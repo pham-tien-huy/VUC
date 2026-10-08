@@ -436,6 +436,7 @@ function sumTier(team){return team.reduce((s,p)=>s+(tierWeight[p.tier]||1),0)}
 function avgRating(team){return team.length?(sumRating(team)/team.length).toFixed(1):"0.0"}
 function positionCounts(team){const out={};team.forEach(p=>out[p.position]=(out[p.position]||0)+1);return out;}
 function positionDifference(a,b){const positions=["Handler","Cutter","Hybrid","Defender","Utility"];return positions.reduce((s,pos)=>s+Math.abs((positionCounts(a)[pos]||0)-(positionCounts(b)[pos]||0)),0);}
+function balanceScore(a,b){const ratingDiff=Math.abs(sumRating(a)-sumRating(b));const tierDiff=Math.abs(sumTier(a)-sumTier(b));const posDiff=positionDifference(a,b);return ratingDiff*100+tierDiff*20+posDiff*10;}
 function femaleCount(team){return team.filter(p=>p.gender==="Female").length;}
 function genderBalancePenalty(a,b,targetFemales){return Math.abs(femaleCount(a)-targetFemales)*1200+Math.abs(femaleCount(b)-targetFemales)*1200;}
 function genderBalanceScore(a,b,targetFemales){return balanceScore(a,b)+genderBalancePenalty(a,b,targetFemales);}
@@ -594,6 +595,7 @@ document.getElementById("fImage").addEventListener("change",e=>{const file=e.tar
 document.getElementById("playerForm").addEventListener("submit",async e=>{e.preventDefault();const btn=document.getElementById("savePlayerBtn");const original=btn.textContent;btn.disabled=true;btn.textContent="Saving...";try{const id=document.getElementById("editId").value||uid();const data={name:document.getElementById("fName").value.trim(),club:document.getElementById("fClub").value.trim(),gender:document.getElementById("fGender").value,position:document.getElementById("fPosition").value,tier:document.getElementById("fTier").value,rating:Math.max(0,Math.min(100,Number(document.getElementById("fRating").value)||0)),image:editingImage||""};const file=document.getElementById("fImage").files[0]||null;if(!data.name||!data.club)throw new Error("Name and club are required.");await savePlayerToDB(id,data,file);await loadPlayers();resetForm();refreshAll();}catch(err){console.error(err);alert("Save failed: "+err.message);}finally{btn.disabled=false;btn.textContent=original;}});
 
 document.getElementById("cancelEdit").addEventListener("click",resetForm);
+if(error)throw error;await loadPlayers();generatedTeamA=[];generatedTeamB=[];resetForm();refreshAll();}catch(err){alert("Reset failed: "+err.message);}});
 document.getElementById("generateBtn").addEventListener("click",generateTeams);
 document.getElementById("swapBtn").addEventListener("click",()=>{if(!generatedTeamA.length)return;[generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];renderTeams();});
 document.getElementById("clearTeamsBtn").addEventListener("click",()=>{generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];renderTeams();});
