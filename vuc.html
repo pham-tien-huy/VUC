@@ -815,21 +815,31 @@ function makeRandomSplit(pool=players){const s=shuffle([...pool]);return{a:s.sli
 function teamMixPenalty(a,b){return a.filter(p=>p.club==="VinUni Ultimate Team 2").length+b.filter(p=>p.club==="VinUni Ultimate Team 1").length;}
 function makeByTeamSplit(pool=players,iterations=5000){if(pool.length<14)return null;let best=null;for(let i=0;i<iterations;i++){const s=shuffle([...pool]),a=s.slice(0,7),b=s.slice(7,14),extras=s.slice(14);const balance=balanceScore(a,b);const cross=teamMixPenalty(a,b);const score=balance+cross*900;const candidate={a,b,extras,score,balance,cross};if(!best||candidate.score<best.score)best=candidate;}return best;}
 function assignMainSubstitutes(extras,a,b){return assignSubstitutes(extras,a,b);}
-function generateTeams(){
-  if(players.length<14){alert("You need at least 14 players for a 7v7 game.");return;}
+async function generateTeams(){
+  // Scrimmage generator now uses ONLY players marked Present for the selected Attendance date.
+  const dateStr=document.getElementById("attendanceDate").value||todayISO();
+  let present=[];
+  try{
+    const {data:session,error:sessionError}=await supabaseClient.from("attendance_sessions").select("id").eq("session_date",dateStr).maybeSingle();
+    if(sessionError)throw sessionError;
+    if(session){
+      const {data:records,error:recordsError}=await supabaseClient.from("attendance_records").select("player_id,present").eq("session_id",session.id).eq("present",true);
+      if(recordsError)throw recordsError;
+      const presentIds=new Set((records||[]).map(r=>r.player_id));
+      present=players.filter(p=>presentIds.has(p.id));
+    }
+  }catch(err){console.error(err);alert("Could not load attendance for team generation: "+err.message);return;}
+  if(present.length<14){alert(`Only ${present.length} player(s) are marked present for ${formatDate(dateStr)}. You need at least 14 for a 7v7 game.`);return;}
   const mode=document.getElementById("genMode").value;let chosen;
-  if(mode==="random")chosen=makeRandomSplit(players);
-  else if(mode==="byteam")chosen=makeByTeamSplit(players,5000);
-  else if(mode==="gender2")chosen=makeGenderBalancedSplit(players,2,6000);
-  else if(mode==="gender1")chosen=makeGenderBalancedSplit(players,1,6000);
-  else{const iterations=mode==="balanced"?5000:1500;const candidates=[];for(let i=0;i<iterations;i++){const split=makeRandomSplit(players);candidates.push({...split,score:balanceScore(split.a,split.b)});}candidates.sort((x,y)=>x.score-y.score);if(mode==="balanced")chosen=candidates[0];else{const topN=Math.max(10,Math.floor(candidates.length*.05));chosen=candidates[Math.floor(Math.random()*topN)];}}
+  if(mode==="random")chosen=makeRandomSplit(present);
+  else if(mode==="byteam")chosen=makeByTeamSplit(present,5000);
+  else if(mode==="gender2")chosen=makeGenderBalancedSplit(present,2,6000);
+  else if(mode==="gender1")chosen=makeGenderBalancedSplit(present,1,6000);
+  else{const iterations=mode==="balanced"?5000:1500;const candidates=[];for(let i=0;i<iterations;i++){const split=makeRandomSplit(present);candidates.push({...split,score:balanceScore(split.a,split.b)});}candidates.sort((x,y)=>x.score-y.score);if(mode==="balanced")chosen=candidates[0];else{const topN=Math.max(10,Math.floor(candidates.length*.05));chosen=candidates[Math.floor(Math.random()*topN)];}}
   generatedTeamA=shuffle(chosen.a);generatedTeamB=shuffle(chosen.b);const subs=assignMainSubstitutes(chosen.extras||[],generatedTeamA,generatedTeamB);generatedSubsA=subs.subA;generatedSubsB=subs.subB;renderTeams();
-  
-  // Ẩn bảng MVP mỗi khi tạo game mới
   document.getElementById('matchSummaryPanel').style.display = 'none';
-  
   const livePanel=document.getElementById("scrimmageMatchPanel"); if(livePanel && !activeScrimmageId) livePanel.scrollIntoView({behavior:"smooth",block:"nearest"});
-  const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));const modeText={random:"Pure random",balanced:"Strongly balanced",competitive:"Balanced + randomized",byteam:"Team-based grouping",gender2:"Balanced · 2 Female / team",gender1:"Balanced · 1 Female / team"}[mode];const genderText=(mode==="gender2"||mode==="gender1")?` · Female: ${femaleCount(generatedTeamA)} / ${femaleCount(generatedTeamB)}`:"";const cross=mode==="byteam"?` · Cross-team starters: <strong>${teamMixPenalty(generatedTeamA,generatedTeamB)}</strong>`:"";document.getElementById("generatorNotice").innerHTML=`<strong>${modeText}</strong> · Rating difference: <strong>${diff}</strong> · Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR · <strong>${(chosen.extras||[]).length} substitute(s)</strong>${genderText}${cross}`;
+  const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));const modeText={random:"Pure random",balanced:"Strongly balanced",competitive:"Balanced + randomized",byteam:"Team-based grouping",gender2:"Balanced · 2 Female / team",gender1:"Balanced · 1 Female / team"}[mode];const genderText=(mode==="gender2"||mode==="gender1")?` · Female: ${femaleCount(generatedTeamA)} / ${femaleCount(generatedTeamB)}`:"";const cross=mode==="byteam"?` · Cross-team starters: <strong>${teamMixPenalty(generatedTeamA,generatedTeamB)}</strong>`:"";document.getElementById("generatorNotice").innerHTML=`<strong>${modeText}</strong> · Attendance: <strong>${present.length} present</strong> · Date: <strong>${formatDate(dateStr)}</strong> · Rating difference: <strong>${diff}</strong> · Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR · <strong>${(chosen.extras||[]).length} substitute(s)</strong>${genderText}${cross}`;
 }
 
 /* ĐỘI HÌNH XOAY DỌC TỪ DƯỚI LÊN TRÊN (BOTTOM -> TOP) */
