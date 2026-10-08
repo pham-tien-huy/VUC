@@ -46,7 +46,6 @@ button{cursor:pointer}
 /* ===== TASKBAR (TOPBAR) MÀU XANH MỜ DẦN ===== */
 .topbar {
   position: sticky; top: 0; z-index: 100;
-  /* Hiệu ứng màu xanh đậm mờ dần sang phải */
   background: linear-gradient(90deg, rgba(6, 21, 45, 0.95) 0%, rgba(30, 58, 138, 0.8) 40%, rgba(59, 130, 246, 0.1) 100%);
   backdrop-filter: blur(12px);
   padding: 0 28px;
@@ -65,7 +64,7 @@ button{cursor:pointer}
 .brand-img {
   height: 55px;
   object-fit: contain;
-  background: #fff; /* Lót nền trắng để logo VinUni dễ nhìn hơn */
+  background: #fff;
   padding: 4px;
   border-radius: 8px;
 }
@@ -175,7 +174,6 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   box-shadow: 0 15px 35px rgba(0,0,0,0.3);
 }
 
-/* Màu viền thẻ theo Tier */
 .tier-S-border { border-color: #f59e0b; }
 .tier-A-border { border-color: #94a3b8; }
 .tier-B-border { border-color: #d97706; }
@@ -189,7 +187,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   overflow: hidden;
 }
 .card-header-image img {
-  width: 100%; height: 100%; object-fit: cover;
+  width: 100%; height: 100%; object-fit: cover; display: block;
   transition: transform 0.4s;
 }
 .player-card-db:hover .card-header-image img { transform: scale(1.05); }
@@ -199,7 +197,6 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   font-size:54px;font-weight:900; color: rgba(255,255,255,0.5);
 }
 
-/* Vòng tròn Tier ở góc trái */
 .bobo-tier {
   position: absolute;
   top: 10px; left: 10px;
@@ -217,7 +214,6 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .tier-B-border .bobo-tier { border-color: #d97706; color: #7c2d12; }
 .tier-C-border .bobo-tier { border-color: #475569; color: #0f172a; }
 
-/* Tên được đẩy lên góc phải, xếp TRÊN ô thông tin */
 .bobo-name {
   position: absolute;
   top: 10px; right: 10px;
@@ -226,16 +222,15 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   text-transform: uppercase;
   font-style: italic;
   text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0 4px 10px rgba(0,0,0,0.8);
-  z-index: 15; /* Z-index cao hơn ô thông tin */
+  z-index: 15;
   text-align: right;
   max-width: 65%;
   line-height: 1.1;
 }
 
-/* Chỉ số OVR & Position ở góc phải, đẩy lùi xuống */
 .bobo-stats {
   position: absolute;
-  top: 48px; /* Đẩy xuống để không che tên */
+  top: 48px;
   right: -8px;
   display: flex; flex-direction: column; gap: 6px;
   z-index: 10;
@@ -248,15 +243,14 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   box-shadow: 2px 2px 8px rgba(0,0,0,0.6);
   display: flex; align-items: center; justify-content: center;
 }
-.bobo-stat.stat-ovr { background: #e11d48; } /* Đỏ cho Rating */
-.bobo-stat.stat-pos { background: #16a34a; } /* Xanh cho Position */
+.bobo-stat.stat-ovr { background: #e11d48; } 
+.bobo-stat.stat-pos { background: #16a34a; } 
 .bobo-stat span {
   display: block;
-  transform: skewX(15deg); /* Đảo ngược nghiêng cho chữ */
+  transform: skewX(15deg); 
   font-style: italic; letter-spacing: 0.5px;
 }
 
-/* Phần thông tin bên dưới thẻ */
 .pbody {
   padding: 14px 16px 16px;
   background: #fff;
@@ -265,54 +259,63 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   display: flex; flex-direction: column; justify-content: flex-end;
 }
 
-/* LÀM LẠI THIẾT KẾ TAGS (MALE, PTS) */
 .badges { 
   display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; 
 }
 .badge {
   padding: 6px 12px;
-  border-radius: 4px; /* Góc cạnh mạnh mẽ hơn */
+  border-radius: 4px; 
   font-size: 11px;
   font-weight: 900; 
   letter-spacing: 1px;
   text-transform: uppercase;
   border: 1px solid rgba(0,0,0,0.1);
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.15); /* Bóng đổ dạng khối truyện tranh */
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.15); 
 }
-.gender-badge-male { background: #1e3a8a; color: #fff; } /* VinUni Blue đậm */
-.gender-badge-female { background: #C8102E; color: #fff; } /* VinUni Red */
-.badge-pts { background: #facc15; color: #000; } /* Vàng rực rõ ràng */
+.gender-badge-male { background: #1e3a8a; color: #fff; } 
+.gender-badge-female { background: #C8102E; color: #fff; } 
+.badge-pts { background: #facc15; color: #000; } 
 
 .bobo-actions { display:flex;gap:8px; }
 .bobo-actions .btn { flex:1;padding:8px;font-size:12px; border-radius: 8px;}
 
 /* ===== THẺ CẦU THỦ TRÊN SÂN (FIELD CARDS) ===== */
 .card-art, .live-card {
-  position:relative;width:62px;height:82px;margin:auto;border-radius:8px;overflow:hidden;
-  border:2px solid transparent; background-clip: padding-box;
+  position:relative;width:64px;height:86px;margin:auto;border-radius:8px;overflow:hidden;
+  border:3px solid transparent; /* Đã nâng cấp viền thể hiện Tier */
+  background-clip: padding-box;
   box-shadow: 0 6px 15px rgba(0,0,0,0.4); transition: transform 0.2s;
 }
-.card-art.tier-S-card, .live-card.tier-S-card { background: linear-gradient(145deg, #fef08a, #b45309); border-color: #fffbea;}
-.card-art.tier-A-card, .live-card.tier-A-card { background: linear-gradient(145deg, #e2e8f0, #475569); border-color: #ffffff;}
-.card-art.tier-B-card, .live-card.tier-B-card { background: linear-gradient(145deg, #fdba74, #9a3412); border-color: #ffedd5;}
-.card-art.tier-C-card, .live-card.tier-C-card { background: linear-gradient(145deg, #f1f5f9, #64748b); border-color: #f8fafc;}
 
-.card-art img, .live-card img{width:100%;height:100%;object-fit:cover; mix-blend-mode: overlay; opacity: 0.9;}
+/* ĐẶT VIỀN TIER RÕ RÀNG TRÊN SÂN */
+.card-art.tier-S-card, .live-card.tier-S-card { background: linear-gradient(145deg, #fef08a, #b45309); border-color: #fbbf24; box-shadow: 0 4px 15px rgba(251,191,36,0.6); }
+.card-art.tier-A-card, .live-card.tier-A-card { background: linear-gradient(145deg, #e2e8f0, #475569); border-color: #cbd5e1; box-shadow: 0 4px 15px rgba(203,213,225,0.6); }
+.card-art.tier-B-card, .live-card.tier-B-card { background: linear-gradient(145deg, #fdba74, #9a3412); border-color: #b45309; }
+.card-art.tier-C-card, .live-card.tier-C-card { background: linear-gradient(145deg, #f1f5f9, #64748b); border-color: #64748b; }
+
+/* BỎ HIỆU ỨNG BÓNG MỜ TỐI ẢNH ĐỂ ẢNH HIỂN THỊ RÕ RÀNG */
+.card-art img, .live-card img{width:100%;height:100%;object-fit:cover; display: block;}
+
 .card-initials{
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
   font-size:24px;font-weight:1000;color: rgba(255,255,255,0.9); text-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 .card-rating{position:absolute;top:4px;left:5px;color:#fff;font-size:12px;font-weight:1000;text-shadow:0 2px 4px #000}
-.card-tier{position:absolute;top:4px;right:5px;color:#fff;background:rgba(0,0,0,.5);padding:1px 4px;border-radius:4px;font-size:8px;font-weight:900}
+.card-tier{position:absolute;top:4px;right:5px;color:#fff;background:rgba(0,0,0,.6);padding:1px 4px;border-radius:4px;font-size:8px;font-weight:900}
+
+/* HIỂN THỊ TÊN ĐẦY ĐỦ TRÊN 2 DÒNG NẾU DÀI */
 .card-name, .live-card .card-name{
   position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);
-  color:#fff;font-size:9px;font-weight:900;padding:4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; text-align: center;
+  color:#fff;font-size:9px;font-weight:900;padding:4px 2px;
+  text-align: center;
+  white-space: normal; line-height: 1.1; word-wrap: break-word;
 }
 .field-name, .live-player-name{
-  margin-top:4px;color:#fff;font-size:10px;font-weight:900;text-shadow:0 2px 4px #000;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+  margin-top:6px;color:#fff;font-size:10px;font-weight:900;text-shadow:0 2px 4px #000;
+  text-align: center;
+  white-space: normal; line-height: 1.1; word-wrap: break-word; /* Hiển thị đủ tên */
 }
-.field-pos, .live-player-pos{color:rgba(255,255,255,.9);font-size:8px;text-shadow:0 2px 3px #000; font-weight: 700; margin-top: 2px;}
+.field-pos, .live-player-pos{color:rgba(255,255,255,.9);font-size:8px;text-shadow:0 2px 3px #000; font-weight: 700; margin-top: 4px; text-align: center;}
 
 /* ===== FORM & KHÁC ===== */
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -384,7 +387,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   color:var(--muted);font-size:14px; line-height: 1.5; font-weight: 500;
 }
 
-/* ===== SCRIMMAGE LIVE MATCH ===== */
+/* ===== SCRIMMAGE LIVE MATCH & MVP MATCH SUMMARY ===== */
 .scrimmage-live-panel{border:3px solid var(--vinuni-red); background: #fff;}
 .scrimmage-live-head{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap; margin-bottom: 20px;}
 .scrimmage-live-head h2{margin:8px 0 4px;font-size:26px; color: var(--blue-950);}
@@ -563,6 +566,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 
   <div id="teamsContainer"></div>
 
+  <!-- BẢNG LIVE MATCH -->
   <div id="scrimmageMatchPanel" class="panel scrimmage-live-panel" style="margin-top:28px;display:none">
     <div class="scrimmage-live-head">
       <div>
@@ -590,6 +594,34 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
       <div id="performanceList"></div>
     </div>
   </div>
+
+  <!-- BẢNG TỔNG KẾT MATCH SUMMARY & MVP (SẼ HIỂN THỊ SAU KHI KẾT THÚC TRẬN) -->
+  <div id="matchSummaryPanel" class="panel scrimmage-live-panel" style="margin-top:28px;display:none; text-align: center; border-color: #f59e0b;">
+    <h2 style="color: #b45309; font-size: 28px; margin-bottom: 20px;">🏆 MATCH SUMMARY</h2>
+    <div class="scoreboard" style="justify-content: center; margin-bottom: 30px; display: inline-flex;">
+      <div><span style="color:var(--blue-700)">TEAM BLUE</span><strong id="summaryScoreA">0</strong></div>
+      <b style="margin: 0 20px;">-</b>
+      <div><span style="color:var(--muted)">TEAM WHITE</span><strong id="summaryScoreB">0</strong></div>
+    </div>
+    
+    <h3 style="margin: 0 0 16px; color: #1e3a8a; font-size: 22px;">🌟 MVP OF THE MATCH 🌟</h3>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 20px; background: #fffbf1; padding: 20px 30px; border-radius: 20px; border: 2px dashed #fcd34d; max-width: 550px; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+      <div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; flex: none;">
+        <!-- KHUNG ẢNH KHIÊN (SHIELD) -->
+        <img src="image_d3bbdf.png" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1;">
+        <!-- AVATAR MVP -->
+        <img id="mvpAvatar" src="gold.jpg" style="position: relative; width: 72px; height: 72px; border-radius: 50%; object-fit: cover; z-index: 2; margin-top: -12px;">
+      </div>
+      <div style="text-align: left;">
+        <div id="mvpTier" class="bobo-tier" style="position: static; display: inline-flex; width: 32px; height: 32px; font-size: 16px; margin-bottom: 8px;">S</div>
+        <h3 id="mvpName" style="margin: 0 0 4px; font-size: 22px; color: #b45309; font-weight: 900; text-transform: uppercase;">Name</h3>
+        <div id="mvpTeam" style="font-size: 13px; font-weight: 800; color: #64748b; margin-bottom: 8px;">TEAM BLUE</div>
+        <div id="mvpPts" style="font-size: 20px; font-weight: 900; color: #15803d; background: #dcfce7; padding: 4px 10px; border-radius: 6px; display: inline-block;">0 PTS</div>
+        <div id="mvpStatsText" style="font-size: 14px; font-weight: 800; color: #475569; margin-top: 8px;">0 G · 0 A · 0 D · 0 B</div>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <!-- ATTENDANCE -->
@@ -753,12 +785,9 @@ function renderPlayers(){
         <div class="card-header-image">
             ${p.image ? `<img src="${esc(p.image)}" loading="lazy">` : `<div class="photo-placeholder">${esc(initials(p.name))}</div>`}
             
-            <!-- Tier góc trái -->
             <div class="bobo-tier">${esc(p.tier)}</div>
-            <!-- Tên được đẩy lên góc trên phải -->
             <div class="bobo-name">${esc(p.name)}</div>
             
-            <!-- Stats (OVR và Vai trò) góc phải - đã đẩy lùi xuống -->
             <div class="bobo-stats">
                 <div class="bobo-stat stat-ovr"><span>${Number(p.rating||0).toFixed(0)} OVR</span></div>
                 <div class="bobo-stat stat-pos"><span>${esc(p.position)}</span></div>
@@ -795,19 +824,23 @@ function generateTeams(){
   else if(mode==="gender1")chosen=makeGenderBalancedSplit(players,1,6000);
   else{const iterations=mode==="balanced"?5000:1500;const candidates=[];for(let i=0;i<iterations;i++){const split=makeRandomSplit(players);candidates.push({...split,score:balanceScore(split.a,split.b)});}candidates.sort((x,y)=>x.score-y.score);if(mode==="balanced")chosen=candidates[0];else{const topN=Math.max(10,Math.floor(candidates.length*.05));chosen=candidates[Math.floor(Math.random()*topN)];}}
   generatedTeamA=shuffle(chosen.a);generatedTeamB=shuffle(chosen.b);const subs=assignMainSubstitutes(chosen.extras||[],generatedTeamA,generatedTeamB);generatedSubsA=subs.subA;generatedSubsB=subs.subB;renderTeams();
+  
+  // Ẩn bảng MVP mỗi khi tạo game mới
+  document.getElementById('matchSummaryPanel').style.display = 'none';
+  
   const livePanel=document.getElementById("scrimmageMatchPanel"); if(livePanel && !activeScrimmageId) livePanel.scrollIntoView({behavior:"smooth",block:"nearest"});
   const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));const modeText={random:"Pure random",balanced:"Strongly balanced",competitive:"Balanced + randomized",byteam:"Team-based grouping",gender2:"Balanced · 2 Female / team",gender1:"Balanced · 1 Female / team"}[mode];const genderText=(mode==="gender2"||mode==="gender1")?` · Female: ${femaleCount(generatedTeamA)} / ${femaleCount(generatedTeamB)}`:"";const cross=mode==="byteam"?` · Cross-team starters: <strong>${teamMixPenalty(generatedTeamA,generatedTeamB)}</strong>`:"";document.getElementById("generatorNotice").innerHTML=`<strong>${modeText}</strong> · Rating difference: <strong>${diff}</strong> · Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR · <strong>${(chosen.extras||[]).length} substitute(s)</strong>${genderText}${cross}`;
 }
 
 /* ĐỘI HÌNH XOAY DỌC TỪ DƯỚI LÊN TRÊN (BOTTOM -> TOP) */
 const formation=[
-  {x:50,y:85,label:"Handler"}, // Defender/Handler dưới đáy
+  {x:50,y:85,label:"Handler"}, 
   {x:25,y:68,label:"Handler"},
   {x:75,y:68,label:"Handler"},
   {x:50,y:50,label:"Mid"},
   {x:25,y:32,label:"Cutter"},
   {x:75,y:32,label:"Cutter"},
-  {x:50,y:15,label:"Deep"}    // Deep/Cutter cắm đỉnh trên
+  {x:50,y:15,label:"Deep"}    
 ];
 
 function makeBalanced14(starters){
@@ -827,7 +860,7 @@ function assignSubstitutes(extras,a,b){
 }
 function renderAttendanceTeams(){const c=document.getElementById("attendanceTeamsContainer"),{a,b,subA,subB}=attendanceTeams;if(!a.length||!b.length){c.innerHTML='<div class="empty">Generate teams after saving attendance for this match date.</div>';return;}c.innerHTML=`<div class="teams-visual">${renderTeamWithSubs(a,subA,"TEAM BLUE","team-blue")}${renderTeamWithSubs(b,subB,"TEAM WHITE","team-white")}</div>`;}
 
-function renderTeamWithSubs(team,subs,name,teamClass){const score=sumRating(team),pc=positionCounts(team);return `<div class="ultimate-team ${teamClass}"><div class="team-head"><div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 STARTERS${subs.length?` · ${subs.length} SUB${subs.length>1?'S':''}`:''}</span></div></div><div class="team-total">${score} OVR</div></div><div class="ultimate-field"><div class="endzone top"><span class="zone-label">END ZONE</span></div><div class="endzone bottom"><span class="zone-label">HOME ZONE</span></div>${team.map((p,i)=>{const pos=formation[i];return `<div class="field-player" style="left:${pos.x}\%;top:${pos.y}%" title="${esc(p.name)} ·${esc(p.position)}"><div class="card-art ${p.gender==="Female"?"gender-female":"gender-male"} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="field-name">${esc(p.name)}</div><div class="field-pos"><span class="badge ${p.gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:8px;padding:2px 5px;box-shadow:none;">${p.gender==="Female"?"Female":"Male"}</span> · ${esc(p.position)}</div></div>`}).join('')}</div><div class="team-stats"><div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div><div class="team-stat"><strong>${sumTier(team)}</strong><span>TIER SCORE</span></div><div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div><div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div></div>${subs.length?`<div class="sub-list" style="margin-top:16px;padding:16px;border:2px dashed #cbd5e1;border-radius:16px;background:#f8fafc"><strong>Substitution · ${subs.length}</strong><div class="badges" style="margin-top:10px">${subs.map((p,i)=>`<span class="badge badge-sub" style="padding:6px 12px;box-shadow:none;">${i+1}. ${esc(p.name)} · ${esc(p.position)} · ${Number(p.rating)||0}</span>`).join('')}</div></div>`:''}</div>`;}
+function renderTeamWithSubs(team,subs,name,teamClass){const score=sumRating(team),pc=positionCounts(team);return `<div class="ultimate-team ${teamClass}"><div class="team-head"><div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 STARTERS${subs.length?` · ${subs.length} SUB${subs.length>1?'S':''}`:''}</span></div></div><div class="team-total">${score} OVR</div></div><div class="ultimate-field"><div class="endzone top"><span class="zone-label">END ZONE</span></div><div class="endzone bottom"><span class="zone-label">HOME ZONE</span></div>${team.map((p,i)=>{const pos=formation[i];return `<div class="field-player" style="left:${pos.x}%;top:${pos.y}%" title="${esc(p.name)} · ${esc(p.position)}"><div class="card-art ${p.gender==="Female"?"gender-female":"gender-male"} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="field-name">${esc(p.name)}</div><div class="field-pos"><span class="badge ${p.gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:8px;padding:2px 5px;box-shadow:none;">${p.gender==="Female"?"Female":"Male"}</span> · ${esc(p.position)}</div></div>`}).join('')}</div><div class="team-stats"><div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div><div class="team-stat"><strong>${sumTier(team)}</strong><span>TIER SCORE</span></div><div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div><div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div></div>${subs.length?`<div class="sub-list" style="margin-top:16px;padding:16px;border:2px dashed #cbd5e1;border-radius:16px;background:#f8fafc"><strong>Substitution · ${subs.length}</strong><div class="badges" style="margin-top:10px">${subs.map((p,i)=>`<span class="badge badge-sub" style="padding:6px 12px;box-shadow:none;">${i+1}. ${esc(p.name)} · ${esc(p.position)} · ${Number(p.rating)||0}</span>`).join('')}</div></div>`:''}</div>`;}
 
 async function loadAttendance(dateStr){if(!dateStr)return;attendancePresentIds=new Set();attendanceTeams={a:[],b:[],subA:[],subB:[]};const {data:session,error}=await supabaseClient.from('attendance_sessions').select('id').eq('session_date',dateStr).maybeSingle();if(error)throw error;if(session){const {data:rows,error:re}=await supabaseClient.from('attendance_records').select('player_id,present,assignment').eq('session_id',session.id);if(re)throw re;attendanceRows=rows||[];attendanceRows.filter(r=>r.present).forEach(r=>attendancePresentIds.add(r.player_id));const byId=new Map(players.map(p=>[p.id,p])),a=[],b=[],subA=[],subB=[];(rows||[]).forEach(r=>{const p=byId.get(r.player_id);if(!p)return;if(r.assignment==='Team A')a.push(p);else if(r.assignment==='Team B')b.push(p);else if(r.assignment==='Sub A')subA.push(p);else if(r.assignment==='Sub B')subB.push(p);});if(a.length===7&&b.length===7)attendanceTeams={a,b,subA,subB};}else attendanceRows=[];renderAttendancePlayers();renderAttendanceTeams();updateAttendanceCount();}
 async function ensureAttendanceSession(dateStr){const {data,error}=await supabaseClient.from('attendance_sessions').upsert({session_date:dateStr},{onConflict:'session_date'}).select().single();if(error)throw error;return data;}
@@ -884,7 +917,7 @@ function renderLiveMatch(){
   const goalsB=activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   document.getElementById('scoreA').textContent=goalsA;document.getElementById('scoreB').textContent=goalsB;
   
-  const field=(team,subs,teamName)=>`<div class="live-team"><div class="live-team-head"><h3>${teamName}</h3><span>${team.length} ON FIELD · ${subs.length} SUB</span></div><div class="live-field"><div class="endzone top"></div><div class="endzone bottom"></div>${team.map((p,i)=>{const pos=formation[i]||formation[0];return `<div class="live-player" draggable="true" data-player-id="${esc(p.id)}" data-team="${teamName==='TEAM BLUE'?'A':'B'}" style="left:${pos.x}\%;top:${pos.y}%" title="Drag a substitute here to replace ${esc(p.name)}"><div class="live-card ${p.gender==='Female'?'gender-female':'gender-male'} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-name">${esc(p.name)}</div></div><div class="live-player-name">${esc(p.name)}</div><div class="live-player-pos">${esc(p.position)}</div></div>`}).join('')}</div><div class="substitute-zone" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">${subs.length?subs.map(p=>`<div class="substitute-chip" draggable="true" data-player-id="${esc(p.id)}" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">↔ ${esc(p.name)} ·${Number(p.rating||0)} OVR</div>`).join(''):'<span style="font-size:12px;color:var(--muted)">No substitutes</span>'}</div></div>`;
+  const field=(team,subs,teamName)=>`<div class="live-team"><div class="live-team-head"><h3>${teamName}</h3><span>${team.length} ON FIELD · ${subs.length} SUB</span></div><div class="live-field"><div class="endzone top"></div><div class="endzone bottom"></div>${team.map((p,i)=>{const pos=formation[i]||formation[0];return `<div class="live-player" draggable="true" data-player-id="${esc(p.id)}" data-team="${teamName==='TEAM BLUE'?'A':'B'}" style="left:${pos.x}\%;top:${pos.y}%" title="Drag a substitute here to replace ${esc(p.name)}"><div class="live-card ${p.gender==='Female'?'gender-female':'gender-male'} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="live-player-name">${esc(p.name)}</div><div class="live-player-pos">${esc(p.position)}</div></div>`}).join('')}</div><div class="substitute-zone" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">${subs.length?subs.map(p=>`<div class="substitute-chip" draggable="true" data-player-id="${esc(p.id)}" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">↔ ${esc(p.name)} ·${Number(p.rating||0)} OVR</div>`).join(''):'<span style="font-size:12px;color:var(--muted)">No substitutes</span>'}</div></div>`;
   document.getElementById('liveTeamsContainer').innerHTML=`<div class="live-team-grid">${field(a,subsA,'TEAM BLUE')}${field(b,subsB,'TEAM WHITE')}</div>`;
   bindDragDrop();renderPerformance();
 }
@@ -894,9 +927,77 @@ async function substitutePlayer(sourceId,targetId){if(!activeScrimmageId)return;
 function renderPerformance(){const list=document.getElementById('performanceList');const map=new Map(players.map(p=>[p.id,p]));const onField=activeScrimmagePlayers.filter(x=>x.team===performanceTeam&&x.on_field).sort((a,b)=>(a.slot??99)-(b.slot??99));if(!onField.length){list.innerHTML='<div class="empty">No players currently on the field.</div>';return;}list.innerHTML=`<div class="performance-row" style="font-size:11px;color:var(--muted);font-weight:900; letter-spacing:0.5px"><div>PLAYER</div><div>GOAL (+4)</div><div>AST (+2)</div><div>DROP (-3)</div><div>BLK (+3)</div><div>POINTS</div><div>Δ RATING</div></div>`+onField.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));return `<div class="performance-row"><div class="performance-player">${p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<div class="performance-avatar">${esc(initials(p.name))}</div>`}<div><strong>${esc(p.name)}</strong><span>${esc(p.position)} · ${esc(p.tier)} · ${Number(p.rating||0).toFixed(1)} OVR</span></div></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','assist')">+1 A</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');}
 window.recordMatchStat=async function(playerId,statType){if(!activeScrimmageId)return;const row=activeScrimmagePlayers.find(x=>x.player_id===playerId);if(!row||!row.on_field){alert('Only players currently on the field can receive match stats.');return;}const {error}=await supabaseClient.from('scrimmage_stat_events').insert({match_id:activeScrimmageId,player_id:playerId,team:row.team,stat_type:statType,delta:1});if(error){alert('Could not record stat: '+error.message);return;}await loadActiveScrimmage();};
 
-async function loadActiveScrimmage(){const {data:m,error}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();if(error)throw error;if(!m){activeScrimmageId=null;activeScrimmagePlayers=[];activeScrimmageEvents=[];const panel=document.getElementById("scrimmageMatchPanel");if(generatedTeamA.length===7&&generatedTeamB.length===7){panel.style.display="block";document.getElementById("activateMatchBtn").style.display="inline-flex";document.getElementById("endMatchBtn").style.display="none";document.getElementById("liveTeamsContainer").innerHTML="<div class=\"generator-summary\"><strong>Match ready.</strong> Activate this generated 7v7 to start live tracking.</div>";document.getElementById("performanceList").innerHTML="<div class=\"empty\">Activate the match to start recording live player performance.</div>";}else{renderLiveMatch();}return;}activeScrimmageId=m.id;const [{data:mp,error:pe},{data:ev,error:ee}]=await Promise.all([supabaseClient.from('scrimmage_players').select('*').eq('match_id',m.id),supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',m.id).order('created_at',{ascending:true})]);if(pe)throw pe;if(ee)throw ee;activeScrimmagePlayers=mp||[];activeScrimmageEvents=ev||[];document.getElementById('activateMatchBtn').style.display='none';document.getElementById('endMatchBtn').style.display='inline-flex';renderLiveMatch();setSync('Live scrimmage',true);}
-async function activateMatch(){if(activeScrimmageId){alert('A scrimmage is already active. End it before starting another.');return;}if(generatedTeamA.length!==7||generatedTeamB.length!==7){alert('Generate a 7v7 match first.');return;}const {data:m,error}=await supabaseClient.from('scrimmage_matches').insert({status:'active'}).select().single();if(error){alert('Could not activate match: '+error.message);return;}const rows=[...generatedTeamA.map((p,i)=>({match_id:m.id,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:m.id,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.map(p=>({match_id:m.id,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.map(p=>({match_id:m.id,player_id:p.id,team:'B',on_field:false,slot:null}))];const {error:pe}=await supabaseClient.from('scrimmage_players').insert(rows);if(pe){await supabaseClient.from('scrimmage_matches').delete().eq('id',m.id);alert('Could not save lineups: '+pe.message);return;}await loadActiveScrimmage();}
-async function endMatch(){if(!activeScrimmageId)return;if(!confirm('End this match? This will permanently apply performance points and rating changes to all players.'))return;const matchId=activeScrimmageId;const {error}=await supabaseClient.rpc('end_scrimmage_match',{p_match_id:matchId});if(error){alert('Could not end match: '+error.message+'\n\nRun vinuni_scrimmage_setup.sql in Supabase first.');return;}await loadPlayers();await exportScrimmageExcel(matchId);activeScrimmageId=null;activeScrimmagePlayers=[];activeScrimmageEvents=[];refreshAll();renderLiveMatch();setSync('Match ended · ratings updated',true);alert('Match ended. Performance Excel has been downloaded and player ratings/tiers were updated.');}
+async function loadActiveScrimmage(){const {data:m,error}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();if(error)throw error;if(!m){activeScrimmageId=null;activeScrimmagePlayers=[];activeScrimmageEvents=[];const panel=document.getElementById("scrimmageMatchPanel");if(generatedTeamA.length===7&&generatedTeamB.length===7){panel.style.display="block";document.getElementById("activateMatchBtn").style.display="inline-flex";document.getElementById("endMatchBtn").style.display="none";document.getElementById("liveTeamsContainer").innerHTML="<div class=\"generator-summary\"><strong>Match ready.</strong> Activate this generated 7v7 to start live tracking.</div>";document.getElementById("performanceList").innerHTML="<div class=\"empty\">Activate the match to start recording live player performance.</div>";}else{renderLiveMatch();}return;}activeScrimmageId=m.id;const [{data:mp,error:pe},{data:ev,error:ee}]=await Promise.all([supabaseClient.from('scrimmage_players').select('*').eq('match_id',m.id),supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',m.id).order('created_at',{ascending:true})]);if(pe)throw pe;if(ee)throw ee;activeScrimmagePlayers=mp||[];activeScrimmageEvents=ev||[];document.getElementById('activateMatchBtn').style.display='none';document.getElementById('endMatchBtn').style.display='inline-flex';
+  
+  document.getElementById('matchSummaryPanel').style.display = 'none'; // Ẩn MVP panel khi đang live
+  renderLiveMatch();
+  setSync('Live scrimmage',true);
+}
+async function activateMatch(){if(activeScrimmageId){alert('A scrimmage is already active. End it before starting another.');return;}if(generatedTeamA.length!==7||generatedTeamB.length!==7){alert('Generate a 7v7 match first.');return;}const {data:m,error}=await supabaseClient.from('scrimmage_matches').insert({status:'active'}).select().single();if(error){alert('Could not activate match: '+error.message);return;}const rows=[...generatedTeamA.map((p,i)=>({match_id:m.id,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:m.id,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.map(p=>({match_id:m.id,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.map(p=>({match_id:m.id,player_id:p.id,team:'B',on_field:false,slot:null}))];const {error:pe}=await supabaseClient.from('scrimmage_players').insert(rows);if(pe){await supabaseClient.from('scrimmage_matches').delete().eq('id',m.id);alert('Could not save lineups: '+pe.message);return;}
+  document.getElementById('matchSummaryPanel').style.display = 'none'; // Ẩn MVP panel
+  await loadActiveScrimmage();
+}
+
+async function endMatch(){
+  if(!activeScrimmageId) return;
+  if(!confirm('End this match? This will permanently apply performance points and rating changes to all players.')) return;
+  
+  const matchId = activeScrimmageId;
+  
+  /* === TÍNH TOÁN KẾT QUẢ VÀ MVP TRƯỚC KHI DATABASE XÓA DỮ LIỆU === */
+  const goalsA = activeScrimmageEvents.filter(e=>e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
+  const goalsB = activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
+  
+  let mvp = null; 
+  let maxPts = -Infinity;
+  const pMap = new Map(players.map(p=>[p.id,p]));
+  activeScrimmagePlayers.forEach(x => {
+      const p = pMap.get(x.player_id);
+      if(!p) return;
+      const t = statTotalsForPlayer(p.id);
+      const pts = performancePoints(t);
+      if(pts > maxPts) { maxPts = pts; mvp = { p, t, pts, team: x.team }; }
+  });
+
+  // Hiển thị Panel Tổng kết & MVP
+  document.getElementById('summaryScoreA').textContent = goalsA;
+  document.getElementById('summaryScoreB').textContent = goalsB;
+  
+  if(mvp) {
+      // Fallback ảnh API nếu không có ảnh gốc
+      const mvpImgSrc = mvp.p.image ? esc(mvp.p.image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(mvp.p.name)}&background=e2e8f0&color=1e3a8a&size=150&bold=true`;
+      document.getElementById('mvpAvatar').src = mvpImgSrc;
+      document.getElementById('mvpName').textContent = mvp.p.name;
+      document.getElementById('mvpTier').textContent = mvp.p.tier;
+      
+      const tierColors = { 'S': '#f59e0b', 'A': '#94a3b8', 'B': '#d97706', 'C': '#475569' };
+      document.getElementById('mvpTier').style.borderColor = tierColors[mvp.p.tier] || '#1e3a8a';
+      document.getElementById('mvpTier').style.color = tierColors[mvp.p.tier] || '#1e3a8a';
+      
+      document.getElementById('mvpTeam').textContent = mvp.team === 'A' ? 'TEAM BLUE' : 'TEAM WHITE';
+      document.getElementById('mvpPts').textContent = mvp.pts + ' PTS';
+      document.getElementById('mvpStatsText').textContent = `${mvp.t.goal} GOAL · ${mvp.t.assist} AST · ${mvp.t.drop} DROP · ${mvp.t.block} BLK`;
+  }
+  
+  document.getElementById('matchSummaryPanel').style.display = 'block';
+  document.getElementById('matchSummaryPanel').scrollIntoView({behavior: "smooth", block: "nearest"});
+
+  /* === KẾT THÚC TRẬN BẰNG RPC === */
+  const {error} = await supabaseClient.rpc('end_scrimmage_match',{p_match_id:matchId});
+  if(error){alert('Could not end match: '+error.message+'\n\nRun vinuni_scrimmage_setup.sql in Supabase first.');return;}
+  
+  await loadPlayers();
+  await exportScrimmageExcel(matchId);
+  
+  activeScrimmageId=null;
+  activeScrimmagePlayers=[];
+  activeScrimmageEvents=[];
+  refreshAll();
+  renderLiveMatch(); // renderLiveMatch sẽ ẩn live panel đi khi id=null
+  setSync('Match ended · ratings updated',true);
+  alert('Match ended. Performance Excel has been downloaded and player ratings/tiers were updated.');
+}
+
 async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const rows=mp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};ev.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:x.team==='A'?'Team 1':'Team 2',Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ev.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:e.team==='A'?'Team 1':'Team 2',Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
 async function subscribeRealtime(){
   if(realtimeChannel)await supabaseClient.removeChannel(realtimeChannel);
@@ -925,7 +1026,9 @@ document.getElementById("activateMatchBtn").addEventListener("click",activateMat
 document.getElementById("endMatchBtn").addEventListener("click",endMatch);
 document.querySelectorAll(".performance-tab").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".performance-tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");performanceTeam=btn.dataset.performanceTeam;renderPerformance();}));
 document.getElementById("swapBtn").addEventListener("click",()=>{if(!generatedTeamA.length)return;[generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];renderTeams();});
-document.getElementById("clearTeamsBtn").addEventListener("click",()=>{generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];renderTeams();});
+document.getElementById("clearTeamsBtn").addEventListener("click",()=>{generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];renderTeams();
+  document.getElementById('matchSummaryPanel').style.display = 'none'; // Clear summary too
+});
 document.getElementById("attendanceDate").addEventListener("change",async()=>{try{await loadAttendance(document.getElementById("attendanceDate").value);}catch(err){alert("Could not load attendance: "+err.message);}});
 document.getElementById("attendanceSearch").addEventListener("input",renderAttendancePlayers);
 document.getElementById("markAllPresentBtn").addEventListener("click",()=>{players.forEach(p=>attendancePresentIds.add(p.id));updateAttendanceCount();renderAttendancePlayers();});
