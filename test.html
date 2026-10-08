@@ -6,6 +6,8 @@
 <title>VinUni Ultimate Clubs Player Management · Attendance</title>
 <style>
 :root{
+  --vinuni-red: #C8102E;
+  --vinuni-blue: #1e3a8a;
   --blue-950:#06152d;
   --blue-900:#082858;
   --blue-800:#0d3f82;
@@ -15,231 +17,459 @@
   --blue-100:#e8f3ff;
   --blue-50:#f5f9ff;
   --text:#122033;
-  --muted:#667085;
-  --line:#dfe7f1;
+  --muted:#64748b;
+  --line:#e2e8f0;
   --white:#fff;
-  --green:#22c55e;
+  --green:#10b981;
   --red:#ef4444;
-  --gold:#f5c542;
+  --gold:#f59e0b;
 }
 *{box-sizing:border-box}
-body{
+
+body {
   margin:0;
-  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  background:#f3f7fc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color:var(--text);
+  /* ẢNH NỀN FACEBOOK: 
+     Bạn cần thay thế link này bằng 1 link ảnh trực tiếp có đuôi .jpg hoặc .png. 
+     Link FB hiện tại là web HTML nên trình duyệt sẽ không tải được làm background. */
+  background-image: url('https://www.facebook.com/photo/?fbid=1032787159584111&set=a.119181300944706&__cft__[0]=AZiVu91_VRV6uJ1Ig9EFowzd5WslQvZRIdI_JcYlxGcF1m48domvOm-ZeIoAIUfP3nHWRyQlOas3QZ1E9fLwx0isYUoPyiKfD2MlvWQakv4hCJ8RWann-yLSzG55RZ0xNkh6X-yzc9FyX8lkb1V8Xlv7z-6-gwetQT6HNNZ9iMVdBs0Xk77S9_K9C7Gg7Q&__tn__=EH-R');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: #f4f7fb; /* Màu dự phòng nếu ảnh lỗi */
 }
+
 button,input,select{font:inherit}
 button{cursor:pointer}
-.topbar{
-  position:sticky;top:0;z-index:100;
-  background:linear-gradient(110deg,var(--blue-950),var(--blue-800));
-  color:#fff;padding:0 28px;
-  box-shadow:0 4px 18px rgba(7,26,51,.18)
+
+/* ===== TASKBAR (TOPBAR) MÀU XANH MỜ DẦN ===== */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  /* Hiệu ứng màu xanh đậm mờ dần sang phải */
+  background: linear-gradient(90deg, rgba(6, 21, 45, 0.95) 0%, rgba(30, 58, 138, 0.8) 40%, rgba(59, 130, 246, 0.1) 100%);
+  backdrop-filter: blur(12px);
+  padding: 0 28px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
 }
 .nav{
-  max-width:1400px;margin:auto;min-height:72px;
+  max-width:1400px;margin:auto;min-height:76px;
   display:flex;align-items:center;justify-content:space-between;gap:20px
 }
-.brand{font-weight:900;letter-spacing:.08em;font-size:18px}
-.brand small{display:block;font-weight:500;letter-spacing:.02em;opacity:.72;font-size:10px;margin-top:2px}
-.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.brand-img {
+  height: 55px;
+  object-fit: contain;
+  background: #fff; /* Lót nền trắng để logo VinUni dễ nhìn hơn */
+  padding: 4px;
+  border-radius: 8px;
+}
+.brand {font-weight:900;letter-spacing:.05em;font-size:20px; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);}
+.brand small {display:block;font-weight:700;letter-spacing:.05em;color: #fca5a5;font-size:10px;margin-top:2px;text-transform: uppercase;}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
 .tab{
-  border:0;background:transparent;color:#dcecff;
-  padding:12px 15px;border-radius:10px;font-weight:700
+  border:0;background:transparent;color: rgba(255,255,255,0.7);
+  padding:12px 18px;border-radius:12px;font-weight:800;
+  transition: all 0.2s ease;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
-.tab:hover,.tab.active{background:rgba(255,255,255,.13);color:#fff}
-main{max-width:1400px;margin:auto;padding:28px}
-.page{display:none}.page.active{display:block}
+.tab:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.tab.active{background: var(--vinuni-red);color:#fff; box-shadow: 0 4px 12px rgba(200, 16, 46, 0.4); text-shadow: none;}
+
+.user-pill{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--vinuni-blue); font-weight: 700; background: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 99px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+.sync-dot{width:10px;height:10px;border-radius:50%;background:#f59e0b;box-shadow:0 0 0 3px rgba(245, 158, 11,.15)}.sync-dot.live{background:#10b981;box-shadow:0 0 0 3px rgba(16, 185, 129,.15)}
+
+
+main{max-width:1400px;margin:auto;padding:32px 28px}
+.page{display:none; animation: fadeIn 0.4s ease forwards;}
+.page.active{display:block}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== HERO & PANELS ===== */
 .hero{
-  background:linear-gradient(135deg,#fff,#edf6ff);
-  border:1px solid var(--line);border-radius:20px;padding:25px;
-  margin-bottom:22px
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--vinuni-red);
+  border-radius: 20px;padding:30px;
+  margin-bottom:28px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.05);
 }
-.hero h1{margin:0 0 7px;font-size:30px}
-.hero p{margin:0;color:var(--muted)}
+.hero h1{margin:0 0 10px;font-size:32px; color: var(--vinuni-blue); font-weight: 900;}
+.hero p{margin:0;color:var(--muted); font-size: 15px;}
 .panel{
-  background:#fff;border:1px solid var(--line);border-radius:18px;
-  padding:20px;box-shadow:0 8px 28px rgba(14,52,91,.05)
+  background:rgba(255,255,255,0.97);border:1px solid var(--line);border-radius:24px;
+  padding:24px;box-shadow:0 10px 35px rgba(0,0,0,.08);
 }
-.panel h2{margin:0 0 16px;font-size:19px}
-.grid{display:grid;gap:18px}
+.panel h2{margin:0 0 20px;font-size:20px; color: var(--blue-950); font-weight: 800;}
+
+/* TAB SCRIMMAGE NỀN TRẮNG */
+#generator {
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+#generator .panel { box-shadow: none; border: 1px solid var(--line); background: #f8fafc; }
+#generator .hero { box-shadow: none; background: #fff; }
+
+.grid{display:grid;gap:20px}
 .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 input,select{
-  border:1px solid #ccd8e7;border-radius:10px;padding:11px 12px;
-  background:#fff;outline:none;min-width:150px
+  border:2px solid #e2e8f0;border-radius:12px;padding:12px 14px;
+  background:#f8fafc;outline:none;min-width:150px;
+  font-weight: 500; transition: all 0.2s;
 }
-input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(66,153,225,.12)}
-.btn{
-  border:0;border-radius:10px;padding:11px 15px;font-weight:800;
-  transition:.15s
-}
-.btn:hover{transform:translateY(-1px)}
-.btn-primary{background:var(--blue-700);color:#fff}
-.btn-secondary{background:var(--blue-100);color:var(--blue-800)}
-.btn-danger{background:#fee2e2;color:#991b1b}
-.btn-dark{background:var(--blue-950);color:#fff}
-.btn-ghost{background:#f5f7fa;color:#334155}
-.stat{
-  padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff
-}
-.stat .num{font-size:29px;font-weight:900;color:var(--blue-800)}
-.stat .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase}
-.player-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-top:18px
-}
-.player-card-db{
-  background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;
-  box-shadow:0 6px 20px rgba(10,47,102,.06)
-}
-.player-card-db.gender-male{border-color:#b9d8ff}
-.player-card-db.gender-female{border-color:#f3bfd8}
-.gender-badge-male{background:#dbeafe;color:#1557b0}
-.gender-badge-female{background:#fce7f3;color:#be185d}
-.gender-male .photo-placeholder{background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1557b0}
-.gender-female .photo-placeholder{background:linear-gradient(135deg,#fce7f3,#fbcfe8);color:#be185d}
-.card-art.gender-male{background:linear-gradient(145deg,#dbeafe,#60a5fa)}
-.card-art.gender-female{background:linear-gradient(145deg,#fce7f3,#f9a8d4)}
+input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-shadow:0 0 0 4px rgba(30, 58, 138,.1)}
 
-.photo{
-  width:100%;height:190px;object-fit:cover;background:linear-gradient(135deg,#dbeafe,#eff6ff)
+/* ===== NÚT BẤM (BUTTONS) ===== */
+.btn{
+  border:0;border-radius:12px;padding:12px 20px;font-weight:800;font-size: 14px;
+  transition:all .2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
-.photo-placeholder{
-  width:100%;height:190px;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,#d9eaff,#f4f9ff);color:var(--blue-800);
-  font-size:46px;font-weight:900
+.btn:hover{transform:translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15);}
+.btn:active{transform:translateY(0);}
+.btn-primary{background: linear-gradient(135deg, var(--vinuni-blue), #2563eb);color:#fff; box-shadow: 0 4px 12px rgba(37,99,235,.2);}
+.btn-secondary{background:var(--blue-100);color:var(--vinuni-blue);}
+.btn-danger{background: linear-gradient(135deg, #ef4444, #b91c1c);color:#fff; box-shadow: 0 4px 12px rgba(239,68,68,.2);}
+.btn-dark{background:var(--blue-950);color:#fff;}
+.btn-ghost{background:#e2e8f0;color:#475569;}
+
+/* ===== STATS ===== */
+.stat{
+  padding:24px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg, #fff, #f8fafc);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.02); position: relative; overflow: hidden;
 }
-.pbody{padding:14px}
-.pname{font-size:17px;font-weight:900;margin-bottom:5px}
-.meta{font-size:12px;color:var(--muted);margin-bottom:10px}
-.badges{display:flex;gap:6px;flex-wrap:wrap}
-.badge{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}
-.tier-S{background:#fff3c4;color:#8a5b00}
-.tier-A{background:#e8edf5;color:#344054}
-.tier-B{background:#f5e2cf;color:#8b4a14}
-.tier-C{background:#e8eef5;color:#526173}
-.rating{background:#e8f3ff;color:#0d3f82}
-.actions{display:flex;gap:7px;margin-top:12px}.actions .btn{flex:1;padding:8px;font-size:12px}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:12px;font-weight:800;color:#344054}
-.field.full{grid-column:1/-1}
-.upload-preview{
-  width:120px;height:150px;border-radius:12px;object-fit:cover;border:1px solid var(--line);
-  background:#f3f7fc
+.stat::after { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: var(--vinuni-blue); border-radius: 20px 0 0 20px;}
+.stat .num{font-size:36px;font-weight:900;color:var(--vinuni-blue); line-height: 1;}
+.stat .label{font-size:13px;color:var(--muted);font-weight:800;text-transform:uppercase; margin-top: 8px;}
+
+/* =========================================================
+   THẺ CẦU THỦ DATABASE (BOBOIBOY STYLE - REWORKED)
+   ========================================================= */
+.player-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px;margin-top:24px;
 }
-.empty{padding:35px;text-align:center;color:var(--muted)}
-/* ===== TEAM GENERATOR ===== */
-.generator-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.mode-wrap{display:flex;align-items:center;gap:8px}
-.mode-wrap select{min-width:190px}
-.teams-visual{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:20px
+.player-card-db {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  border: 6px solid #1e3a8a;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.ultimate-team{
-  background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;
-  box-shadow:0 10px 30px rgba(10,47,102,.07)
+.player-card-db:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
 }
-.team-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.team-title{display:flex;align-items:center;gap:10px}
-.team-dot{width:13px;height:13px;border-radius:50%}
-.team-blue .team-dot{background:#2f7eea}.team-white .team-dot{background:#f8fafc;border:1px solid #9aa9ba}
-.team-title h3{margin:0;font-size:19px}.team-title span{font-size:11px;color:var(--muted);font-weight:800}
-.team-total{font-weight:900;color:var(--blue-800)}
-.ultimate-field{
-  position:relative;width:100%;aspect-ratio:1.48/1;overflow:hidden;border-radius:14px;
-  border:4px solid #dfff36;
-  background:
-    linear-gradient(90deg,rgba(255,255,255,.035) 49.7%,rgba(255,255,255,.35) 49.8%,rgba(255,255,255,.35) 50.2%,rgba(255,255,255,.035) 50.3%),
-    repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0,rgba(255,255,255,.035) 2px,transparent 2px,transparent 42px),
-    #397b25;
-  box-shadow:0 0 16px rgba(220,255,50,.32)
+
+/* Màu viền thẻ theo Tier */
+.tier-S-border { border-color: #f59e0b; }
+.tier-A-border { border-color: #94a3b8; }
+.tier-B-border { border-color: #d97706; }
+.tier-C-border { border-color: #475569; }
+
+.card-header-image {
+  position: relative;
+  height: 260px;
+  width: 100%;
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  overflow: hidden;
 }
-.ultimate-field:after{
-  content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.45);transform:translateX(-50%)
+.card-header-image img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.4s;
 }
-.endzone{
-  position:absolute;top:0;bottom:0;width:15%;border:2px solid rgba(255,255,255,.58);z-index:1
+.player-card-db:hover .card-header-image img { transform: scale(1.05); }
+
+.photo-placeholder {
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-size:54px;font-weight:900; color: rgba(255,255,255,0.5);
 }
-.endzone.left{left:0}.endzone.right{right:0}
-.zone-label{
-  position:absolute;top:50%;transform:translateY(-50%);font-size:9px;
-  font-weight:900;letter-spacing:.08em;color:rgba(255,255,255,.72);writing-mode:vertical-rl
+
+/* Vòng tròn Tier ở góc trái */
+.bobo-tier {
+  position: absolute;
+  top: 10px; left: 10px;
+  width: 45px; height: 45px;
+  background: #fff; color: #000;
+  border-radius: 50%;
+  font-size: 26px; font-weight: 1000;
+  display: flex; align-items: center; justify-content: center;
+  border: 4px solid #1e3a8a;
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.6);
+  z-index: 10;
 }
-.endzone.left .zone-label{left:5px}.endzone.right .zone-label{right:5px}
-.field-player{
-  position:absolute;transform:translate(-50%,-50%);width:78px;text-align:center;
-  z-index:5;transition:.18s;cursor:pointer
+.tier-S-border .bobo-tier { border-color: #f59e0b; color: #b45309; }
+.tier-A-border .bobo-tier { border-color: #94a3b8; color: #334155; }
+.tier-B-border .bobo-tier { border-color: #d97706; color: #7c2d12; }
+.tier-C-border .bobo-tier { border-color: #475569; color: #0f172a; }
+
+/* Tên được đẩy lên góc phải, xếp TRÊN ô thông tin */
+.bobo-name {
+  position: absolute;
+  top: 10px; right: 10px;
+  color: #fff;
+  font-size: 17px; font-weight: 900;
+  text-transform: uppercase;
+  font-style: italic;
+  text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0 4px 10px rgba(0,0,0,0.8);
+  z-index: 15; /* Z-index cao hơn ô thông tin */
+  text-align: right;
+  max-width: 65%;
+  line-height: 1.1;
 }
-.field-player:hover{z-index:20;transform:translate(-50%,-50%) scale(1.1)}
-.card-art{
-  position:relative;width:62px;height:80px;margin:auto;border-radius:8px;overflow:hidden;
-  border:2px solid #fff;box-shadow:0 6px 13px rgba(0,0,0,.35);
-  background:linear-gradient(145deg,#e8f3ff,#8cb9eb)
+
+/* Chỉ số OVR & Position ở góc phải, đẩy lùi xuống */
+.bobo-stats {
+  position: absolute;
+  top: 48px; /* Đẩy xuống để không che tên */
+  right: -8px;
+  display: flex; flex-direction: column; gap: 6px;
+  z-index: 10;
 }
-.team-white .card-art{background:linear-gradient(145deg,#f9fafb,#d9e3ee)}
-.card-art img{width:100%;height:100%;object-fit:cover}
+.bobo-stat {
+  padding: 4px 16px;
+  color: #fff; font-weight: 900; font-size: 14px;
+  transform: skewX(-15deg);
+  border: 2px solid #fff;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+}
+.bobo-stat.stat-ovr { background: #e11d48; } /* Đỏ cho Rating */
+.bobo-stat.stat-pos { background: #16a34a; } /* Xanh cho Position */
+.bobo-stat span {
+  display: block;
+  transform: skewX(15deg); /* Đảo ngược nghiêng cho chữ */
+  font-style: italic; letter-spacing: 0.5px;
+}
+
+/* Phần thông tin bên dưới thẻ */
+.pbody {
+  padding: 14px 16px 16px;
+  background: #fff;
+  border-top: 5px solid #facc15; 
+  flex: 1;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+
+/* LÀM LẠI THIẾT KẾ TAGS (MALE, PTS) */
+.badges { 
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; 
+}
+.badge {
+  padding: 6px 12px;
+  border-radius: 4px; /* Góc cạnh mạnh mẽ hơn */
+  font-size: 11px;
+  font-weight: 900; 
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.15); /* Bóng đổ dạng khối truyện tranh */
+}
+.gender-badge-male { background: #1e3a8a; color: #fff; } /* VinUni Blue đậm */
+.gender-badge-female { background: #C8102E; color: #fff; } /* VinUni Red */
+.badge-pts { background: #facc15; color: #000; } /* Vàng rực rõ ràng */
+
+.bobo-actions { display:flex;gap:8px; }
+.bobo-actions .btn { flex:1;padding:8px;font-size:12px; border-radius: 8px;}
+
+/* ===== THẺ CẦU THỦ TRÊN SÂN (FIELD CARDS) ===== */
+.card-art, .live-card {
+  position:relative;width:62px;height:82px;margin:auto;border-radius:8px;overflow:hidden;
+  border:2px solid transparent; background-clip: padding-box;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4); transition: transform 0.2s;
+}
+.card-art.tier-S-card, .live-card.tier-S-card { background: linear-gradient(145deg, #fef08a, #b45309); border-color: #fffbea;}
+.card-art.tier-A-card, .live-card.tier-A-card { background: linear-gradient(145deg, #e2e8f0, #475569); border-color: #ffffff;}
+.card-art.tier-B-card, .live-card.tier-B-card { background: linear-gradient(145deg, #fdba74, #9a3412); border-color: #ffedd5;}
+.card-art.tier-C-card, .live-card.tier-C-card { background: linear-gradient(145deg, #f1f5f9, #64748b); border-color: #f8fafc;}
+
+.card-art img, .live-card img{width:100%;height:100%;object-fit:cover; mix-blend-mode: overlay; opacity: 0.9;}
 .card-initials{
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  font-size:22px;font-weight:1000;color:#0a2f66
+  font-size:24px;font-weight:1000;color: rgba(255,255,255,0.9); text-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
-.card-rating{position:absolute;top:3px;left:4px;color:#fff;font-size:12px;font-weight:1000;text-shadow:0 1px 3px #000}
-.card-tier{position:absolute;top:3px;right:4px;color:#fff;background:rgba(0,0,0,.68);padding:1px 4px;border-radius:4px;font-size:9px;font-weight:900}
-.card-name{
-  position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.62);
-  color:#fff;font-size:8px;font-weight:900;padding:3px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+.card-rating{position:absolute;top:4px;left:5px;color:#fff;font-size:12px;font-weight:1000;text-shadow:0 2px 4px #000}
+.card-tier{position:absolute;top:4px;right:5px;color:#fff;background:rgba(0,0,0,.5);padding:1px 4px;border-radius:4px;font-size:8px;font-weight:900}
+.card-name, .live-card .card-name{
+  position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);
+  color:#fff;font-size:9px;font-weight:900;padding:4px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; text-align: center;
 }
-.field-name{
-  margin-top:3px;color:#fff;font-size:10px;font-weight:900;text-shadow:0 1px 4px #000;
+.field-name, .live-player-name{
+  margin-top:4px;color:#fff;font-size:10px;font-weight:900;text-shadow:0 2px 4px #000;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis
 }
-.field-pos{color:rgba(255,255,255,.85);font-size:8px;text-shadow:0 1px 3px #000}
-.team-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
-.team-stat{background:var(--blue-50);border-radius:9px;text-align:center;padding:7px}
-.team-stat strong{display:block;color:var(--blue-800);font-size:15px}.team-stat span{font-size:9px;color:var(--muted);font-weight:700}
-.generator-summary{
-  margin-top:15px;padding:12px;border-radius:12px;background:#f7fbff;border:1px solid var(--line);
-  color:var(--muted);font-size:12px
+.field-pos, .live-player-pos{color:rgba(255,255,255,.9);font-size:8px;text-shadow:0 2px 3px #000; font-weight: 700; margin-top: 2px;}
+
+/* ===== FORM & KHÁC ===== */
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-size:13px;font-weight:800;color:#334155}
+.field.full{grid-column:1/-1}
+.upload-preview{
+  width:120px;height:150px;border-radius:16px;object-fit:cover;border:2px solid var(--line);
+  background:#f8fafc; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
-/* ===== CLUBS / STATS ===== */
-.club-card{border:1px solid var(--line);border-radius:15px;padding:16px;background:#fff}
-.club-card h3{margin:0 0 6px}.club-card p{margin:0;color:var(--muted);font-size:12px}
-.bar{height:9px;background:#edf2f7;border-radius:99px;overflow:hidden;margin-top:8px}
-.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue-500),var(--blue-800));border-radius:99px}
-.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}.table th{color:var(--muted);font-size:11px;text-transform:uppercase}
-@media(max-width:1050px){.grid-4{grid-template-columns:repeat(2,1fr)}.teams-visual{grid-template-columns:1fr}}
-@media(max-width:700px){
-  main{padding:15px}.topbar{padding:0 14px}.nav{align-items:flex-start;padding:12px 0;flex-direction:column}.tabs{width:100%;overflow:auto}
+.empty{padding:40px;text-align:center;color:var(--muted); font-weight: 600; font-size: 15px; border-radius: 20px; background: #f8fafc; border: 2px dashed #cbd5e1;}
+
+/* ===== TEAM GENERATOR & SÂN BÓNG (VERTICAL) ===== */
+.generator-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center; background: #f8fafc; padding: 16px; border-radius: 16px;}
+.mode-wrap{display:flex;align-items:center;gap:10px; font-weight: 800;}
+.teams-visual{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:24px
+}
+.ultimate-team{
+  background:#fff;border:1px solid var(--line);border-radius:24px;padding:20px;
+  box-shadow:0 12px 35px rgba(10,47,102,.06)
+}
+.team-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.team-title{display:flex;align-items:center;gap:12px}
+.team-dot{width:16px;height:16px;border-radius:50%; box-shadow: 0 0 0 4px rgba(0,0,0,0.05);}
+.team-blue .team-dot{background:#2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);}
+.team-white .team-dot{background:#f8fafc;border:2px solid #cbd5e1;}
+.team-title h3{margin:0;font-size:22px; font-weight: 900;}
+.team-title span{font-size:12px;color:var(--muted);font-weight:800; letter-spacing: 0.5px;}
+.team-total{font-weight:900;color:var(--vinuni-blue); font-size: 24px; background: var(--blue-50); padding: 6px 12px; border-radius: 12px;}
+
+/* SÂN BÓNG XOAY DỌC TỪ DƯỚI LÊN TRÊN */
+.ultimate-field, .live-field{
+  position:relative;width:100%;aspect-ratio:1 / 1.45; overflow:hidden;border-radius:16px;
+  border:4px solid #fff;
+  background:
+    linear-gradient(0deg,rgba(255,255,255,.05) 49.7%,rgba(255,255,255,.4) 49.8%,rgba(255,255,255,.4) 50.2%,rgba(255,255,255,.05) 50.3%), /* Vạch ngang giữa sân */
+    repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0,rgba(255,255,255,.04) 2px,transparent 2px,transparent 42px), /* Sọc cỏ dọc */
+    #15803d; /* Màu cỏ */
+  box-shadow:0 10px 25px rgba(21, 128, 61,.3)
+}
+.ultimate-field:after, .live-field:after{
+  content:"";position:absolute;top:50%;left:0;right:0;height:3px;background:rgba(255,255,255,.6);transform:translateY(-50%);
+}
+.endzone{
+  position:absolute;left:0;right:0;height:14%;border:none;z-index:1;background:rgba(0,0,0,0.05);
+}
+.endzone.top{top:0; border-bottom:3px solid rgba(255,255,255,.6);}
+.endzone.bottom{bottom:0; border-top:3px solid rgba(255,255,255,.6); background: rgba(200, 16, 46, 0.4);} /* Tô đỏ endzone đội nhà (bên dưới) */
+
+.zone-label{
+  position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);font-size:14px;
+  font-weight:900;letter-spacing:.2em;color:rgba(255,255,255,.8);
+}
+
+.field-player, .live-player{
+  position:absolute;transform:translate(-50%,-50%);width:75px;text-align:center;
+  z-index:5;transition:.2s cubic-bezier(0.2, 0.8, 0.2, 1);cursor:pointer
+}
+.field-player:hover, .live-player:hover{z-index:20;transform:translate(-50%,-50%) scale(1.15)}
+.live-player:active{cursor:grabbing}
+.live-player.drag-over{filter:drop-shadow(0 0 12px #fff)}
+
+.team-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.team-stat{background:var(--blue-50);border-radius:12px;text-align:center;padding:12px}
+.team-stat strong{display:block;color:var(--vinuni-blue);font-size:18px}.team-stat span{font-size:10px;color:var(--muted);font-weight:800}
+.generator-summary{
+  margin-top:20px;padding:16px;border-radius:16px;background:linear-gradient(145deg, #f8fafc, #f1f5f9);border:1px solid var(--line);
+  color:var(--muted);font-size:14px; line-height: 1.5; font-weight: 500;
+}
+
+/* ===== SCRIMMAGE LIVE MATCH ===== */
+.scrimmage-live-panel{border:3px solid var(--vinuni-red); background: #fff;}
+.scrimmage-live-head{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap; margin-bottom: 20px;}
+.scrimmage-live-head h2{margin:8px 0 4px;font-size:26px; color: var(--blue-950);}
+.live-badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:900;letter-spacing:.1em;color:var(--vinuni-red); background: #fef2f2; padding: 6px 12px; border-radius: 8px;}
+.live-badge span{width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.2); animation: pulse 1.5s infinite;}
+@keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(239,68,68,.4); } 70% { box-shadow:0 0 0 6px rgba(239,68,68,0); } 100% { box-shadow:0 0 0 0 rgba(239,68,68,0); } }
+
+.match-meta{font-size:13px;color:var(--muted); font-weight: 600;}
+.scoreboard{display:flex;align-items:center;gap:24px;padding:16px 24px;background:#f8fafc;border:2px solid var(--line);border-radius:20px}
+.scoreboard div{text-align:center;min-width:85px}.scoreboard span{display:block;font-size:11px;font-weight:900;color:var(--muted); letter-spacing: 0.5px;}.scoreboard strong{display:block;font-size:42px;color:var(--blue-950);line-height:1.1; font-weight: 900;}.scoreboard>b{font-size:26px;color:#cbd5e1}
+.live-team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.live-team{border:1px solid var(--line);border-radius:20px;background:#f8fafc;padding:16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.02);}
+.live-team-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.live-team-head h3{margin:0; font-size: 18px; font-weight: 900;}.live-team-head span{font-size:12px;color:var(--muted);font-weight:800}
+.substitute-zone{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding:14px;border:2px dashed #cbd5e1;border-radius:16px;background:#fff}.substitute-chip{padding:8px 14px;border-radius:12px;background:#fef3c7;border:1px solid #fde68a;color:#92400e;font-size:12px;font-weight:900;cursor:grab; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);}.substitute-chip:hover{transform: translateY(-2px); box-shadow: 0 6px 10px rgba(0,0,0,0.1);}.substitute-chip.dragging{opacity:.45}
+
+.performance-panel{margin-top:24px;border-top:2px solid var(--line);padding-top:20px}
+.performance-tabs{display:flex;gap:10px;margin-bottom:16px}
+.performance-tab{border:2px solid var(--line);background:#fff;padding:12px 20px;border-radius:12px;font-weight:900;color:var(--muted); transition: 0.2s; font-size: 14px;}
+.performance-tab.active{background:var(--vinuni-blue);color:#fff;border-color:var(--vinuni-blue); box-shadow: 0 4px 12px rgba(30,58,138,0.3);}
+.performance-row{display:grid;grid-template-columns:minmax(200px,1fr) repeat(4,80px) 95px 80px;gap:12px;align-items:center;padding:14px;border-bottom:1px solid var(--line); transition: background 0.2s;}
+.performance-row:first-child{border-top:1px solid var(--line)}
+.performance-row:hover{background: #f8fafc;}
+.performance-player{display:flex;align-items:center;gap:12px;min-width:0}
+.performance-avatar{width:45px;height:45px;border-radius:12px;object-fit:cover;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--vinuni-blue);flex:none; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
+.performance-player strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; font-size: 15px; color: var(--blue-950); font-weight: 800;}
+.performance-player span{display:block;font-size:11px;color:var(--muted); font-weight: 600; margin-top: 2px;}
+
+.stat-btn {
+  width: 100%; height: 36px; border-radius: 10px; border: none; font-size: 13px; font-weight: 900; color: #fff;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.stat-btn:hover { transform: translateY(-3px); filter: brightness(1.15); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+.stat-btn:active { transform: translateY(0); }
+.performance-row .stat-btn:nth-of-type(1) { background: linear-gradient(135deg, #10b981, #047857); } 
+.performance-row .stat-btn:nth-of-type(2) { background: linear-gradient(135deg, #3b82f6, #1d4ed8); } 
+.performance-row .stat-btn:nth-of-type(3) { background: linear-gradient(135deg, #ef4444, #b91c1c); } 
+.performance-row .stat-btn:nth-of-type(4) { background: linear-gradient(135deg, #f59e0b, #d97706); } 
+.stat-value{text-align:center;font-weight:900;color:var(--vinuni-blue); font-size: 20px;}
+.rating-delta{text-align:center;font-weight:900; font-size: 16px; padding: 6px; border-radius: 8px;}
+.rating-delta.pos{color:#15803d; background: #dcfce7;}
+.rating-delta.neg{color:#b91c1c; background: #fee2e2;}
+
+
+/* ===== ATTENDANCE & STATS ===== */
+.attendance-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:20px}
+.attendance-player{display:flex;align-items:center;gap:14px;padding:14px;border:2px solid var(--line);border-radius:16px;background:#fff;transition:.2s; cursor: pointer;}
+.attendance-player:hover{border-color:var(--vinuni-blue);transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05);}
+.attendance-player.present{border-color:#34d399;background:#ecfdf5;}
+.attendance-player input{min-width:0;width:22px;height:22px;accent-color:var(--vinuni-blue); cursor: pointer;}
+.attendance-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:var(--vinuni-blue);font-weight:900;flex:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+.attendance-meta{min-width:0}.attendance-meta strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; font-size: 15px; font-weight: 800; color: var(--blue-950); margin-bottom: 2px;}
+.attendance-meta span{font-size:12px;color:var(--muted); font-weight: 600;}
+
+.table-wrap{overflow:auto; border-radius: 16px; border: 1px solid var(--line);}.table{width:100%;border-collapse:collapse; background: #fff;}.table th,.table td{padding:16px;border-bottom:1px solid var(--line);text-align:left;font-size:14px; font-weight: 600;}.table th{color:var(--muted);font-size:12px;text-transform:uppercase; background: #f8fafc;}
+.attendance-history tr{cursor:pointer; transition: 0.2s;}.attendance-history tr:hover{background:var(--blue-50)}
+.badge-sub{background:#fef3c7;color:#92400e; border: 1px solid #fde68a;}.badge-present{background:#dcfce7;color:#166534; border: 1px solid #bbf7d0;}
+
+.club-card{border:1px solid var(--line);border-radius:20px;padding:24px;background:#fff; box-shadow: 0 4px 15px rgba(0,0,0,0.03);}
+.club-card h3{margin:0 0 8px; font-size: 18px; color: var(--blue-950);}.club-card p{margin:0;color:var(--muted);font-size:13px; font-weight: 600;}
+.bar{height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:12px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);}
+.bar i{display:block;height:100%;background:linear-gradient(90deg, var(--vinuni-blue), #3b82f6);border-radius:99px}
+
+@media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr)}.teams-visual{grid-template-columns:1fr}}
+@media(max-width:768px){
+  main{padding:20px}.topbar{padding:0 16px}.nav{align-items:flex-start;padding:16px 0;flex-direction:column}.tabs{width:100%;overflow:auto}
   .grid-2,.grid-3,.grid-4,.form-grid{grid-template-columns:1fr}
   .team-stats{grid-template-columns:repeat(2,1fr)}
-  .ultimate-field{aspect-ratio:1.2/1}.field-player{width:61px}.card-art{width:49px;height:65px}.field-name{font-size:8px}
+  .ultimate-field, .live-field{aspect-ratio:1 / 1.3}.field-player, .live-player{width:60px}.card-art, .live-card{width:50px;height:68px}.field-name, .live-player-name{font-size:8px}
+  .performance-row{grid-template-columns:minmax(140px,1fr) repeat(4,55px) 65px 60px; gap: 8px;}
+  .stat-btn { height: 30px; font-size: 11px; }
 }
-
-
-.user-pill{display:flex;align-items:center;gap:9px;font-size:11px;color:#dcecff}.sync-dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.15)}.sync-dot.live{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
-.attendance-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:15px}
-.attendance-player{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:12px;background:#fff;transition:.15s}
-.attendance-player:hover{border-color:var(--blue-500);background:var(--blue-50)}.attendance-player.present{border-color:#86efac;background:#f0fdf4}
-.attendance-player input{min-width:0;width:18px;height:18px;accent-color:var(--blue-700)}
-.attendance-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;background:#e8f3ff;display:flex;align-items:center;justify-content:center;color:var(--blue-800);font-weight:900;flex:none}
-.attendance-meta{min-width:0}.attendance-meta strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.attendance-meta span{font-size:11px;color:var(--muted)}
-.attendance-history tr{cursor:pointer}.attendance-history tr:hover{background:var(--blue-50)}
-.sub-list{margin-top:12px;padding:11px;border:1px dashed #c7d7e8;border-radius:12px;background:#f8fbff}.sub-list strong{color:var(--blue-800)}
-.badge-sub{background:#fff7ed;color:#9a3412}.badge-present{background:#dcfce7;color:#166534}
-@media(max-width:700px){.user-pill{font-size:10px}.attendance-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <header class="topbar">
   <div class="nav">
-    <div class="brand">VINUNI ULTIMATE<small>CLUBS PLAYER MANAGEMENT</small></div>
+    <div class="brand-wrap">
+      <img src="https://media.loveitopcdn.com/3807/logo-vinuniversity-compressed.jpg" alt="VinUniversity Logo" class="brand-img">
+      <div class="brand">VINUNI ULTIMATE<small>CLUBS PLAYER MANAGEMENT</small></div>
+    </div>
     <div class="tabs">
       <button class="tab active" data-page="players">Players</button>
-      <button class="tab" data-page="generator">7v7 Generator</button>
+      <button class="tab" data-page="generator">Scrimmage</button>
       <button class="tab" data-page="attendance">Attendance</button>
       <button class="tab" data-page="stats">Statistics</button>
     </div>
@@ -248,7 +478,6 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
 </header>
 
 <main>
-
 <!-- PLAYERS -->
 <section id="players" class="page active">
   <div class="hero">
@@ -263,7 +492,17 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
     <div class="stat"><div class="num" id="statClubs">2</div><div class="label">Teams</div></div>
   </div>
 
-  <div class="panel" style="margin-top:18px">
+  <div class="panel" id="searchPanel" style="margin-top:28px">
+    <div class="controls">
+      <input id="search" placeholder="Search player..." style="flex:1">
+      <select id="tierFilter"><option value="">All tiers</option><option>S</option><option>A</option><option>B</option><option>C</option></select>
+      <select id="positionFilter"><option value="">All positions</option><option>Handler</option><option>Cutter</option><option>Hybrid</option><option>Defender</option><option>Utility</option></select>
+      <select id="clubFilter"><option value="">All teams</option><option value="VinUni Ultimate Team 1">VinUni Ultimate Team 1</option><option value="VinUni Ultimate Team 2">VinUni Ultimate Team 2</option></select>
+    </div>
+    <div id="playerGrid" class="player-grid"></div>
+  </div>
+
+  <div class="panel" id="addEditPanel" style="margin-top:28px">
     <h2>Add / Edit Player</h2>
     <form id="playerForm">
       <input type="hidden" id="editId">
@@ -282,7 +521,7 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
         <div class="field full">
           <div class="controls">
             <img id="imagePreview" class="upload-preview" alt="Preview" style="display:none">
-            <span style="font-size:12px;color:var(--muted)">Upload a photo to show the player card on the 7v7 field.</span>
+            <span style="font-size:13px;color:var(--muted); font-weight: 500;">Upload a photo to show the player card on the 7v7 field.</span>
           </div>
         </div>
         <div class="field full">
@@ -294,28 +533,18 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
       </div>
     </form>
   </div>
-
-  <div class="panel" style="margin-top:18px">
-    <div class="controls">
-      <input id="search" placeholder="Search player..." style="flex:1">
-      <select id="tierFilter"><option value="">All tiers</option><option>S</option><option>A</option><option>B</option><option>C</option></select>
-      <select id="positionFilter"><option value="">All positions</option><option>Handler</option><option>Cutter</option><option>Hybrid</option><option>Defender</option><option>Utility</option></select>
-      <select id="clubFilter"><option value="">All teams</option><option value="VinUni Ultimate Team 1">VinUni Ultimate Team 1</option><option value="VinUni Ultimate Team 2">VinUni Ultimate Team 2</option></select>
-    </div>
-    <div id="playerGrid" class="player-grid"></div>
-  </div>
 </section>
 
-<!-- GENERATOR -->
+<!-- SCRIMMAGE -->
 <section id="generator" class="page">
   <div class="hero">
-    <h1>7v7 Team Generator</h1>
-    <p>Randomized team selection with balance constraints, then visualized directly on an Ultimate field.</p>
+    <h1>Scrimmage</h1>
+    <p>Generate a 7v7 match, activate it for all devices, manage substitutions live, and record player performance.</p>
   </div>
 
   <div class="panel">
     <div class="generator-toolbar">
-      <div class="mode-wrap"><strong>Mode:</strong>
+      <div class="mode-wrap">Mode:
         <select id="genMode">
           <option value="gender2">Balanced — 2 Female / team</option>
           <option value="gender1">Balanced — 1 Female / team</option>
@@ -325,14 +554,42 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
           <option value="byteam">By Team — keep Team 1 / Team 2 together</option>
         </select>
       </div>
-      <button class="btn btn-primary" id="generateBtn">⚡ Generate 7v7</button>
+      <button class="btn btn-primary" id="generateBtn">⚡ Generate Match 7v7</button>
       <button class="btn btn-secondary" id="swapBtn">↔ Swap Teams</button>
       <button class="btn btn-ghost" id="clearTeamsBtn">Clear</button>
     </div>
-    <div id="generatorNotice" class="generator-summary">Choose a generator mode to split the full player database. “By Team” prioritizes keeping Team 1 and Team 2 members together. Extra players become substitutes.</div>
+    <div id="generatorNotice" class="generator-summary">Generate the 7v7 match first. Then activate it so every connected device sees the same teams and live match.</div>
   </div>
 
   <div id="teamsContainer"></div>
+
+  <div id="scrimmageMatchPanel" class="panel scrimmage-live-panel" style="margin-top:28px;display:none">
+    <div class="scrimmage-live-head">
+      <div>
+        <div class="live-badge"><span></span> LIVE SCRIMMAGE</div>
+        <h2 id="scrimmageMatchTitle">Live Match</h2>
+        <div id="scrimmageMatchMeta" class="match-meta">All connected devices share this match.</div>
+      </div>
+      <div class="scoreboard">
+        <div><span>TEAM BLUE</span><strong id="scoreA">0</strong></div>
+        <b>:</b>
+        <div><span>TEAM WHITE</span><strong id="scoreB">0</strong></div>
+      </div>
+    </div>
+    <div class="match-actions" style="display:flex;gap:12px;justify-content:flex-end;">
+      <button class="btn btn-primary" id="activateMatchBtn">▶ Activate Match</button>
+      <button class="btn btn-danger" id="endMatchBtn" style="display:none">■ End Match</button>
+    </div>
+    <div id="dragHint" class="generator-summary" style="margin-top:16px">Drag a substitute onto a player on the field to replace them. The substitution is synchronized to every device. Stats are recorded only for players currently on the field.</div>
+    <div id="liveTeamsContainer" style="margin-top:24px"></div>
+    <div class="performance-panel">
+      <div class="performance-tabs">
+        <button class="performance-tab active" data-performance-team="A">Team 1</button>
+        <button class="performance-tab" data-performance-team="B">Team 2</button>
+      </div>
+      <div id="performanceList"></div>
+    </div>
+  </div>
 </section>
 
 <!-- ATTENDANCE -->
@@ -340,19 +597,19 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
   <div class="hero"><h1>Match Day Attendance</h1><p>Set the match date, mark who is present, save attendance, then generate balanced 7v7 teams and substitutions from the players who are actually there.</p></div>
   <div class="panel">
     <div class="controls" style="justify-content:space-between">
-      <div class="controls"><div class="field" style="min-width:170px"><label>Match Date</label><input id="attendanceDate" type="date"></div><div style="padding-top:20px"><span class="badge badge-present" id="attendanceCount">0 PRESENT</span></div></div>
-      <div class="controls" style="padding-top:20px"><button class="btn btn-secondary" id="markAllPresentBtn">✓ All Present</button><button class="btn btn-ghost" id="clearAttendanceBtn">Clear</button><button class="btn btn-primary" id="saveAttendanceBtn">Save Attendance</button></div>
+      <div class="controls"><div class="field" style="min-width:180px"><label>Match Date</label><input id="attendanceDate" type="date"></div><div style="padding-top:24px"><span class="badge badge-present" id="attendanceCount" style="padding:10px 16px; font-size: 13px;">0 PRESENT</span></div></div>
+      <div class="controls" style="padding-top:24px"><button class="btn btn-secondary" id="markAllPresentBtn">✓ All Present</button><button class="btn btn-ghost" id="clearAttendanceBtn">Clear</button><button class="btn btn-primary" id="saveAttendanceBtn">Save Attendance</button></div>
     </div>
-    <div class="controls" style="margin-top:16px"><input id="attendanceSearch" placeholder="Search player..." style="flex:1"></div>
+    <div class="controls" style="margin-top:20px"><input id="attendanceSearch" placeholder="Search player..." style="flex:1"></div>
     <div id="attendancePlayerGrid" class="attendance-grid"></div>
   </div>
-  <div class="panel" style="margin-top:18px">
-    <div class="controls" style="justify-content:space-between"><div><h2 style="margin:0">Match History</h2><div style="font-size:12px;color:var(--muted);margin-top:4px">Click a date to load its saved attendance.</div></div><button class="btn btn-dark" id="exportAttendanceBtn">📊 Export Excel</button></div>
-    <div class="table-wrap" style="margin-top:12px"><table class="table attendance-history"><thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>Status</th></tr></thead><tbody id="attendanceHistoryBody"></tbody></table></div>
+  <div class="panel" style="margin-top:28px">
+    <div class="controls" style="justify-content:space-between"><div><h2 style="margin:0">Match History</h2><div style="font-size:13px;color:var(--muted);margin-top:6px;font-weight:500;">Click a date to load its saved attendance.</div></div><button class="btn btn-dark" id="exportAttendanceBtn">📊 Export Excel</button></div>
+    <div class="table-wrap" style="margin-top:16px"><table class="table attendance-history"><thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>Status</th></tr></thead><tbody id="attendanceHistoryBody"></tbody></table></div>
   </div>
-  <div class="panel" style="margin-top:18px">
-    <div class="controls" style="justify-content:space-between"><div><h2 style="margin:0">7v7 From This Attendance</h2><div style="font-size:12px;color:var(--muted);margin-top:4px">Only checked-in players are used. If there are more than 14, extra players become substitutes, split as evenly as possible.</div></div><div class="controls"><div class="field"><label>Team Split</label><select id="attendanceGenMode"><option value="gender2">Balanced — 2 Female / team</option><option value="gender1">Balanced — 1 Female / team</option><option value="balanced">Balanced — strongest balance</option><option value="random">Random — pure random</option><option value="byteam">By Team — keep Team 1 / Team 2 together</option></select></div><button class="btn btn-primary" id="generateAttendanceBtn">⚡ Generate From Attendance</button></div></div>
-    <div id="attendanceTeamsContainer" style="margin-top:16px"></div>
+  <div class="panel" style="margin-top:28px">
+    <div class="controls" style="justify-content:space-between; flex-wrap: nowrap; align-items: flex-end;"><div><h2 style="margin:0">7v7 From This Attendance</h2><div style="font-size:13px;color:var(--muted);margin-top:6px;font-weight:500;max-width: 600px;">Only checked-in players are used. If there are more than 14, extra players become substitutes, split as evenly as possible.</div></div><div class="controls"><div class="field"><label>Team Split</label><select id="attendanceGenMode"><option value="gender2">Balanced — 2 Female / team</option><option value="gender1">Balanced — 1 Female / team</option><option value="balanced">Balanced — strongest balance</option><option value="random">Random — pure random</option><option value="byteam">By Team — keep Team 1 / Team 2 together</option></select></div><button class="btn btn-primary" id="generateAttendanceBtn">⚡ Generate From Attendance</button></div></div>
+    <div id="attendanceTeamsContainer" style="margin-top:24px"></div>
   </div>
 </section>
 
@@ -365,26 +622,17 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
     <div class="stat"><div class="num" id="sHighest">0</div><div class="label">Highest Rating</div></div>
     <div class="stat"><div class="num" id="sMedian">0</div><div class="label">Median Rating</div></div>
   </div>
-  <div class="grid grid-2" style="margin-top:18px">
+  <div class="grid grid-2" style="margin-top:28px">
     <div class="panel"><h2>Tier Distribution</h2><div id="tierStats"></div></div>
     <div class="panel"><h2>Position Distribution</h2><div id="positionStats"></div></div>
   </div>
 </section>
 
 </main>
-</div>
-
-<!-- Supabase JS client: MUST load before the application script below -->
+<!-- Supabase JS client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-/* =========================================================
-   SUPABASE CONFIGURATION
-   1. Create a Supabase project.
-   2. Put your Project URL and Publishable Key below.
-   3. Run supabase_setup.sql supplied with this file.
-   NEVER put the service_role/secret key in this HTML file.
-   ========================================================= */
 const SUPABASE_URL = "https://oxewgrdepojulpmeksbn.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_X_yHbJXHGMm10Mho05NI2A_RXD8BLsB";
 
@@ -395,26 +643,6 @@ if(!window.supabase){
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 const tierWeight = {S:4,A:3,B:2,C:1};
-const demoPlayers = [
-  {id:"p01",name:"Minh Anh",club:"VinUni Ultimate",position:"Handler",tier:"S",rating:94,image:""},
-  {id:"p02",name:"Huy Pham",club:"VinUni Ultimate",position:"Hybrid",tier:"S",rating:92,image:""},
-  {id:"p03",name:"Bao Long",club:"VinUni Ultimate",position:"Cutter",tier:"A",rating:89,image:""},
-  {id:"p04",name:"Duc Minh",club:"VinUni Ultimate",position:"Handler",tier:"A",rating:88,image:""},
-  {id:"p05",name:"Quang Anh",club:"VinUni Ultimate",position:"Defender",tier:"A",rating:87,image:""},
-  {id:"p06",name:"Tuan Kiet",club:"VinUni Ultimate",position:"Cutter",tier:"A",rating:86,image:""},
-  {id:"p07",name:"Khanh Linh",club:"VinUni Ultimate",position:"Hybrid",tier:"A",rating:85,image:""},
-  {id:"p08",name:"Thanh Dat",club:"VinUni Ultimate",position:"Handler",tier:"B",rating:83,image:""},
-  {id:"p09",name:"Gia Bao",club:"VinUni Ultimate",position:"Cutter",tier:"B",rating:82,image:""},
-  {id:"p10",name:"Hoang Nam",club:"VinUni Ultimate",position:"Defender",tier:"B",rating:81,image:""},
-  {id:"p11",name:"Nhat Minh",club:"VinUni Ultimate",position:"Hybrid",tier:"B",rating:80,image:""},
-  {id:"p12",name:"Thanh Tung",club:"VinUni Ultimate",position:"Handler",tier:"B",rating:79,image:""},
-  {id:"p13",name:"Mai Chi",club:"VinUni Ultimate",position:"Cutter",tier:"C",rating:77,image:""},
-  {id:"p14",name:"Anh Khoa",club:"VinUni Ultimate",position:"Utility",tier:"C",rating:76,image:""},
-  {id:"p15",name:"Viet Hoang",club:"VinUni Ultimate",position:"Defender",tier:"C",rating:75,image:""},
-  {id:"p16",name:"Phuong Nam",club:"VinUni Ultimate",position:"Hybrid",tier:"C",rating:74,image:""},
-  {id:"p17",name:"Duy Khanh",club:"VinUni Ultimate",position:"Handler",tier:"B",rating:82,image:""},
-  {id:"p18",name:"Ngoc Anh",club:"VinUni Ultimate",position:"Cutter",tier:"B",rating:81,image:""}
-];
 
 let players=[];
 let generatedTeamA=[];
@@ -470,7 +698,7 @@ async function uploadPlayerImage(playerId,file){
 async function savePlayerToDB(id,data,file){
   let imageUrl=data.image||"";
   if(file) imageUrl=await uploadPlayerImage(id,file);
-  const payload={id,name:data.name,club:data.club,position:data.position,gender:data.gender||"Male",tier:data.tier,rating:data.rating,image_url:imageUrl};
+  const normalizedRating=Math.max(0,Math.min(100,Number(data.rating)||0)); const payload={id,name:data.name,club:data.club,position:data.position,gender:data.gender||"Male",tier:tierFromRating(normalizedRating),rating:normalizedRating,image_url:imageUrl};
   const {error}=await supabaseClient.from("players").upsert(payload,{onConflict:"id"});
   if(error)throw error;
 }
@@ -502,7 +730,7 @@ function editPlayer(id){
   img.src=editingImage;img.style.display=editingImage?"block":"none";
   document.getElementById("savePlayerBtn").textContent="Save Changes";
   document.getElementById("cancelEdit").style.display="inline-block";
-  window.scrollTo({top:document.getElementById("playerForm").getBoundingClientRect().top+window.scrollY-100,behavior:"smooth"});
+  window.scrollTo({top:document.getElementById("addEditPanel").getBoundingClientRect().top+window.scrollY-100,behavior:"smooth"});
 }
 
 function resetForm(){
@@ -511,16 +739,47 @@ function resetForm(){
   document.getElementById("savePlayerBtn").textContent="Add Player";document.getElementById("cancelEdit").style.display="none";editingImage="";
 }
 
+/* RENDERING BOBOIBOY STYLE CARDS */
 function renderPlayers(){
   const q=document.getElementById("search").value.trim().toLowerCase();const tier=document.getElementById("tierFilter").value;const position=document.getElementById("positionFilter").value;const club=document.getElementById("clubFilter").value;
   const filtered=players.filter(p=>{const matchQ=!q||`${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q);return matchQ&&(!tier||p.tier===tier)&&(!position||p.position===position)&&(!club||p.club===club)}).sort((a,b)=>Number(b.rating)-Number(a.rating));
   const grid=document.getElementById("playerGrid");
   if(!filtered.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1">No players found.</div>`;return;}
-  grid.innerHTML=filtered.map(p=>{const gender=p.gender==="Female"?"Female":"Male";const gc=gender==="Female"?"gender-female":"gender-male";return `<div class="player-card-db ${gc}">${p.image?`<img class="photo" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="photo-placeholder">${esc(initials(p.name))}</div>`}<div class="pbody"><div class="pname">${esc(p.name)}</div><div class="meta">${esc(p.club)} · ${esc(p.position)}</div><div class="badges"><span class="badge ${gender==="Female"?"gender-badge-female":"gender-badge-male"}">${gender}</span><span class="badge tier-${esc(p.tier)}">TIER ${esc(p.tier)}</span><span class="badge rating">${Number(p.rating)||0} OVR</span></div><div class="actions"><button class="btn btn-secondary" onclick="editPlayer('${esc(p.id)}')">Edit</button><button class="btn btn-danger" onclick="deletePlayer('${esc(p.id)}')">Delete</button></div></div></div>`}).join("");
+  
+  grid.innerHTML = filtered.map(p => {
+    const gender = p.gender === "Female" ? "Female" : "Male";
+    return `
+    <div class="player-card-db tier-${esc(p.tier)}-border">
+        <div class="card-header-image">
+            ${p.image ? `<img src="${esc(p.image)}" loading="lazy">` : `<div class="photo-placeholder">${esc(initials(p.name))}</div>`}
+            
+            <!-- Tier góc trái -->
+            <div class="bobo-tier">${esc(p.tier)}</div>
+            <!-- Tên được đẩy lên góc trên phải -->
+            <div class="bobo-name">${esc(p.name)}</div>
+            
+            <!-- Stats (OVR và Vai trò) góc phải - đã đẩy lùi xuống -->
+            <div class="bobo-stats">
+                <div class="bobo-stat stat-ovr"><span>${Number(p.rating||0).toFixed(0)} OVR</span></div>
+                <div class="bobo-stat stat-pos"><span>${esc(p.position)}</span></div>
+            </div>
+        </div>
+        <div class="pbody">
+            <div class="badges">
+                <span class="badge ${gender === "Female" ? "gender-badge-female" : "gender-badge-male"}">${gender}</span>
+                <span class="badge badge-pts">PTS ${Number(p.total_points||0).toFixed(1)}</span>
+            </div>
+            <div class="bobo-actions">
+                <button class="btn btn-secondary" onclick="editPlayer('${esc(p.id)}')">Edit</button>
+                <button class="btn btn-danger" onclick="deletePlayer('${esc(p.id)}')">Delete</button>
+            </div>
+        </div>
+    </div>`;
+  }).join("");
 }
+
 function refreshClubFilter(){const select=document.getElementById("clubFilter");const current=select.value;select.innerHTML=`<option value="">All teams</option><option value="VinUni Ultimate Team 1">VinUni Ultimate Team 1</option><option value="VinUni Ultimate Team 2">VinUni Ultimate Team 2</option>`;if(["VinUni Ultimate Team 1","VinUni Ultimate Team 2"].includes(current))select.value=current;}
 function updateTopStats(){const avg=players.length?(players.reduce((s,p)=>s+Number(p.rating||0),0)/players.length).toFixed(1):0;const top=players.filter(p=>p.tier==="S"||p.tier==="A").length;document.getElementById("statPlayers").textContent=players.length;document.getElementById("statAvg").textContent=avg;document.getElementById("statTop").textContent=top;document.getElementById("statClubs").textContent="2";}
-function renderClubs(){const grid=document.getElementById("clubsGrid");const map={};players.forEach(p=>{if(!map[p.club])map[p.club]=[];map[p.club].push(p)});const clubs=Object.entries(map).sort((a,b)=>b[1].length-a[1].length);grid.innerHTML=clubs.map(([club,list])=>{const avg=(list.reduce((s,p)=>s+Number(p.rating||0),0)/list.length).toFixed(1);const max=Math.max(...list.map(p=>Number(p.rating||0)));return `<div class="club-card"><h3>${esc(club)}</h3><p>${list.length} players · average ${avg} · best ${max}</p><div class="bar"><i style="width:${Math.min(100,max)}%"></i></div></div>`}).join("")||`<div class="empty">No clubs yet.</div>`;}
 function renderStats(){const ratings=players.map(p=>Number(p.rating||0)).sort((a,b)=>a-b);const avg=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):0;const median=ratings.length?(ratings.length%2?ratings[Math.floor(ratings.length/2)]:((ratings[ratings.length/2-1]+ratings[ratings.length/2])/2).toFixed(1)):0;document.getElementById("sTotal").textContent=players.length;document.getElementById("sAvg").textContent=avg;document.getElementById("sHighest").textContent=ratings.length?Math.max(...ratings):0;document.getElementById("sMedian").textContent=median;const tiers=["S","A","B","C"];document.getElementById("tierStats").innerHTML=tiers.map(t=>{const n=players.filter(p=>p.tier===t).length;const pct=players.length?n/players.length*100:0;return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>Tier ${t}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join("");const positions=["Handler","Cutter","Hybrid","Defender","Utility"];document.getElementById("positionStats").innerHTML=positions.map(pos=>{const n=players.filter(p=>p.position===pos).length;const pct=players.length?n/players.length*100:0;return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>${pos}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join("");}
 
 function makeRandomSplit(pool=players){const s=shuffle([...pool]);return{a:s.slice(0,7),b:s.slice(7,14),extras:s.slice(14)}}
@@ -536,9 +795,20 @@ function generateTeams(){
   else if(mode==="gender1")chosen=makeGenderBalancedSplit(players,1,6000);
   else{const iterations=mode==="balanced"?5000:1500;const candidates=[];for(let i=0;i<iterations;i++){const split=makeRandomSplit(players);candidates.push({...split,score:balanceScore(split.a,split.b)});}candidates.sort((x,y)=>x.score-y.score);if(mode==="balanced")chosen=candidates[0];else{const topN=Math.max(10,Math.floor(candidates.length*.05));chosen=candidates[Math.floor(Math.random()*topN)];}}
   generatedTeamA=shuffle(chosen.a);generatedTeamB=shuffle(chosen.b);const subs=assignMainSubstitutes(chosen.extras||[],generatedTeamA,generatedTeamB);generatedSubsA=subs.subA;generatedSubsB=subs.subB;renderTeams();
+  const livePanel=document.getElementById("scrimmageMatchPanel"); if(livePanel && !activeScrimmageId) livePanel.scrollIntoView({behavior:"smooth",block:"nearest"});
   const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));const modeText={random:"Pure random",balanced:"Strongly balanced",competitive:"Balanced + randomized",byteam:"Team-based grouping",gender2:"Balanced · 2 Female / team",gender1:"Balanced · 1 Female / team"}[mode];const genderText=(mode==="gender2"||mode==="gender1")?` · Female: ${femaleCount(generatedTeamA)} / ${femaleCount(generatedTeamB)}`:"";const cross=mode==="byteam"?` · Cross-team starters: <strong>${teamMixPenalty(generatedTeamA,generatedTeamB)}</strong>`:"";document.getElementById("generatorNotice").innerHTML=`<strong>${modeText}</strong> · Rating difference: <strong>${diff}</strong> · Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR · <strong>${(chosen.extras||[]).length} substitute(s)</strong>${genderText}${cross}`;
 }
-const formation=[{x:50,y:13,label:"Deep"},{x:28,y:30,label:"Wing"},{x:72,y:30,label:"Wing"},{x:50,y:47,label:"Middle"},{x:28,y:65,label:"Wing"},{x:72,y:65,label:"Wing"},{x:50,y:84,label:"Deep"}];
+
+/* ĐỘI HÌNH XOAY DỌC TỪ DƯỚI LÊN TRÊN (BOTTOM -> TOP) */
+const formation=[
+  {x:50,y:85,label:"Handler"}, // Defender/Handler dưới đáy
+  {x:25,y:68,label:"Handler"},
+  {x:75,y:68,label:"Handler"},
+  {x:50,y:50,label:"Mid"},
+  {x:25,y:32,label:"Cutter"},
+  {x:75,y:32,label:"Cutter"},
+  {x:50,y:15,label:"Deep"}    // Deep/Cutter cắm đỉnh trên
+];
 
 function makeBalanced14(starters){
   if(starters.length!==14)return null;let best=null;
@@ -556,14 +826,15 @@ function assignSubstitutes(extras,a,b){
   return {subA,subB};
 }
 function renderAttendanceTeams(){const c=document.getElementById("attendanceTeamsContainer"),{a,b,subA,subB}=attendanceTeams;if(!a.length||!b.length){c.innerHTML='<div class="empty">Generate teams after saving attendance for this match date.</div>';return;}c.innerHTML=`<div class="teams-visual">${renderTeamWithSubs(a,subA,"TEAM BLUE","team-blue")}${renderTeamWithSubs(b,subB,"TEAM WHITE","team-white")}</div>`;}
-function renderTeamWithSubs(team,subs,name,teamClass){const score=sumRating(team),pc=positionCounts(team);return `<div class="ultimate-team ${teamClass}"><div class="team-head"><div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 STARTERS${subs.length?` · ${subs.length} SUB${subs.length>1?'S':''}`:''}</span></div></div><div class="team-total">${score} OVR</div></div><div class="ultimate-field"><div class="endzone left"><span class="zone-label">END ZONE</span></div><div class="endzone right"><span class="zone-label">END ZONE</span></div>${team.map((p,i)=>{const pos=formation[i];return `<div class="field-player" style="left:${pos.x}%;top:${pos.y}%" title="${esc(p.name)} · ${esc(p.position)}"><div class="card-art ${p.gender==="Female"?"gender-female":"gender-male"}">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="field-name">${esc(p.name)}</div><div class="field-pos"><span class="badge ${p.gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:8px;padding:2px 5px">${p.gender==="Female"?"Female":"Male"}</span> · ${esc(p.position)}</div></div>`}).join('')}</div><div class="team-stats"><div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div><div class="team-stat"><strong>${sumTier(team)}</strong><span>TIER SCORE</span></div><div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div><div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div></div>${subs.length?`<div class="sub-list"><strong>Substitution · ${subs.length}</strong><div class="badges" style="margin-top:7px">${subs.map(p=>`<span class="badge badge-sub">${esc(p.name)} · ${Number(p.rating)||0}</span>`).join('')}</div></div>`:''}</div>`;}
+
+function renderTeamWithSubs(team,subs,name,teamClass){const score=sumRating(team),pc=positionCounts(team);return `<div class="ultimate-team ${teamClass}"><div class="team-head"><div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 STARTERS${subs.length?` · ${subs.length} SUB${subs.length>1?'S':''}`:''}</span></div></div><div class="team-total">${score} OVR</div></div><div class="ultimate-field"><div class="endzone top"><span class="zone-label">END ZONE</span></div><div class="endzone bottom"><span class="zone-label">HOME ZONE</span></div>${team.map((p,i)=>{const pos=formation[i];return `<div class="field-player" style="left:${pos.x}\%;top:${pos.y}%" title="${esc(p.name)} ·${esc(p.position)}"><div class="card-art ${p.gender==="Female"?"gender-female":"gender-male"} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="field-name">${esc(p.name)}</div><div class="field-pos"><span class="badge ${p.gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:8px;padding:2px 5px;box-shadow:none;">${p.gender==="Female"?"Female":"Male"}</span> · ${esc(p.position)}</div></div>`}).join('')}</div><div class="team-stats"><div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div><div class="team-stat"><strong>${sumTier(team)}</strong><span>TIER SCORE</span></div><div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div><div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div></div>${subs.length?`<div class="sub-list" style="margin-top:16px;padding:16px;border:2px dashed #cbd5e1;border-radius:16px;background:#f8fafc"><strong>Substitution · ${subs.length}</strong><div class="badges" style="margin-top:10px">${subs.map((p,i)=>`<span class="badge badge-sub" style="padding:6px 12px;box-shadow:none;">${i+1}. ${esc(p.name)} · ${esc(p.position)} · ${Number(p.rating)||0}</span>`).join('')}</div></div>`:''}</div>`;}
 
 async function loadAttendance(dateStr){if(!dateStr)return;attendancePresentIds=new Set();attendanceTeams={a:[],b:[],subA:[],subB:[]};const {data:session,error}=await supabaseClient.from('attendance_sessions').select('id').eq('session_date',dateStr).maybeSingle();if(error)throw error;if(session){const {data:rows,error:re}=await supabaseClient.from('attendance_records').select('player_id,present,assignment').eq('session_id',session.id);if(re)throw re;attendanceRows=rows||[];attendanceRows.filter(r=>r.present).forEach(r=>attendancePresentIds.add(r.player_id));const byId=new Map(players.map(p=>[p.id,p])),a=[],b=[],subA=[],subB=[];(rows||[]).forEach(r=>{const p=byId.get(r.player_id);if(!p)return;if(r.assignment==='Team A')a.push(p);else if(r.assignment==='Team B')b.push(p);else if(r.assignment==='Sub A')subA.push(p);else if(r.assignment==='Sub B')subB.push(p);});if(a.length===7&&b.length===7)attendanceTeams={a,b,subA,subB};}else attendanceRows=[];renderAttendancePlayers();renderAttendanceTeams();updateAttendanceCount();}
 async function ensureAttendanceSession(dateStr){const {data,error}=await supabaseClient.from('attendance_sessions').upsert({session_date:dateStr},{onConflict:'session_date'}).select().single();if(error)throw error;return data;}
 async function saveAttendance(){const dateStr=document.getElementById('attendanceDate').value;if(!dateStr){alert('Choose a match date first.');return;}const btn=document.getElementById('saveAttendanceBtn');btn.disabled=true;try{const session=await ensureAttendanceSession(dateStr);const {error:delErr}=await supabaseClient.from('attendance_records').delete().eq('session_id',session.id);if(delErr)throw delErr;const rows=[...attendancePresentIds].map(player_id=>({session_id:session.id,player_id,present:true,assignment:null}));if(rows.length){const {error:insErr}=await supabaseClient.from('attendance_records').insert(rows);if(insErr)throw insErr;}attendanceRows=rows;attendanceTeams={a:[],b:[],subA:[],subB:[]};renderAttendanceTeams();await loadAttendanceHistory();setSync('Attendance saved',true);}catch(err){console.error(err);alert('Attendance save failed: '+err.message);setSync('Sync error',false);}finally{btn.disabled=false;}}
-async function loadAttendanceHistory(){const {data:sessions,error}=await supabaseClient.from('attendance_sessions').select('id,session_date,created_at').order('session_date',{ascending:false});if(error)throw error;const body=document.getElementById('attendanceHistoryBody');if(!sessions?.length){body.innerHTML='<tr><td colspan="4" class="empty">No match days saved yet.</td></tr>';return;}const ids=sessions.map(s=>s.id);const {data:rows,error:re}=await supabaseClient.from('attendance_records').select('session_id,player_id,present').in('session_id',ids);if(re)throw re;const counts={};(rows||[]).forEach(r=>{if(!counts[r.session_id])counts[r.session_id]=0;if(r.present)counts[r.session_id]++;});body.innerHTML=sessions.map(s=>{const n=counts[s.id]||0;return `<tr onclick="loadAttendanceDate('${s.session_date}')"><td><strong>${formatDate(s.session_date)}</strong></td><td>${n}</td><td>${Math.max(0,players.length-n)}</td><td><span class="badge badge-present">Saved</span></td></tr>`}).join('');}
+async function loadAttendanceHistory(){const {data:sessions,error}=await supabaseClient.from('attendance_sessions').select('id,session_date,created_at').order('session_date',{ascending:false});if(error)throw error;const body=document.getElementById('attendanceHistoryBody');if(!sessions?.length){body.innerHTML='<tr><td colspan="4" class="empty">No match days saved yet.</td></tr>';return;}const ids=sessions.map(s=>s.id);const {data:rows,error:re}=await supabaseClient.from('attendance_records').select('session_id,player_id,present').in('session_id',ids);if(re)throw re;const counts={};(rows||[]).forEach(r=>{if(!counts[r.session_id])counts[r.session_id]=0;if(r.present)counts[r.session_id]++;});body.innerHTML=sessions.map(s=>{const n=counts[s.id]||0;return `<tr onclick="loadAttendanceDate('${s.session_date}')"><td><strong>${formatDate(s.session_date)}</strong></td><td>${n}</td><td>${Math.max(0,players.length-n)}</td><td><span class="badge badge-present" style="box-shadow:none;">Saved</span></td></tr>`}).join('');}
 window.loadAttendanceDate=async function(dateStr){document.getElementById('attendanceDate').value=dateStr;try{await loadAttendance(dateStr);document.getElementById('attendance').scrollIntoView({behavior:'smooth',block:'start'});}catch(err){alert('Could not load attendance: '+err.message);}};
-function renderAttendancePlayers(){const q=document.getElementById('attendanceSearch').value.trim().toLowerCase(),list=players.filter(p=>`${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q)).sort((a,b)=>Number(b.rating)-Number(a.rating)),grid=document.getElementById('attendancePlayerGrid');if(!list.length){grid.innerHTML='<div class="empty">No players found.</div>';return;}grid.innerHTML=list.map(p=>{const present=attendancePresentIds.has(p.id);const gender=p.gender==="Female"?"Female":"Male";return `<label class="attendance-player ${present?'present':''}"><input type="checkbox" ${present?'checked':''} onchange="toggleAttendance('${esc(p.id)}',this.checked)">${p.image?`<img class="attendance-avatar" src="${esc(p.image)}" alt="">`:`<div class="attendance-avatar">${esc(initials(p.name))}</div>`}<div class="attendance-meta"><strong>${esc(p.name)} <span class="badge ${gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:9px">${gender}</span></strong><span>${esc(p.position)} · ${Number(p.rating)||0} OVR · Tier ${esc(p.tier)}</span></div></label>`}).join('');}
+function renderAttendancePlayers(){const q=document.getElementById('attendanceSearch').value.trim().toLowerCase(),list=players.filter(p=>`${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q)).sort((a,b)=>Number(b.rating)-Number(a.rating)),grid=document.getElementById('attendancePlayerGrid');if(!list.length){grid.innerHTML='<div class="empty">No players found.</div>';return;}grid.innerHTML=list.map(p=>{const present=attendancePresentIds.has(p.id);const gender=p.gender==="Female"?"Female":"Male";return `<label class="attendance-player ${present?'present':''}"><input type="checkbox" ${present?'checked':''} onchange="toggleAttendance('${esc(p.id)}',this.checked)">${p.image?`<img class="attendance-avatar" src="${esc(p.image)}" alt="">`:`<div class="attendance-avatar">${esc(initials(p.name))}</div>`}<div class="attendance-meta"><strong>${esc(p.name)} <span class="badge ${gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:9px;padding:2px 6px;box-shadow:none;">${gender}</span></strong><span>${esc(p.position)} · ${Number(p.rating)||0} OVR · Tier ${esc(p.tier)}</span></div></label>`}).join('');}
 window.toggleAttendance=function(id,present){if(present)attendancePresentIds.add(id);else attendancePresentIds.delete(id);updateAttendanceCount();renderAttendancePlayers();};
 function updateAttendanceCount(){document.getElementById('attendanceCount').textContent=`${attendancePresentIds.size} PRESENT`;}
 async function generateFromAttendance(){
@@ -572,19 +843,73 @@ async function generateFromAttendance(){
   try{const mode=document.getElementById('attendanceGenMode').value;let result;if(mode==='random')result=makeRandomSplit(present);else if(mode==='byteam')result=makeByTeamSplit(present,5000);else if(mode==='gender2')result=makeGenderBalancedSplit(present,2,6000);else if(mode==='gender1')result=makeGenderBalancedSplit(present,1,6000);else result=bestBalancedSplitForAttendance(present);const subs=assignSubstitutes(result.extras||[],result.a,result.b);attendanceTeams={a:shuffle(result.a),b:shuffle(result.b),subA:subs.subA,subB:subs.subB};renderAttendanceTeams();const session=await ensureAttendanceSession(dateStr);await supabaseClient.from('attendance_records').delete().eq('session_id',session.id);const rows=[...attendanceTeams.a.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Team A'})),...attendanceTeams.b.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Team B'})),...attendanceTeams.subA.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Sub A'})),...attendanceTeams.subB.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Sub B'}))];if(rows.length){const {error}=await supabaseClient.from('attendance_records').insert(rows);if(error)throw error;}attendanceRows=rows;await loadAttendanceHistory();const extra=present.length-14,diff=Math.abs(sumRating(attendanceTeams.a)-sumRating(attendanceTeams.b));const genderText=(mode==='gender2'||mode==='gender1')?` · Female: ${femaleCount(attendanceTeams.a)} / ${femaleCount(attendanceTeams.b)}`:"";setSync(`Teams saved · ${present.length} present`,true);alert(`Teams generated and saved for ${formatDate(dateStr)}.\n\n${present.length} present · ${extra} substitute(s) · Team rating difference: ${diff}${genderText}`);}catch(err){console.error(err);alert('Team generation failed: '+err.message);setSync('Sync error',false);}}
 async function exportAttendanceExcel(){if(typeof XLSX==='undefined'){alert('Excel library did not load. Check your internet connection.');return;}try{const {data:sessions,error:se}=await supabaseClient.from('attendance_sessions').select('id,session_date').order('session_date',{ascending:true});if(se)throw se;if(!sessions?.length){alert('No saved attendance yet. Save at least one match day first.');return;}const ids=sessions.map(s=>s.id);const {data:records,error:re}=await supabaseClient.from('attendance_records').select('session_id,player_id,present,assignment').in('session_id',ids);if(re)throw re;const byKey=new Map((records||[]).map(r=>[`${r.session_id}|${r.player_id}`,r]));const history=[];sessions.forEach(session=>{players.forEach(p=>{const r=byKey.get(`${session.id}|${p.id}`);history.push({Date:session.session_date,Player:p.name,Club:p.club,Gender:p.gender||'Male',Position:p.position,Tier:p.tier,Rating:Number(p.rating)||0,Attendance:r?.present?'Present':'Absent',Assignment:r?.assignment||''});});});const summary=players.map(p=>{let present=0;sessions.forEach(session=>{const r=byKey.get(`${session.id}|${p.id}`);if(r?.present)present++;});return {Player:p.name,Club:p.club,Gender:p.gender||'Male',Position:p.position,Tier:p.tier,Rating:Number(p.rating)||0,'Sessions Recorded':sessions.length,'Present':present,'Absent':sessions.length-present,'Attendance Rate':sessions.length?`${(present/sessions.length*100).toFixed(1)}%`:'0.0%'};});const selectedDate=document.getElementById('attendanceDate').value;const selectedSession=sessions.find(x=>x.session_date===selectedDate);const selected=players.map(p=>{const r=selectedSession?byKey.get(`${selectedSession.id}|${p.id}`):null;return {Date:selectedDate,Player:p.name,Club:p.club,Gender:p.gender||'Male',Position:p.position,Tier:p.tier,Rating:Number(p.rating)||0,Attendance:r?.present?'Present':'Absent',Assignment:r?.assignment||''};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(history),'Attendance History');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summary),'Player Summary');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(selected),'Selected Date');XLSX.writeFile(wb,`VinUni_Ultimate_Attendance_${dateFileSafe(selectedDate)}.xlsx`);}catch(err){console.error(err);alert('Excel export failed: '+err.message);}}
 
-function renderTeams(){const container=document.getElementById("teamsContainer");if(!generatedTeamA.length||!generatedTeamB.length){container.innerHTML=`<div class="panel empty" style="margin-top:20px"><div style="font-size:40px">⚡</div><strong>Generate your 7v7 teams</strong><div style="margin-top:6px">The two teams will appear here as player cards on an Ultimate field.</div></div>`;return;}container.innerHTML=`<div class="teams-visual">${renderTeamWithSubs(generatedTeamA,generatedSubsA,"TEAM BLUE","team-blue")}${renderTeamWithSubs(generatedTeamB,generatedSubsB,"TEAM WHITE","team-white")}</div>`;}
-function renderTeam(team,name,teamClass){return renderTeamWithSubs(team,[],name,teamClass);}
-function renderTeamWithSubs(team,subs,name,teamClass){const score=sumRating(team),tier=sumTier(team),pc=positionCounts(team);return `<div class="ultimate-team ${teamClass}"><div class="team-head"><div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 STARTERS${subs.length?` · ${subs.length} SUB${subs.length>1?'S':''}`:""}</span></div></div><div class="team-total">${score} OVR</div></div><div class="ultimate-field"><div class="endzone left"><span class="zone-label">END ZONE</span></div><div class="endzone right"><span class="zone-label">END ZONE</span></div>${team.map((p,i)=>{const pos=formation[i];return `<div class="field-player" style="left:${pos.x}%;top:${pos.y}%" title="${esc(p.name)} · ${esc(p.position)}"><div class="card-art ${p.gender==="Female"?"gender-female":"gender-male"}">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="field-name">${esc(p.name)}</div><div class="field-pos"><span class="badge ${p.gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:8px;padding:2px 5px">${p.gender==="Female"?"Female":"Male"}</span> · ${esc(p.position)}</div></div>`}).join("")}</div><div class="team-stats"><div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div><div class="team-stat"><strong>${tier}</strong><span>TIER SCORE</span></div><div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div><div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div></div>${subs.length?`<div class="sub-list"><strong>Substitution · ${subs.length}</strong><div class="badges" style="margin-top:7px">${subs.map((p,i)=>`<span class="badge badge-sub">${i+1}. ${esc(p.name)} · ${esc(p.position)} · ${Number(p.rating)||0}</span>`).join("")}</div></div>`:""}</div>`;}
+function renderTeams(){
+  const container=document.getElementById("teamsContainer");
+  const panel=document.getElementById("scrimmageMatchPanel");
+  if(!generatedTeamA.length||!generatedTeamB.length){
+    container.innerHTML=`<div class="panel empty" style="margin-top:24px"><div style="font-size:48px; margin-bottom: 12px;">⚡</div><strong>Generate your 7v7 match</strong><div style="margin-top:8px">The two teams will appear here. After generation, activate the match to enable live substitutions and performance tracking.</div></div>`;
+    if(panel && !activeScrimmageId) panel.style.display="none";
+    return;
+  }
+  container.innerHTML=`<div class="teams-visual">${renderTeamWithSubs(generatedTeamA,generatedSubsA,"TEAM BLUE","team-blue")}${renderTeamWithSubs(generatedTeamB,generatedSubsB,"TEAM WHITE","team-white")}</div>`;
+  if(panel && !activeScrimmageId){
+    panel.style.display="block";
+    document.getElementById("activateMatchBtn").style.display="inline-flex";
+    document.getElementById("endMatchBtn").style.display="none";
+    document.getElementById("liveTeamsContainer").innerHTML='<div class="generator-summary"><strong>Match ready.</strong> Review the 7v7 teams above, then press <b>Activate Match</b>. The active match will be synchronized to every connected device.</div>';
+    document.getElementById("performanceList").innerHTML='<div class="empty">Activate the match to start recording live player performance.</div>';
+  }
+}
 
+let activeScrimmageId=null;
+let activeScrimmagePlayers=[];
+let activeScrimmageEvents=[];
+let performanceTeam='A';
+let dragPlayerId=null;
+
+function tierFromRating(r){r=Number(r)||0;return r>=90?'S':r>=80?'A':r>=70?'B':'C';}
+function statTotalsForPlayer(playerId){const out={goal:0,assist:0,drop:0,block:0};activeScrimmageEvents.filter(e=>e.player_id===playerId).forEach(e=>{if(out[e.stat_type]!==undefined)out[e.stat_type]+=Number(e.delta||0)});return out;}
+function performancePoints(t){return t.goal*4+t.assist*2+t.block*3-t.drop*3;}
+
+function renderLiveMatch(){
+  const panel=document.getElementById('scrimmageMatchPanel');
+  if(!activeScrimmageId){panel.style.display='none';return;}
+  panel.style.display='block';
+  const map=new Map(players.map(p=>[p.id,p]));
+  const a=activeScrimmagePlayers.filter(x=>x.team==='A'&&x.on_field).sort((x,y)=>(x.slot??99)-(y.slot??99)).map(x=>map.get(x.player_id)).filter(Boolean);
+  const b=activeScrimmagePlayers.filter(x=>x.team==='B'&&x.on_field).sort((x,y)=>(x.slot??99)-(y.slot??99)).map(x=>map.get(x.player_id)).filter(Boolean);
+  const subsA=activeScrimmagePlayers.filter(x=>x.team==='A'&&!x.on_field).map(x=>map.get(x.player_id)).filter(Boolean);
+  const subsB=activeScrimmagePlayers.filter(x=>x.team==='B'&&!x.on_field).map(x=>map.get(x.player_id)).filter(Boolean);
+  const goalsA=activeScrimmageEvents.filter(e=>e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
+  const goalsB=activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
+  document.getElementById('scoreA').textContent=goalsA;document.getElementById('scoreB').textContent=goalsB;
+  
+  const field=(team,subs,teamName)=>`<div class="live-team"><div class="live-team-head"><h3>${teamName}</h3><span>${team.length} ON FIELD · ${subs.length} SUB</span></div><div class="live-field"><div class="endzone top"></div><div class="endzone bottom"></div>${team.map((p,i)=>{const pos=formation[i]||formation[0];return `<div class="live-player" draggable="true" data-player-id="${esc(p.id)}" data-team="${teamName==='TEAM BLUE'?'A':'B'}" style="left:${pos.x}\%;top:${pos.y}%" title="Drag a substitute here to replace ${esc(p.name)}"><div class="live-card ${p.gender==='Female'?'gender-female':'gender-male'} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-name">${esc(p.name)}</div></div><div class="live-player-name">${esc(p.name)}</div><div class="live-player-pos">${esc(p.position)}</div></div>`}).join('')}</div><div class="substitute-zone" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">${subs.length?subs.map(p=>`<div class="substitute-chip" draggable="true" data-player-id="${esc(p.id)}" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">↔ ${esc(p.name)} ·${Number(p.rating||0)} OVR</div>`).join(''):'<span style="font-size:12px;color:var(--muted)">No substitutes</span>'}</div></div>`;
+  document.getElementById('liveTeamsContainer').innerHTML=`<div class="live-team-grid">${field(a,subsA,'TEAM BLUE')}${field(b,subsB,'TEAM WHITE')}</div>`;
+  bindDragDrop();renderPerformance();
+}
+function bindDragDrop(){document.querySelectorAll('.live-player').forEach(el=>{el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over')});el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));el.addEventListener('drop',async e=>{e.preventDefault();el.classList.remove('drag-over');const source=dragPlayerId,target=el.dataset.playerId;if(source&&target&&source!==target)await substitutePlayer(source,target);});el.addEventListener('dragstart',()=>{dragPlayerId=el.dataset.playerId;});});document.querySelectorAll('.substitute-chip').forEach(el=>{el.addEventListener('dragstart',()=>{dragPlayerId=el.dataset.playerId;el.classList.add('dragging')});el.addEventListener('dragend',()=>{dragPlayerId=null;el.classList.remove('dragging')});});}
+async function substitutePlayer(sourceId,targetId){if(!activeScrimmageId)return;const source=activeScrimmagePlayers.find(x=>x.player_id===sourceId),target=activeScrimmagePlayers.find(x=>x.player_id===targetId);if(!source||!target)return;if(source.team!==target.team||source.on_field||!target.on_field){alert('For a substitution, drag a substitute onto a player from the same team.');return;}const {error:e1}=await supabaseClient.from('scrimmage_players').update({on_field:false,slot:null}).eq('match_id',activeScrimmageId).eq('player_id',targetId);if(e1){alert('Substitution failed: '+e1.message);return;}const {error:e2}=await supabaseClient.from('scrimmage_players').update({on_field:true,slot:target.slot}).eq('match_id',activeScrimmageId).eq('player_id',sourceId);if(e2){alert('Substitution failed: '+e2.message);return;}setSync('Substitution synced',true);await loadActiveScrimmage();}
+
+function renderPerformance(){const list=document.getElementById('performanceList');const map=new Map(players.map(p=>[p.id,p]));const onField=activeScrimmagePlayers.filter(x=>x.team===performanceTeam&&x.on_field).sort((a,b)=>(a.slot??99)-(b.slot??99));if(!onField.length){list.innerHTML='<div class="empty">No players currently on the field.</div>';return;}list.innerHTML=`<div class="performance-row" style="font-size:11px;color:var(--muted);font-weight:900; letter-spacing:0.5px"><div>PLAYER</div><div>GOAL (+4)</div><div>AST (+2)</div><div>DROP (-3)</div><div>BLK (+3)</div><div>POINTS</div><div>Δ RATING</div></div>`+onField.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));return `<div class="performance-row"><div class="performance-player">${p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<div class="performance-avatar">${esc(initials(p.name))}</div>`}<div><strong>${esc(p.name)}</strong><span>${esc(p.position)} · ${esc(p.tier)} · ${Number(p.rating||0).toFixed(1)} OVR</span></div></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','assist')">+1 A</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');}
+window.recordMatchStat=async function(playerId,statType){if(!activeScrimmageId)return;const row=activeScrimmagePlayers.find(x=>x.player_id===playerId);if(!row||!row.on_field){alert('Only players currently on the field can receive match stats.');return;}const {error}=await supabaseClient.from('scrimmage_stat_events').insert({match_id:activeScrimmageId,player_id:playerId,team:row.team,stat_type:statType,delta:1});if(error){alert('Could not record stat: '+error.message);return;}await loadActiveScrimmage();};
+
+async function loadActiveScrimmage(){const {data:m,error}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();if(error)throw error;if(!m){activeScrimmageId=null;activeScrimmagePlayers=[];activeScrimmageEvents=[];const panel=document.getElementById("scrimmageMatchPanel");if(generatedTeamA.length===7&&generatedTeamB.length===7){panel.style.display="block";document.getElementById("activateMatchBtn").style.display="inline-flex";document.getElementById("endMatchBtn").style.display="none";document.getElementById("liveTeamsContainer").innerHTML="<div class=\"generator-summary\"><strong>Match ready.</strong> Activate this generated 7v7 to start live tracking.</div>";document.getElementById("performanceList").innerHTML="<div class=\"empty\">Activate the match to start recording live player performance.</div>";}else{renderLiveMatch();}return;}activeScrimmageId=m.id;const [{data:mp,error:pe},{data:ev,error:ee}]=await Promise.all([supabaseClient.from('scrimmage_players').select('*').eq('match_id',m.id),supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',m.id).order('created_at',{ascending:true})]);if(pe)throw pe;if(ee)throw ee;activeScrimmagePlayers=mp||[];activeScrimmageEvents=ev||[];document.getElementById('activateMatchBtn').style.display='none';document.getElementById('endMatchBtn').style.display='inline-flex';renderLiveMatch();setSync('Live scrimmage',true);}
+async function activateMatch(){if(activeScrimmageId){alert('A scrimmage is already active. End it before starting another.');return;}if(generatedTeamA.length!==7||generatedTeamB.length!==7){alert('Generate a 7v7 match first.');return;}const {data:m,error}=await supabaseClient.from('scrimmage_matches').insert({status:'active'}).select().single();if(error){alert('Could not activate match: '+error.message);return;}const rows=[...generatedTeamA.map((p,i)=>({match_id:m.id,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:m.id,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.map(p=>({match_id:m.id,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.map(p=>({match_id:m.id,player_id:p.id,team:'B',on_field:false,slot:null}))];const {error:pe}=await supabaseClient.from('scrimmage_players').insert(rows);if(pe){await supabaseClient.from('scrimmage_matches').delete().eq('id',m.id);alert('Could not save lineups: '+pe.message);return;}await loadActiveScrimmage();}
+async function endMatch(){if(!activeScrimmageId)return;if(!confirm('End this match? This will permanently apply performance points and rating changes to all players.'))return;const matchId=activeScrimmageId;const {error}=await supabaseClient.rpc('end_scrimmage_match',{p_match_id:matchId});if(error){alert('Could not end match: '+error.message+'\n\nRun vinuni_scrimmage_setup.sql in Supabase first.');return;}await loadPlayers();await exportScrimmageExcel(matchId);activeScrimmageId=null;activeScrimmagePlayers=[];activeScrimmageEvents=[];refreshAll();renderLiveMatch();setSync('Match ended · ratings updated',true);alert('Match ended. Performance Excel has been downloaded and player ratings/tiers were updated.');}
+async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const rows=mp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};ev.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:x.team==='A'?'Team 1':'Team 2',Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ev.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:e.team==='A'?'Team 1':'Team 2',Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
 async function subscribeRealtime(){
   if(realtimeChannel)await supabaseClient.removeChannel(realtimeChannel);
   realtimeChannel=supabaseClient.channel("vinuni-live")
-    .on("postgres_changes",{event:"*",schema:"public",table:"players"},async()=>{try{await loadPlayers();refreshAll();setSync("Live sync",true);}catch(e){console.error(e);setSync("Sync error",false);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"attendance_sessions"},async()=>{try{await loadAttendanceHistory();setSync("Live sync",true);}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"attendance_records"},async()=>{try{const d=document.getElementById("attendanceDate").value;if(d)await loadAttendance(d);setSync("Live sync",true);}catch(e){console.error(e);}})
-    .subscribe((status)=>{if(status==="SUBSCRIBED")setSync("Live sync",true);else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setSync("Sync error",false);});
+    .on("postgres_changes",{event:"*",schema:"public",table:"players"},async()=>{try{await loadPlayers();refreshAll();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"attendance_sessions"},async()=>{try{await loadAttendanceHistory();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"attendance_records"},async()=>{try{const d=document.getElementById("attendanceDate").value;if(d)await loadAttendance(d);}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_matches"},async()=>{try{await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_players"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();else await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .subscribe((status)=>{if(status==="SUBSCRIBED")setSync(activeScrimmageId?"Live scrimmage":"Live sync",true);else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setSync("Sync error",false);});
 }
-async function bootstrapApp(){setSync("Loading...",false);try{await loadPlayers();refreshAll();const d=todayISO();document.getElementById("attendanceDate").value=d;await loadAttendance(d);await loadAttendanceHistory();await subscribeRealtime();}catch(err){console.error(err);alert("Could not load the shared database. Check your Supabase URL, key, SQL setup and RLS policies.\n\n"+err.message);setSync("Database error",false);}}
+async function bootstrapApp(){setSync("Loading...",false);try{await loadPlayers();refreshAll();const d=todayISO();document.getElementById("attendanceDate").value=d;await loadAttendance(d);await loadAttendanceHistory();await loadActiveScrimmage();await subscribeRealtime();}catch(err){console.error(err);alert("Could not load the shared database. Check your Supabase URL, key, SQL setup and RLS policies.\n\n"+err.message);setSync("Database error",false);}}
 
 /* UI events */
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",async()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));btn.classList.add("active");document.getElementById(btn.dataset.page).classList.add("active");if(btn.dataset.page==="attendance"){try{await loadAttendanceHistory();await loadAttendance(document.getElementById("attendanceDate").value||todayISO());}catch(e){console.error(e);}}}));
@@ -596,6 +921,9 @@ document.getElementById("playerForm").addEventListener("submit",async e=>{e.prev
 
 document.getElementById("cancelEdit").addEventListener("click",resetForm);
 document.getElementById("generateBtn").addEventListener("click",generateTeams);
+document.getElementById("activateMatchBtn").addEventListener("click",activateMatch);
+document.getElementById("endMatchBtn").addEventListener("click",endMatch);
+document.querySelectorAll(".performance-tab").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".performance-tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");performanceTeam=btn.dataset.performanceTeam;renderPerformance();}));
 document.getElementById("swapBtn").addEventListener("click",()=>{if(!generatedTeamA.length)return;[generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];renderTeams();});
 document.getElementById("clearTeamsBtn").addEventListener("click",()=>{generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];renderTeams();});
 document.getElementById("attendanceDate").addEventListener("change",async()=>{try{await loadAttendance(document.getElementById("attendanceDate").value);}catch(err){alert("Could not load attendance: "+err.message);}});
