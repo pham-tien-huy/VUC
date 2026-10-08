@@ -195,55 +195,6 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
   margin-top:15px;padding:12px;border-radius:12px;background:#f7fbff;border:1px solid var(--line);
   color:var(--muted);font-size:12px
 }
-
-/* ===== ATTENDANCE ===== */
-.attendance-toolbar{
-  display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap
-}
-.attendance-toolbar .field{min-width:180px}
-.attendance-help{
-  margin-top:14px;padding:11px 13px;border-radius:10px;
-  background:var(--blue-50);border:1px solid var(--line);
-  color:var(--muted);font-size:12px
-}
-.attendance-roster{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px
-}
-.attendance-row{
-  display:flex;align-items:center;gap:11px;padding:11px 12px;
-  border:1px solid var(--line);border-radius:12px;background:#fff;
-  transition:.15s
-}
-.attendance-row:hover{border-color:#a9c8ed;background:#fafdff}
-.attendance-row.present{border-color:#8bd5a7;background:#f2fff6}
-.attendance-check{
-  width:19px;height:19px;accent-color:var(--blue-700);cursor:pointer;flex:none
-}
-.att-avatar{
-  width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;
-  background:var(--blue-100);display:flex;align-items:center;justify-content:center;
-  color:var(--blue-800);font-weight:900;font-size:12px
-}
-.att-avatar img{width:100%;height:100%;object-fit:cover}
-.att-info{min-width:0;flex:1}
-.att-name{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.att-meta{font-size:10px;color:var(--muted);margin-top:2px}
-.att-status{
-  font-size:10px;font-weight:900;text-transform:uppercase;
-  color:#98a2b3
-}
-.attendance-row.present .att-status{color:#15803d}
-.attendance-history{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.session-chip{
-  border:1px solid var(--line);background:#fff;border-radius:10px;
-  padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer
-}
-.session-chip:hover{border-color:var(--blue-500);background:var(--blue-50)}
-.session-date{font-weight:900;color:var(--blue-800)}
-.session-count{font-size:11px;color:var(--muted)}
-@media(max-width:900px){.attendance-roster{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.attendance-roster{grid-template-columns:1fr}}
-
 /* ===== CLUBS / STATS ===== */
 .club-card{border:1px solid var(--line);border-radius:15px;padding:16px;background:#fff}
 .club-card h3{margin:0 0 6px}.club-card p{margin:0;color:var(--muted);font-size:12px}
@@ -257,20 +208,42 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
   .team-stats{grid-template-columns:repeat(2,1fr)}
   .ultimate-field{aspect-ratio:1.2/1}.field-player{width:61px}.card-art{width:49px;height:65px}.field-name{font-size:8px}
 }
+
+.auth-gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top right,#dbeafe,transparent 38%),#f3f7fc}
+.auth-card{width:min(440px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px;box-shadow:0 18px 60px rgba(10,47,102,.12)}
+.auth-logo{font-size:22px;font-weight:1000;color:var(--blue-800);letter-spacing:.08em}.auth-sub{color:var(--muted);font-size:13px;margin:6px 0 22px}.auth-status{font-size:12px;padding:9px 11px;border-radius:9px;margin-top:10px;display:none}.auth-status.error{display:block;background:#fee2e2;color:#991b1b}.auth-status.ok{display:block;background:#dcfce7;color:#166534}
+.auth-actions{display:flex;gap:8px;margin-top:14px}.auth-actions .btn{flex:1}.user-pill{display:flex;align-items:center;gap:9px;font-size:11px;color:#dcecff}.user-email{max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sync-dot{width:8px;height:8px;border-radius:50%;background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.15)}.sync-dot.live{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+@media(max-width:700px){.user-email{max-width:140px}}
+
 </style>
 </head>
 <body>
 
+<div id="authGate" class="auth-gate">
+  <div class="auth-card">
+    <div class="auth-logo">VINUNI ULTIMATE</div>
+    <div class="auth-sub">Clubs Player Management · Shared cloud database</div>
+    <div class="field"><label>Email</label><input id="authEmail" type="email" placeholder="you@vinuni.edu.vn" autocomplete="email"></div>
+    <div class="field" style="margin-top:12px"><label>Password</label><input id="authPassword" type="password" placeholder="At least 6 characters" autocomplete="current-password"></div>
+    <div class="auth-actions">
+      <button class="btn btn-primary" id="loginBtn">Log In</button>
+      <button class="btn btn-secondary" id="signupBtn">Create Account</button>
+    </div>
+    <div id="authStatus" class="auth-status"></div>
+  </div>
+</div>
+
+<div id="appShell" style="display:none">
 <header class="topbar">
   <div class="nav">
     <div class="brand">VINUNI ULTIMATE<small>CLUBS PLAYER MANAGEMENT</small></div>
     <div class="tabs">
       <button class="tab active" data-page="players">Players</button>
       <button class="tab" data-page="generator">7v7 Generator</button>
-      <button class="tab" data-page="attendance">Attendance</button>
       <button class="tab" data-page="clubs">Clubs</button>
       <button class="tab" data-page="stats">Statistics</button>
     </div>
+    <div class="user-pill"><span id="syncDot" class="sync-dot"></span><span id="syncText">Connecting...</span><span class="user-email" id="userEmail"></span><button class="btn btn-ghost" id="logoutBtn" style="padding:7px 10px;font-size:11px">Log Out</button></div>
   </div>
 </header>
 
@@ -342,11 +315,6 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
 
   <div class="panel">
     <div class="generator-toolbar">
-      <div class="mode-wrap"><strong>Training date:</strong>
-        <select id="generatorDate" style="min-width:180px">
-          <option value="">Select saved session</option>
-        </select>
-      </div>
       <div class="mode-wrap"><strong>Mode:</strong>
         <select id="genMode">
           <option value="competitive">Competitive — balanced + random</option>
@@ -362,57 +330,6 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
   </div>
 
   <div id="teamsContainer"></div>
-</section>
-
-
-<!-- ATTENDANCE -->
-<section id="attendance" class="page">
-  <div class="hero">
-    <h1>Club Attendance</h1>
-    <p>Track who attended each training session. Only players marked present will be available for 7v7 team generation.</p>
-  </div>
-
-  <div class="grid grid-4">
-    <div class="stat"><div class="num" id="attTotalMembers">0</div><div class="label">Total Members</div></div>
-    <div class="stat"><div class="num" id="attPresent">0</div><div class="label">Present This Session</div></div>
-    <div class="stat"><div class="num" id="attAbsent">0</div><div class="label">Absent This Session</div></div>
-    <div class="stat"><div class="num" id="attSessions">0</div><div class="label">Saved Sessions</div></div>
-  </div>
-
-  <div class="panel" style="margin-top:18px">
-    <div class="attendance-toolbar">
-      <div class="field">
-        <label>Training Date</label>
-        <input id="attendanceDate" type="date">
-      </div>
-      <button class="btn btn-primary" id="loadAttendanceBtn">Load Date</button>
-      <button class="btn btn-secondary" id="markAllPresentBtn">✓ Mark All Present</button>
-      <button class="btn btn-ghost" id="clearAllPresentBtn">Clear All</button>
-      <button class="btn btn-dark" id="saveAttendanceBtn">Save Training Session</button>
-      <button class="btn btn-secondary" id="exportAttendanceBtn">Export Attendance CSV</button>
-    </div>
-
-    <div class="attendance-help">
-      Tick <strong>Present</strong> for everyone who actually came to the training session.
-      The saved attendance record is also used by the <strong>7v7 Generator</strong>.
-    </div>
-  </div>
-
-  <div class="panel" style="margin-top:18px">
-    <div class="controls" style="justify-content:space-between">
-      <h2 style="margin:0">Club Roster</h2>
-      <input id="attendanceSearch" placeholder="Search member..." style="max-width:300px">
-    </div>
-    <div id="attendanceRoster" class="attendance-roster"></div>
-  </div>
-
-  <div class="panel" style="margin-top:18px">
-    <div class="controls" style="justify-content:space-between">
-      <h2 style="margin:0">Saved Training Sessions</h2>
-      <span style="font-size:12px;color:var(--muted)">Click a date to load its attendance.</span>
-    </div>
-    <div id="attendanceHistory" class="attendance-history"></div>
-  </div>
 </section>
 
 <!-- CLUBS -->
@@ -437,11 +354,26 @@ input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(
 </section>
 
 </main>
+</div>
 
 <script>
-const STORAGE_KEY = "vinuniUltimatePlayers_v3";
-const tierWeight = {S:4,A:3,B:2,C:1};
+/* =========================================================
+   SUPABASE CONFIGURATION
+   1. Create a Supabase project.
+   2. Put your Project URL and Publishable Key below.
+   3. Run supabase_setup.sql supplied with this file.
+   NEVER put the service_role/secret key in this HTML file.
+   ========================================================= */
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_PUBLISHABLE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
 
+if(!window.supabase){
+  document.body.innerHTML='<div style="padding:40px;font-family:Arial">Supabase library failed to load. Check your internet connection.</div>';
+  throw new Error("Supabase library not loaded");
+}
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const tierWeight = {S:4,A:3,B:2,C:1};
 const demoPlayers = [
   {id:"p01",name:"Minh Anh",club:"VinUni Ultimate",position:"Handler",tier:"S",rating:94,image:""},
   {id:"p02",name:"Huy Pham",club:"VinUni Ultimate",position:"Hybrid",tier:"S",rating:92,image:""},
@@ -463,515 +395,75 @@ const demoPlayers = [
   {id:"p18",name:"Ngoc Anh",club:"VinUni Ultimate",position:"Cutter",tier:"B",rating:81,image:""}
 ];
 
-let players = loadPlayers();
-let generatedTeamA = [];
-let generatedTeamB = [];
-let attendanceRecords = loadAttendanceRecords();
-let currentAttendanceDate = "";
-let editingImage = "";
+let players=[];
+let generatedTeamA=[];
+let generatedTeamB=[];
+let editingImage="";
+let currentUser=null;
+let realtimeChannel=null;
 
-function loadPlayers(){
-  try{
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return Array.isArray(saved) && saved.length ? saved : structuredClone(demoPlayers);
-  }catch(e){ return structuredClone(demoPlayers); }
-}
-function savePlayers(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(players)); }
-function loadAttendanceRecords(){
-  try{
-    const saved = JSON.parse(localStorage.getItem("vinuniUltimateAttendance_v1"));
-    return saved && typeof saved === "object" ? saved : {};
-  }catch(e){ return {}; }
-}
-function saveAttendanceRecords(){
-  localStorage.setItem("vinuniUltimateAttendance_v1", JSON.stringify(attendanceRecords));
-}
-function todayISO(){
-  const d=new Date();
-  const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);
-  return local.toISOString().slice(0,10);
-}
-function formatDate(dateString){
-  if(!dateString) return "";
-  const d=new Date(dateString+"T00:00:00");
-  return d.toLocaleDateString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric"});
-}
-function getAttendeeIds(date){
-  return new Set((attendanceRecords[date]?.attendees)||[]);
-}
-function getAttendees(date){
-  const ids=getAttendeeIds(date);
-  return players.filter(p=>ids.has(p.id));
-}
-function uid(){ return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2,8); }
-function esc(v){
-  return String(v ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-}
-function initials(name){
-  return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase() || "?";
-}
-function shuffle(arr){
-  const a=[...arr];
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
+function esc(v){return String(v ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function initials(name){return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"?";}
+function uid(){return "p_"+crypto.randomUUID();}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function sumRating(team){return team.reduce((s,p)=>s+Number(p.rating||0),0)}
 function sumTier(team){return team.reduce((s,p)=>s+(tierWeight[p.tier]||1),0)}
 function avgRating(team){return team.length?(sumRating(team)/team.length).toFixed(1):"0.0"}
+function positionCounts(team){const out={};team.forEach(p=>out[p.position]=(out[p.position]||0)+1);return out;}
+function positionDifference(a,b){const positions=["Handler","Cutter","Hybrid","Defender","Utility"];return positions.reduce((s,pos)=>s+Math.abs((positionCounts(a)[pos]||0)-(positionCounts(b)[pos]||0)),0);}
+function balanceScore(a,b){return Math.abs(sumRating(a)-sumRating(b))+Math.abs(sumTier(a)-sumTier(b))*12+positionDifference(a,b)*14;}
 
-function positionCounts(team){
-  const out={};
-  team.forEach(p=>out[p.position]=(out[p.position]||0)+1);
-  return out;
+function setSync(textValue,live=false){
+  document.getElementById("syncText").textContent=textValue;
+  document.getElementById("syncDot").classList.toggle("live",live);
 }
-function positionDifference(a,b){
-  const positions=["Handler","Cutter","Hybrid","Defender","Utility"];
-  return positions.reduce((s,pos)=>s+Math.abs((positionCounts(a)[pos]||0)-(positionCounts(b)[pos]||0)),0);
-}
-
-/* Lower score = better balance */
-function balanceScore(a,b){
-  const ratingDiff=Math.abs(sumRating(a)-sumRating(b));
-  const tierDiff=Math.abs(sumTier(a)-sumTier(b));
-  const posDiff=positionDifference(a,b);
-  return ratingDiff*1.0 + tierDiff*12 + posDiff*14;
+function showAuthStatus(msg,type="error"){
+  const el=document.getElementById("authStatus");el.textContent=msg;el.className="auth-status "+type;
 }
 
-function makeRandomSplit(){
-  const s=shuffle(players);
-  return {a:s.slice(0,7),b:s.slice(7,14)};
+async function loadPlayers(){
+  const {data,error}=await supabaseClient.from("players").select("*").order("rating",{ascending:false});
+  if(error){console.error(error);throw error;}
+  players=(data||[]).map(row=>({...row,image:row.image_url||""}));
 }
 
-function generateTeams(){
-  const selectedDate=document.getElementById("generatorDate").value;
+function refreshAll(){refreshClubFilter();renderPlayers();updateTopStats();renderClubs();renderStats();renderTeams();}
 
-  if(!selectedDate){
-    alert("Please select a saved training session first. Teams are generated only from players marked Present.");
-    return;
-  }
+async function uploadPlayerImage(playerId,file){
+  if(!file)return "";
+  if(!file.type.startsWith("image/"))throw new Error("Please select an image file.");
+  if(file.size>5*1024*1024)throw new Error("Image must be smaller than 5 MB.");
+  const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+  const path=`${playerId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+  const {error}=await supabaseClient.storage.from("player-images").upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
+  if(error)throw error;
+  const {data}=supabaseClient.storage.from("player-images").getPublicUrl(path);
+  return data.publicUrl;
+}
 
-  const activePlayers=getAttendees(selectedDate);
+async function savePlayerToDB(id,data,file){
+  let imageUrl=data.image||"";
+  if(file) imageUrl=await uploadPlayerImage(id,file);
+  const payload={id,name:data.name,club:data.club,position:data.position,tier:data.tier,rating:data.rating,image_url:imageUrl,updated_by:currentUser?.id||null};
+  const {error}=await supabaseClient.from("players").upsert(payload,{onConflict:"id"});
+  if(error)throw error;
+}
 
-  if(activePlayers.length<14){
-    alert(`Only ${activePlayers.length} players are marked Present on ${formatDate(selectedDate)}. You need at least 14 for 7v7.`);
-    return;
-  }
-
-  const mode=document.getElementById("genMode").value;
-  let chosen;
-
-  /* Generate only from attendees of the selected training session. */
-  const originalPlayers=players;
-  players=activePlayers;
-
+async function deletePlayer(id){
+  const p=players.find(x=>x.id===id);if(!p)return;
+  if(!confirm(`Delete ${p.name}?`))return;
   try{
-    if(mode==="random"){
-      chosen=makeRandomSplit();
-    }else{
-      const iterations=mode==="balanced"?5000:1500;
-      const candidates=[];
-      for(let i=0;i<iterations;i++){
-        const split=makeRandomSplit();
-        candidates.push({...split,score:balanceScore(split.a,split.b)});
-      }
-      candidates.sort((x,y)=>x.score-y.score);
-
-      if(mode==="balanced"){
-        chosen=candidates[0];
-      }else{
-        const topN=Math.max(10,Math.floor(candidates.length*.05));
-        chosen=candidates[Math.floor(Math.random()*topN)];
-      }
-    }
-  }finally{
-    players=originalPlayers;
-  }
-
-  generatedTeamA=shuffle(chosen.a);
-  generatedTeamB=shuffle(chosen.b);
-  renderTeams();
-
-  const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));
-  const modeText={
-    random:"Pure random",
-    balanced:"Strongly balanced",
-    competitive:"Balanced + randomized"
-  }[mode];
-
-  const extras=activePlayers.length-14;
-
-  document.getElementById("generatorNotice").innerHTML =
-    `<strong>${modeText}</strong> · Session: <strong>${formatDate(selectedDate)}</strong> · `+
-    `Present: <strong>${activePlayers.length}</strong> · `+
-    `Rating difference: <strong>${diff}</strong> · `+
-    `Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR`+
-    (extras>0?` · ${extras} present players not selected`:"");
+    const {error}=await supabaseClient.from("players").delete().eq("id",id);
+    if(error)throw error;
+    generatedTeamA=[];generatedTeamB=[];
+    await loadPlayers();refreshAll();
+  }catch(err){console.error(err);alert("Delete failed: "+err.message);}
 }
-function renderTeams(){
-  const container=document.getElementById("teamsContainer");
-  if(!generatedTeamA.length || !generatedTeamB.length){
-    container.innerHTML=`
-      <div class="panel empty" style="margin-top:20px">
-        <div style="font-size:40px">⚡</div>
-        <strong>Generate your 7v7 teams</strong>
-        <div style="margin-top:6px">The two teams will appear here as player cards on an Ultimate field.</div>
-      </div>`;
-    return;
-  }
-  container.innerHTML=`
-    <div class="teams-visual">
-      ${renderTeam(generatedTeamA,"TEAM BLUE","team-blue")}
-      ${renderTeam(generatedTeamB,"TEAM WHITE","team-white")}
-    </div>`;
-}
-
-const formation=[
-  {x:50,y:13,label:"Deep"},
-  {x:28,y:30,label:"Wing"},
-  {x:72,y:30,label:"Wing"},
-  {x:50,y:47,label:"Middle"},
-  {x:28,y:65,label:"Wing"},
-  {x:72,y:65,label:"Wing"},
-  {x:50,y:84,label:"Deep"}
-];
-
-function renderTeam(team,name,teamClass){
-  const score=sumRating(team);
-  const tier=sumTier(team);
-  const pc=positionCounts(team);
-  return `
-    <div class="ultimate-team ${teamClass}">
-      <div class="team-head">
-        <div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 PLAYERS · VISUAL LINEUP</span></div></div>
-        <div class="team-total">${score} OVR</div>
-      </div>
-
-      <div class="ultimate-field">
-        <div class="endzone left"><span class="zone-label">END ZONE</span></div>
-        <div class="endzone right"><span class="zone-label">END ZONE</span></div>
-
-        ${team.map((p,i)=>{
-          const pos=formation[i];
-          return `
-            <div class="field-player" style="left:${pos.x}%;top:${pos.y}%" title="${esc(p.name)} · ${esc(p.position)}">
-              <div class="card-art">
-                ${p.image
-                  ? `<img src="${p.image}" alt="${esc(p.name)}">`
-                  : `<div class="card-initials">${esc(initials(p.name))}</div>`}
-                <div class="card-rating">${Number(p.rating)||0}</div>
-                <div class="card-tier">${esc(p.tier)}</div>
-                <div class="card-name">${esc(p.name)}</div>
-              </div>
-              <div class="field-name">${esc(p.name)}</div>
-              <div class="field-pos">${esc(p.position)}</div>
-            </div>`;
-        }).join("")}
-      </div>
-
-      <div class="team-stats">
-        <div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div>
-        <div class="team-stat"><strong>${tier}</strong><span>TIER SCORE</span></div>
-        <div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div>
-        <div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div>
-      </div>
-    </div>`;
-}
-
-function renderPlayers(){
-  const q=document.getElementById("search").value.trim().toLowerCase();
-  const tier=document.getElementById("tierFilter").value;
-  const position=document.getElementById("positionFilter").value;
-  const club=document.getElementById("clubFilter").value;
-
-  const filtered=players.filter(p=>{
-    const matchQ=!q || `${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q);
-    return matchQ && (!tier||p.tier===tier) && (!position||p.position===position) && (!club||p.club===club);
-  }).sort((a,b)=>Number(b.rating)-Number(a.rating));
-
-  const grid=document.getElementById("playerGrid");
-  if(!filtered.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1">No players found.</div>`;return;}
-
-  grid.innerHTML=filtered.map(p=>`
-    <div class="player-card-db">
-      ${p.image?`<img class="photo" src="${p.image}" alt="${esc(p.name)}">`:`<div class="photo-placeholder">${esc(initials(p.name))}</div>`}
-      <div class="pbody">
-        <div class="pname">${esc(p.name)}</div>
-        <div class="meta">${esc(p.club)} · ${esc(p.position)}</div>
-        <div class="badges">
-          <span class="badge tier-${esc(p.tier)}">TIER ${esc(p.tier)}</span>
-          <span class="badge rating">${Number(p.rating)||0} OVR</span>
-        </div>
-        <div class="actions">
-          <button class="btn btn-secondary" onclick="editPlayer('${p.id}')">Edit</button>
-          <button class="btn btn-danger" onclick="deletePlayer('${p.id}')">Delete</button>
-        </div>
-      </div>
-    </div>`).join("");
-}
-
-function refreshClubFilter(){
-  const select=document.getElementById("clubFilter");
-  const current=select.value;
-  const clubs=[...new Set(players.map(p=>p.club).filter(Boolean))].sort();
-  select.innerHTML=`<option value="">All clubs</option>`+clubs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
-  if(clubs.includes(current)) select.value=current;
-}
-
-function updateTopStats(){
-  const avg=players.length?(players.reduce((s,p)=>s+Number(p.rating||0),0)/players.length).toFixed(1):0;
-  const top=players.filter(p=>p.tier==="S"||p.tier==="A").length;
-  document.getElementById("statPlayers").textContent=players.length;
-  document.getElementById("statAvg").textContent=avg;
-  document.getElementById("statTop").textContent=top;
-  document.getElementById("statClubs").textContent=new Set(players.map(p=>p.club)).size;
-}
-
-function renderClubs(){
-  const grid=document.getElementById("clubsGrid");
-  const map={};
-  players.forEach(p=>{if(!map[p.club])map[p.club]=[];map[p.club].push(p)});
-  const clubs=Object.entries(map).sort((a,b)=>b[1].length-a[1].length);
-  grid.innerHTML=clubs.map(([club,list])=>{
-    const avg=(list.reduce((s,p)=>s+Number(p.rating||0),0)/list.length).toFixed(1);
-    const max=Math.max(...list.map(p=>Number(p.rating||0)));
-    return `<div class="club-card">
-      <h3>${esc(club)}</h3>
-      <p>${list.length} players · average ${avg} · best ${max}</p>
-      <div class="bar"><i style="width:${Math.min(100,max)}%"></i></div>
-    </div>`;
-  }).join("") || `<div class="empty">No clubs yet.</div>`;
-}
-
-function renderStats(){
-  const ratings=players.map(p=>Number(p.rating||0)).sort((a,b)=>a-b);
-  const avg=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):0;
-  const median=ratings.length?(
-    ratings.length%2?ratings[Math.floor(ratings.length/2)]:
-    ((ratings[ratings.length/2-1]+ratings[ratings.length/2])/2).toFixed(1)
-  ):0;
-  document.getElementById("sTotal").textContent=players.length;
-  document.getElementById("sAvg").textContent=avg;
-  document.getElementById("sHighest").textContent=ratings.length?Math.max(...ratings):0;
-  document.getElementById("sMedian").textContent=median;
-
-  const tiers=["S","A","B","C"];
-  document.getElementById("tierStats").innerHTML=tiers.map(t=>{
-    const n=players.filter(p=>p.tier===t).length;
-    const pct=players.length?n/players.length*100:0;
-    return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>Tier ${t}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
-  }).join("");
-
-  const positions=["Handler","Cutter","Hybrid","Defender","Utility"];
-  document.getElementById("positionStats").innerHTML=positions.map(pos=>{
-    const n=players.filter(p=>p.position===pos).length;
-    const pct=players.length?n/players.length*100:0;
-    return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>${pos}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
-  }).join("");
-}
-
-
-function renderAttendanceRoster(){
-  const date=document.getElementById("attendanceDate").value;
-  const q=document.getElementById("attendanceSearch").value.trim().toLowerCase();
-  const savedIds=getAttendeeIds(date);
-
-  const list=players.filter(p=>
-    !q || `${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q)
-  ).sort((a,b)=>a.name.localeCompare(b.name));
-
-  const container=document.getElementById("attendanceRoster");
-  if(!date){
-    container.innerHTML=`<div class="empty" style="grid-column:1/-1">Choose a training date first.</div>`;
-    updateAttendanceStats();
-    return;
-  }
-  if(!list.length){
-    container.innerHTML=`<div class="empty" style="grid-column:1/-1">No club members found.</div>`;
-    updateAttendanceStats();
-    return;
-  }
-
-  container.innerHTML=list.map(p=>{
-    const present=savedIds.has(p.id);
-    return `
-      <label class="attendance-row ${present?'present':''}">
-        <input class="attendance-check" type="checkbox" data-player-id="${p.id}" ${present?'checked':''}>
-        <div class="att-avatar">
-          ${p.image?`<img src="${p.image}" alt="${esc(p.name)}">`:esc(initials(p.name))}
-        </div>
-        <div class="att-info">
-          <div class="att-name">${esc(p.name)}</div>
-          <div class="att-meta">${esc(p.position)} · ${esc(p.tier)} · ${Number(p.rating)||0} OVR</div>
-        </div>
-        <span class="att-status">${present?'Present':'Absent'}</span>
-      </label>`;
-  }).join("");
-
-  container.querySelectorAll(".attendance-check").forEach(cb=>{
-    cb.addEventListener("change",()=>{
-      const row=cb.closest(".attendance-row");
-      row.classList.toggle("present",cb.checked);
-      row.querySelector(".att-status").textContent=cb.checked?"Present":"Absent";
-      updateAttendanceStats();
-    });
-  });
-  updateAttendanceStats();
-}
-
-function getCheckedAttendanceIds(){
-  return [...document.querySelectorAll("#attendanceRoster .attendance-check:checked")]
-    .map(x=>x.dataset.playerId);
-}
-
-function updateAttendanceStats(){
-  const date=document.getElementById("attendanceDate").value;
-  const ids=getCheckedAttendanceIds();
-  const present=date?ids.length:(attendanceRecords[date]?.attendees?.length||0);
-  document.getElementById("attTotalMembers").textContent=players.length;
-  document.getElementById("attPresent").textContent=present;
-  document.getElementById("attAbsent").textContent=Math.max(0,players.length-present);
-  document.getElementById("attSessions").textContent=Object.keys(attendanceRecords).length;
-}
-
-function renderAttendanceHistory(){
-  const dates=Object.keys(attendanceRecords).sort((a,b)=>b.localeCompare(a));
-  const container=document.getElementById("attendanceHistory");
-  if(!dates.length){
-    container.innerHTML=`<div class="empty">No training sessions saved yet.</div>`;
-    return;
-  }
-  container.innerHTML=dates.map(date=>{
-    const count=(attendanceRecords[date].attendees||[]).length;
-    return `
-      <button class="session-chip" data-session-date="${date}">
-        <span class="session-date">${formatDate(date)}</span>
-        <span class="session-count">${count}/${players.length} present</span>
-      </button>`;
-  }).join("");
-  container.querySelectorAll("[data-session-date]").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      document.getElementById("attendanceDate").value=btn.dataset.sessionDate;
-      currentAttendanceDate=btn.dataset.sessionDate;
-      renderAttendanceRoster();
-      window.scrollTo({top:document.getElementById("attendanceDate").getBoundingClientRect().top+window.scrollY-110,behavior:"smooth"});
-    });
-  });
-}
-
-function renderGeneratorDates(){
-  const select=document.getElementById("generatorDate");
-  const current=select.value;
-  const dates=Object.keys(attendanceRecords).sort((a,b)=>b.localeCompare(a));
-  select.innerHTML=`<option value="">Select saved session</option>`+
-    dates.map(d=>`<option value="${d}">${formatDate(d)} — ${(attendanceRecords[d].attendees||[]).length} present</option>`).join("");
-  if(dates.includes(current)) select.value=current;
-}
-
-function loadAttendanceDate(){
-  const date=document.getElementById("attendanceDate").value;
-  if(!date){
-    alert("Please choose a training date.");
-    return;
-  }
-  currentAttendanceDate=date;
-  renderAttendanceRoster();
-}
-
-function saveCurrentAttendance(){
-  const date=document.getElementById("attendanceDate").value;
-  if(!date){
-    alert("Please choose a training date.");
-    return;
-  }
-  const attendees=getCheckedAttendanceIds();
-  attendanceRecords[date]={
-    date,
-    attendees,
-    updatedAt:new Date().toISOString()
-  };
-  saveAttendanceRecords();
-  currentAttendanceDate=date;
-  renderAttendanceHistory();
-  renderGeneratorDates();
-  renderAttendanceRoster();
-  document.getElementById("generatorDate").value=date;
-
-  const count=attendees.length;
-  alert(`Attendance saved for ${formatDate(date)}: ${count}/${players.length} present.`);
-}
-
-function exportAttendanceCSV(){
-  const dates=Object.keys(attendanceRecords).sort();
-  if(!dates.length){
-    alert("No saved attendance data to export.");
-    return;
-  }
-
-  const lines=[];
-  lines.push(["Date","Player ID","Player Name","Club","Position","Tier","Rating","Present"].map(csvEscape).join(","));
-
-  dates.forEach(date=>{
-    const ids=new Set(attendanceRecords[date].attendees||[]);
-    players.forEach(p=>{
-      lines.push([
-        date,p.id,p.name,p.club,p.position,p.tier,p.rating,ids.has(p.id)?"Yes":"No"
-      ].map(csvEscape).join(","));
-    });
-  });
-
-  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download="vinuni_ultimate_attendance.csv";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
-function csvEscape(value){
-  return `"${String(value??"").replace(/"/g,'""')}"`;
-}
-
-function markAllAttendance(value){
-  document.querySelectorAll("#attendanceRoster .attendance-check").forEach(cb=>{
-    cb.checked=value;
-    const row=cb.closest(".attendance-row");
-    row.classList.toggle("present",value);
-    row.querySelector(".att-status").textContent=value?"Present":"Absent";
-  });
-  updateAttendanceStats();
-}
-
-function refreshAll(){
-  refreshClubFilter();
-  renderPlayers();
-  updateTopStats();
-  renderClubs();
-  renderStats();
-  renderAttendanceHistory();
-  renderGeneratorDates();
-  renderAttendanceRoster();
-  renderTeams();
-}
-
-function resetForm(){
-  document.getElementById("playerForm").reset();
-  document.getElementById("editId").value="";
-  document.getElementById("fRating").value=80;
-  document.getElementById("imagePreview").style.display="none";
-  document.getElementById("imagePreview").src="";
-  document.getElementById("savePlayerBtn").textContent="Add Player";
-  document.getElementById("cancelEdit").style.display="none";
-  editingImage="";
-}
+window.deletePlayer=deletePlayer;
+window.editPlayer=editPlayer;
 
 function editPlayer(id){
-  const p=players.find(x=>x.id===id); if(!p)return;
+  const p=players.find(x=>x.id===id);if(!p)return;
   document.getElementById("editId").value=p.id;
   document.getElementById("fName").value=p.name;
   document.getElementById("fClub").value=p.club;
@@ -979,120 +471,83 @@ function editPlayer(id){
   document.getElementById("fTier").value=p.tier;
   document.getElementById("fRating").value=p.rating;
   editingImage=p.image||"";
-  if(editingImage){
-    document.getElementById("imagePreview").src=editingImage;
-    document.getElementById("imagePreview").style.display="block";
-  }else{
-    document.getElementById("imagePreview").style.display="none";
-  }
+  const img=document.getElementById("imagePreview");
+  img.src=editingImage;img.style.display=editingImage?"block":"none";
   document.getElementById("savePlayerBtn").textContent="Save Changes";
   document.getElementById("cancelEdit").style.display="inline-block";
   window.scrollTo({top:document.getElementById("playerForm").getBoundingClientRect().top+window.scrollY-100,behavior:"smooth"});
 }
 
-function deletePlayer(id){
-  const p=players.find(x=>x.id===id); if(!p)return;
-  if(!confirm(`Delete ${p.name}?`))return;
-  players=players.filter(x=>x.id!==id);
-  savePlayers();refreshAll();
+function resetForm(){
+  document.getElementById("playerForm").reset();document.getElementById("editId").value="";document.getElementById("fRating").value=80;
+  document.getElementById("imagePreview").style.display="none";document.getElementById("imagePreview").src="";
+  document.getElementById("savePlayerBtn").textContent="Add Player";document.getElementById("cancelEdit").style.display="none";editingImage="";
 }
 
-document.querySelectorAll(".tab").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.page).classList.add("active");
-  });
-});
+function renderPlayers(){
+  const q=document.getElementById("search").value.trim().toLowerCase();const tier=document.getElementById("tierFilter").value;const position=document.getElementById("positionFilter").value;const club=document.getElementById("clubFilter").value;
+  const filtered=players.filter(p=>{const matchQ=!q||`${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q);return matchQ&&(!tier||p.tier===tier)&&(!position||p.position===position)&&(!club||p.club===club)}).sort((a,b)=>Number(b.rating)-Number(a.rating));
+  const grid=document.getElementById("playerGrid");
+  if(!filtered.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1">No players found.</div>`;return;}
+  grid.innerHTML=filtered.map(p=>`<div class="player-card-db">${p.image?`<img class="photo" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="photo-placeholder">${esc(initials(p.name))}</div>`}<div class="pbody"><div class="pname">${esc(p.name)}</div><div class="meta">${esc(p.club)} · ${esc(p.position)}</div><div class="badges"><span class="badge tier-${esc(p.tier)}">TIER ${esc(p.tier)}</span><span class="badge rating">${Number(p.rating)||0} OVR</span></div><div class="actions"><button class="btn btn-secondary" onclick="editPlayer('${esc(p.id)}')">Edit</button><button class="btn btn-danger" onclick="deletePlayer('${esc(p.id)}')">Delete</button></div></div></div>`).join("");
+}
+function refreshClubFilter(){const select=document.getElementById("clubFilter");const current=select.value;const clubs=[...new Set(players.map(p=>p.club).filter(Boolean))].sort();select.innerHTML=`<option value="">All clubs</option>`+clubs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");if(clubs.includes(current))select.value=current;}
+function updateTopStats(){const avg=players.length?(players.reduce((s,p)=>s+Number(p.rating||0),0)/players.length).toFixed(1):0;const top=players.filter(p=>p.tier==="S"||p.tier==="A").length;document.getElementById("statPlayers").textContent=players.length;document.getElementById("statAvg").textContent=avg;document.getElementById("statTop").textContent=top;document.getElementById("statClubs").textContent=new Set(players.map(p=>p.club)).size;}
+function renderClubs(){const grid=document.getElementById("clubsGrid");const map={};players.forEach(p=>{if(!map[p.club])map[p.club]=[];map[p.club].push(p)});const clubs=Object.entries(map).sort((a,b)=>b[1].length-a[1].length);grid.innerHTML=clubs.map(([club,list])=>{const avg=(list.reduce((s,p)=>s+Number(p.rating||0),0)/list.length).toFixed(1);const max=Math.max(...list.map(p=>Number(p.rating||0)));return `<div class="club-card"><h3>${esc(club)}</h3><p>${list.length} players · average ${avg} · best ${max}</p><div class="bar"><i style="width:${Math.min(100,max)}%"></i></div></div>`}).join("")||`<div class="empty">No clubs yet.</div>`;}
+function renderStats(){const ratings=players.map(p=>Number(p.rating||0)).sort((a,b)=>a-b);const avg=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):0;const median=ratings.length?(ratings.length%2?ratings[Math.floor(ratings.length/2)]:((ratings[ratings.length/2-1]+ratings[ratings.length/2])/2).toFixed(1)):0;document.getElementById("sTotal").textContent=players.length;document.getElementById("sAvg").textContent=avg;document.getElementById("sHighest").textContent=ratings.length?Math.max(...ratings):0;document.getElementById("sMedian").textContent=median;const tiers=["S","A","B","C"];document.getElementById("tierStats").innerHTML=tiers.map(t=>{const n=players.filter(p=>p.tier===t).length;const pct=players.length?n/players.length*100:0;return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>Tier ${t}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join("");const positions=["Handler","Cutter","Hybrid","Defender","Utility"];document.getElementById("positionStats").innerHTML=positions.map(pos=>{const n=players.filter(p=>p.position===pos).length;const pct=players.length?n/players.length*100:0;return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>${pos}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join("");}
 
-["search","tierFilter","positionFilter","clubFilter"].forEach(id=>{
-  document.getElementById(id).addEventListener("input",renderPlayers);
-  document.getElementById(id).addEventListener("change",renderPlayers);
-});
+function makeRandomSplit(){const s=shuffle(players);return{a:s.slice(0,7),b:s.slice(7,14)}}
+function generateTeams(){if(players.length<14){alert("You need at least 14 players for a 7v7 game.");return;}const mode=document.getElementById("genMode").value;let chosen;if(mode==="random"){chosen=makeRandomSplit();}else{const iterations=mode==="balanced"?5000:1500;const candidates=[];for(let i=0;i<iterations;i++){const split=makeRandomSplit();candidates.push({...split,score:balanceScore(split.a,split.b)});}candidates.sort((x,y)=>x.score-y.score);if(mode==="balanced")chosen=candidates[0];else{const topN=Math.max(10,Math.floor(candidates.length*.05));chosen=candidates[Math.floor(Math.random()*topN)];}}generatedTeamA=shuffle(chosen.a);generatedTeamB=shuffle(chosen.b);renderTeams();const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));const modeText={random:"Pure random",balanced:"Strongly balanced",competitive:"Balanced + randomized"}[mode];document.getElementById("generatorNotice").innerHTML=`<strong>${modeText}</strong> · Rating difference: <strong>${diff}</strong> · Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR · Extra players not selected: <strong>${players.length-14}</strong>`;}
+const formation=[{x:50,y:13,label:"Deep"},{x:28,y:30,label:"Wing"},{x:72,y:30,label:"Wing"},{x:50,y:47,label:"Middle"},{x:28,y:65,label:"Wing"},{x:72,y:65,label:"Wing"},{x:50,y:84,label:"Deep"}];
+function renderTeams(){const container=document.getElementById("teamsContainer");if(!generatedTeamA.length||!generatedTeamB.length){container.innerHTML=`<div class="panel empty" style="margin-top:20px"><div style="font-size:40px">⚡</div><strong>Generate your 7v7 teams</strong><div style="margin-top:6px">The two teams will appear here as player cards on an Ultimate field.</div></div>`;return;}container.innerHTML=`<div class="teams-visual">${renderTeam(generatedTeamA,"TEAM BLUE","team-blue")}${renderTeam(generatedTeamB,"TEAM WHITE","team-white")}</div>`;}
+function renderTeam(team,name,teamClass){const score=sumRating(team);const tier=sumTier(team);const pc=positionCounts(team);return `<div class="ultimate-team ${teamClass}"><div class="team-head"><div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 PLAYERS · VISUAL LINEUP</span></div></div><div class="team-total">${score} OVR</div></div><div class="ultimate-field"><div class="endzone left"><span class="zone-label">END ZONE</span></div><div class="endzone right"><span class="zone-label">END ZONE</span></div>${team.map((p,i)=>{const pos=formation[i];return `<div class="field-player" style="left:${pos.x}%;top:${pos.y}%" title="${esc(p.name)} · ${esc(p.position)}"><div class="card-art">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="field-name">${esc(p.name)}</div><div class="field-pos">${esc(p.position)}</div></div>`}).join("")}</div><div class="team-stats"><div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div><div class="team-stat"><strong>${tier}</strong><span>TIER SCORE</span></div><div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div><div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div></div></div>`;}
 
-document.getElementById("fImage").addEventListener("change",e=>{
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    editingImage=reader.result;
-    const img=document.getElementById("imagePreview");
-    img.src=reader.result;img.style.display="block";
-  };
-  reader.readAsDataURL(file);
-});
+async function subscribeRealtime(){
+  if(realtimeChannel)await supabaseClient.removeChannel(realtimeChannel);
+  realtimeChannel=supabaseClient.channel("players-realtime").on("postgres_changes",{event:"*",schema:"public",table:"players"},async(payload)=>{
+    try{await loadPlayers();refreshAll();setSync("Live sync",true);}catch(e){console.error(e);setSync("Sync error",false);}
+  }).subscribe((status)=>{if(status==="SUBSCRIBED")setSync("Live sync",true);else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setSync("Sync error",false);});
+}
 
-document.getElementById("playerForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  const id=document.getElementById("editId").value;
-  const data={
-    name:document.getElementById("fName").value.trim(),
-    club:document.getElementById("fClub").value.trim(),
-    position:document.getElementById("fPosition").value,
-    tier:document.getElementById("fTier").value,
-    rating:Math.max(0,Math.min(100,Number(document.getElementById("fRating").value)||0)),
-    image:editingImage||""
-  };
-  if(!data.name||!data.club)return;
-  if(id){
-    const idx=players.findIndex(p=>p.id===id);
-    if(idx>=0)players[idx]={...players[idx],...data};
-  }else{
-    players.push({id:uid(),...data});
-  }
-  savePlayers();resetForm();refreshAll();
-});
+async function bootstrapApp(session){
+  currentUser=session.user;
+  document.getElementById("userEmail").textContent=currentUser.email||"";
+  document.getElementById("authGate").style.display="none";
+  document.getElementById("appShell").style.display="block";
+  setSync("Loading...",false);
+  try{await loadPlayers();refreshAll();await subscribeRealtime();}catch(err){console.error(err);alert("Could not load the shared player database. Check your Supabase URL, key, SQL setup and RLS policies.\n\n"+err.message);setSync("Database error",false);}
+}
+
+async function signOut(){await supabaseClient.auth.signOut();players=[];generatedTeamA=[];generatedTeamB=[];document.getElementById("appShell").style.display="none";document.getElementById("authGate").style.display="flex";}
+
+async function login(){const email=document.getElementById("authEmail").value.trim();const password=document.getElementById("authPassword").value;if(!email||!password){showAuthStatus("Enter your email and password.");return;}showAuthStatus("Signing in...","ok");const {error}=await supabaseClient.auth.signInWithPassword({email,password});if(error)showAuthStatus(error.message);}
+async function signup(){const email=document.getElementById("authEmail").value.trim();const password=document.getElementById("authPassword").value;if(!email||password.length<6){showAuthStatus("Enter an email and a password with at least 6 characters.");return;}showAuthStatus("Creating account...","ok");const {data,error}=await supabaseClient.auth.signUp({email,password});if(error){showAuthStatus(error.message);return;}if(data.session){showAuthStatus("Account created.","ok");}else{showAuthStatus("Account created. Check your email to confirm your account, then log in.","ok");}}
+
+/* UI events */
+document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));btn.classList.add("active");document.getElementById(btn.dataset.page).classList.add("active");}));
+["search","tierFilter","positionFilter","clubFilter"].forEach(id=>{document.getElementById(id).addEventListener("input",renderPlayers);document.getElementById(id).addEventListener("change",renderPlayers);});
+
+document.getElementById("fImage").addEventListener("change",e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Please select an image file.");e.target.value="";return;}const reader=new FileReader();reader.onload=()=>{editingImage=reader.result;const img=document.getElementById("imagePreview");img.src=reader.result;img.style.display="block";};reader.readAsDataURL(file);});
+
+document.getElementById("playerForm").addEventListener("submit",async e=>{e.preventDefault();const btn=document.getElementById("savePlayerBtn");const original=btn.textContent;btn.disabled=true;btn.textContent="Saving...";try{const id=document.getElementById("editId").value||uid();const data={name:document.getElementById("fName").value.trim(),club:document.getElementById("fClub").value.trim(),position:document.getElementById("fPosition").value,tier:document.getElementById("fTier").value,rating:Math.max(0,Math.min(100,Number(document.getElementById("fRating").value)||0)),image:editingImage||""};const file=document.getElementById("fImage").files[0]||null;if(!data.name||!data.club)throw new Error("Name and club are required.");await savePlayerToDB(id,data,file);await loadPlayers();resetForm();refreshAll();}catch(err){console.error(err);alert("Save failed: "+err.message);}finally{btn.disabled=false;btn.textContent=original;}});
 
 document.getElementById("cancelEdit").addEventListener("click",resetForm);
-
-document.getElementById("resetPlayers").addEventListener("click",()=>{
-  if(!confirm("Reset the database to the demo players?"))return;
-  players=structuredClone(demoPlayers);
-  attendanceRecords={};
-  savePlayers();
-  saveAttendanceRecords();
-  generatedTeamA=[];generatedTeamB=[];
-  resetForm();refreshAll();
-});
-
+document.getElementById("resetPlayers").addEventListener("click",async()=>{if(!confirm("Reset the shared database to the demo players? This changes the database for everyone."))return;try{const payload=demoPlayers.map(p=>({...p,image_url:"",updated_by:currentUser?.id||null}));const {error}=await supabaseClient.from("players").upsert(payload,{onConflict:"id"});if(error)throw error;await loadPlayers();generatedTeamA=[];generatedTeamB=[];resetForm();refreshAll();}catch(err){alert("Reset failed: "+err.message);}});
 document.getElementById("generateBtn").addEventListener("click",generateTeams);
+document.getElementById("swapBtn").addEventListener("click",()=>{if(!generatedTeamA.length)return;[generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];renderTeams();});
+document.getElementById("clearTeamsBtn").addEventListener("click",()=>{generatedTeamA=[];generatedTeamB=[];renderTeams();});
+document.getElementById("loginBtn").addEventListener("click",login);document.getElementById("signupBtn").addEventListener("click",signup);document.getElementById("logoutBtn").addEventListener("click",signOut);
+document.getElementById("authPassword").addEventListener("keydown",e=>{if(e.key==="Enter")login();});
 
-document.getElementById("swapBtn").addEventListener("click",()=>{
-  if(!generatedTeamA.length)return;
-  [generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];
-  renderTeams();
-});
-
-document.getElementById("clearTeamsBtn").addEventListener("click",()=>{
-  generatedTeamA=[];generatedTeamB=[];renderTeams();
-});
-
-
-document.getElementById("attendanceDate").value=todayISO();
-
-document.getElementById("attendanceDate").addEventListener("change",()=>{
-  currentAttendanceDate=document.getElementById("attendanceDate").value;
-  renderAttendanceRoster();
-});
-
-document.getElementById("loadAttendanceBtn").addEventListener("click",loadAttendanceDate);
-document.getElementById("saveAttendanceBtn").addEventListener("click",saveCurrentAttendance);
-document.getElementById("markAllPresentBtn").addEventListener("click",()=>markAllAttendance(true));
-document.getElementById("clearAllPresentBtn").addEventListener("click",()=>markAllAttendance(false));
-document.getElementById("exportAttendanceBtn").addEventListener("click",exportAttendanceCSV);
-document.getElementById("attendanceSearch").addEventListener("input",renderAttendanceRoster);
-
-document.getElementById("generatorDate").addEventListener("change",()=>{
-  const date=document.getElementById("generatorDate").value;
-  if(date){
-    document.getElementById("generatorNotice").innerHTML=
-      `Selected session: <strong>${formatDate(date)}</strong> · `+
-      `<strong>${(attendanceRecords[date]?.attendees||[]).length}</strong> players present. `+
-      `Only these players will be used for 7v7.`;
+(async()=>{
+  if(SUPABASE_URL.includes("YOUR_")||SUPABASE_PUBLISHABLE_KEY.includes("YOUR_")){
+    showAuthStatus("Add your Supabase Project URL and Publishable Key in the code first.");
+    return;
   }
-});
-
-refreshAll();
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(session)await bootstrapApp(session);
+  supabaseClient.auth.onAuthStateChange(async(_event,newSession)=>{if(newSession&&!currentUser)await bootstrapApp(newSession);else if(!newSession)currentUser=null;});
+})();
 </script>
 </body>
 </html>
