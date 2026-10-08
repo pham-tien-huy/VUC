@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VinUni Ultimate Clubs Player Management</title>
+<style>
+:root{
+  --blue-950:#06152d;
+  --blue-900:#082858;
+  --blue-800:#0d3f82;
+  --blue-700:#1557b0;
+  --blue-600:#2878d0;
+  --blue-500:#4299e1;
+  --blue-100:#e8f3ff;
+  --blue-50:#f5f9ff;
+  --text:#122033;
+  --muted:#667085;
+  --line:#dfe7f1;
+  --white:#fff;
+  --green:#22c55e;
+  --red:#ef4444;
+  --gold:#f5c542;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:#f3f7fc;
+  color:var(--text);
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:linear-gradient(110deg,var(--blue-950),var(--blue-800));
+  color:#fff;padding:0 28px;
+  box-shadow:0 4px 18px rgba(7,26,51,.18)
+}
+.nav{
+  max-width:1400px;margin:auto;min-height:72px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px
+}
+.brand{font-weight:900;letter-spacing:.08em;font-size:18px}
+.brand small{display:block;font-weight:500;letter-spacing:.02em;opacity:.72;font-size:10px;margin-top:2px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{
+  border:0;background:transparent;color:#dcecff;
+  padding:12px 15px;border-radius:10px;font-weight:700
+}
+.tab:hover,.tab.active{background:rgba(255,255,255,.13);color:#fff}
+main{max-width:1400px;margin:auto;padding:28px}
+.page{display:none}.page.active{display:block}
+.hero{
+  background:linear-gradient(135deg,#fff,#edf6ff);
+  border:1px solid var(--line);border-radius:20px;padding:25px;
+  margin-bottom:22px
+}
+.hero h1{margin:0 0 7px;font-size:30px}
+.hero p{margin:0;color:var(--muted)}
+.panel{
+  background:#fff;border:1px solid var(--line);border-radius:18px;
+  padding:20px;box-shadow:0 8px 28px rgba(14,52,91,.05)
+}
+.panel h2{margin:0 0 16px;font-size:19px}
+.grid{display:grid;gap:18px}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select{
+  border:1px solid #ccd8e7;border-radius:10px;padding:11px 12px;
+  background:#fff;outline:none;min-width:150px
+}
+input:focus,select:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(66,153,225,.12)}
+.btn{
+  border:0;border-radius:10px;padding:11px 15px;font-weight:800;
+  transition:.15s
+}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--blue-700);color:#fff}
+.btn-secondary{background:var(--blue-100);color:var(--blue-800)}
+.btn-danger{background:#fee2e2;color:#991b1b}
+.btn-dark{background:var(--blue-950);color:#fff}
+.btn-ghost{background:#f5f7fa;color:#334155}
+.stat{
+  padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff
+}
+.stat .num{font-size:29px;font-weight:900;color:var(--blue-800)}
+.stat .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase}
+.player-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-top:18px
+}
+.player-card-db{
+  background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  box-shadow:0 6px 20px rgba(10,47,102,.06)
+}
+.photo{
+  width:100%;height:190px;object-fit:cover;background:linear-gradient(135deg,#dbeafe,#eff6ff)
+}
+.photo-placeholder{
+  width:100%;height:190px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#d9eaff,#f4f9ff);color:var(--blue-800);
+  font-size:46px;font-weight:900
+}
+.pbody{padding:14px}
+.pname{font-size:17px;font-weight:900;margin-bottom:5px}
+.meta{font-size:12px;color:var(--muted);margin-bottom:10px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}
+.tier-S{background:#fff3c4;color:#8a5b00}
+.tier-A{background:#e8edf5;color:#344054}
+.tier-B{background:#f5e2cf;color:#8b4a14}
+.tier-C{background:#e8eef5;color:#526173}
+.rating{background:#e8f3ff;color:#0d3f82}
+.actions{display:flex;gap:7px;margin-top:12px}.actions .btn{flex:1;padding:8px;font-size:12px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:800;color:#344054}
+.field.full{grid-column:1/-1}
+.upload-preview{
+  width:120px;height:150px;border-radius:12px;object-fit:cover;border:1px solid var(--line);
+  background:#f3f7fc
+}
+.empty{padding:35px;text-align:center;color:var(--muted)}
+/* ===== TEAM GENERATOR ===== */
+.generator-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mode-wrap{display:flex;align-items:center;gap:8px}
+.mode-wrap select{min-width:190px}
+.teams-visual{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:20px
+}
+.ultimate-team{
+  background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;
+  box-shadow:0 10px 30px rgba(10,47,102,.07)
+}
+.team-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.team-title{display:flex;align-items:center;gap:10px}
+.team-dot{width:13px;height:13px;border-radius:50%}
+.team-blue .team-dot{background:#2f7eea}.team-white .team-dot{background:#f8fafc;border:1px solid #9aa9ba}
+.team-title h3{margin:0;font-size:19px}.team-title span{font-size:11px;color:var(--muted);font-weight:800}
+.team-total{font-weight:900;color:var(--blue-800)}
+.ultimate-field{
+  position:relative;width:100%;aspect-ratio:1.48/1;overflow:hidden;border-radius:14px;
+  border:4px solid #dfff36;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.035) 49.7%,rgba(255,255,255,.35) 49.8%,rgba(255,255,255,.35) 50.2%,rgba(255,255,255,.035) 50.3%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0,rgba(255,255,255,.035) 2px,transparent 2px,transparent 42px),
+    #397b25;
+  box-shadow:0 0 16px rgba(220,255,50,.32)
+}
+.ultimate-field:after{
+  content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.45);transform:translateX(-50%)
+}
+.endzone{
+  position:absolute;top:0;bottom:0;width:15%;border:2px solid rgba(255,255,255,.58);z-index:1
+}
+.endzone.left{left:0}.endzone.right{right:0}
+.zone-label{
+  position:absolute;top:50%;transform:translateY(-50%);font-size:9px;
+  font-weight:900;letter-spacing:.08em;color:rgba(255,255,255,.72);writing-mode:vertical-rl
+}
+.endzone.left .zone-label{left:5px}.endzone.right .zone-label{right:5px}
+.field-player{
+  position:absolute;transform:translate(-50%,-50%);width:78px;text-align:center;
+  z-index:5;transition:.18s;cursor:pointer
+}
+.field-player:hover{z-index:20;transform:translate(-50%,-50%) scale(1.1)}
+.card-art{
+  position:relative;width:62px;height:80px;margin:auto;border-radius:8px;overflow:hidden;
+  border:2px solid #fff;box-shadow:0 6px 13px rgba(0,0,0,.35);
+  background:linear-gradient(145deg,#e8f3ff,#8cb9eb)
+}
+.team-white .card-art{background:linear-gradient(145deg,#f9fafb,#d9e3ee)}
+.card-art img{width:100%;height:100%;object-fit:cover}
+.card-initials{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:1000;color:#0a2f66
+}
+.card-rating{position:absolute;top:3px;left:4px;color:#fff;font-size:12px;font-weight:1000;text-shadow:0 1px 3px #000}
+.card-tier{position:absolute;top:3px;right:4px;color:#fff;background:rgba(0,0,0,.68);padding:1px 4px;border-radius:4px;font-size:9px;font-weight:900}
+.card-name{
+  position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.62);
+  color:#fff;font-size:8px;font-weight:900;padding:3px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.field-name{
+  margin-top:3px;color:#fff;font-size:10px;font-weight:900;text-shadow:0 1px 4px #000;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.field-pos{color:rgba(255,255,255,.85);font-size:8px;text-shadow:0 1px 3px #000}
+.team-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
+.team-stat{background:var(--blue-50);border-radius:9px;text-align:center;padding:7px}
+.team-stat strong{display:block;color:var(--blue-800);font-size:15px}.team-stat span{font-size:9px;color:var(--muted);font-weight:700}
+.generator-summary{
+  margin-top:15px;padding:12px;border-radius:12px;background:#f7fbff;border:1px solid var(--line);
+  color:var(--muted);font-size:12px
+}
+
+/* ===== ATTENDANCE ===== */
+.attendance-toolbar{
+  display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap
+}
+.attendance-toolbar .field{min-width:180px}
+.attendance-help{
+  margin-top:14px;padding:11px 13px;border-radius:10px;
+  background:var(--blue-50);border:1px solid var(--line);
+  color:var(--muted);font-size:12px
+}
+.attendance-roster{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px
+}
+.attendance-row{
+  display:flex;align-items:center;gap:11px;padding:11px 12px;
+  border:1px solid var(--line);border-radius:12px;background:#fff;
+  transition:.15s
+}
+.attendance-row:hover{border-color:#a9c8ed;background:#fafdff}
+.attendance-row.present{border-color:#8bd5a7;background:#f2fff6}
+.attendance-check{
+  width:19px;height:19px;accent-color:var(--blue-700);cursor:pointer;flex:none
+}
+.att-avatar{
+  width:38px;height:38px;border-radius:50%;overflow:hidden;flex:none;
+  background:var(--blue-100);display:flex;align-items:center;justify-content:center;
+  color:var(--blue-800);font-weight:900;font-size:12px
+}
+.att-avatar img{width:100%;height:100%;object-fit:cover}
+.att-info{min-width:0;flex:1}
+.att-name{font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.att-meta{font-size:10px;color:var(--muted);margin-top:2px}
+.att-status{
+  font-size:10px;font-weight:900;text-transform:uppercase;
+  color:#98a2b3
+}
+.attendance-row.present .att-status{color:#15803d}
+.attendance-history{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.session-chip{
+  border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer
+}
+.session-chip:hover{border-color:var(--blue-500);background:var(--blue-50)}
+.session-date{font-weight:900;color:var(--blue-800)}
+.session-count{font-size:11px;color:var(--muted)}
+@media(max-width:900px){.attendance-roster{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.attendance-roster{grid-template-columns:1fr}}
+
+/* ===== CLUBS / STATS ===== */
+.club-card{border:1px solid var(--line);border-radius:15px;padding:16px;background:#fff}
+.club-card h3{margin:0 0 6px}.club-card p{margin:0;color:var(--muted);font-size:12px}
+.bar{height:9px;background:#edf2f7;border-radius:99px;overflow:hidden;margin-top:8px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue-500),var(--blue-800));border-radius:99px}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse}.table th,.table td{padding:11px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}.table th{color:var(--muted);font-size:11px;text-transform:uppercase}
+@media(max-width:1050px){.grid-4{grid-template-columns:repeat(2,1fr)}.teams-visual{grid-template-columns:1fr}}
+@media(max-width:700px){
+  main{padding:15px}.topbar{padding:0 14px}.nav{align-items:flex-start;padding:12px 0;flex-direction:column}.tabs{width:100%;overflow:auto}
+  .grid-2,.grid-3,.grid-4,.form-grid{grid-template-columns:1fr}
+  .team-stats{grid-template-columns:repeat(2,1fr)}
+  .ultimate-field{aspect-ratio:1.2/1}.field-player{width:61px}.card-art{width:49px;height:65px}.field-name{font-size:8px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="nav">
+    <div class="brand">VINUNI ULTIMATE<small>CLUBS PLAYER MANAGEMENT</small></div>
+    <div class="tabs">
+      <button class="tab active" data-page="players">Players</button>
+      <button class="tab" data-page="generator">7v7 Generator</button>
+      <button class="tab" data-page="attendance">Attendance</button>
+      <button class="tab" data-page="clubs">Clubs</button>
+      <button class="tab" data-page="stats">Statistics</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- PLAYERS -->
+<section id="players" class="page active">
+  <div class="hero">
+    <h1>Player Database</h1>
+    <p>Manage players, photos, positions, tiers and ratings for VinUni Ultimate.</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat"><div class="num" id="statPlayers">0</div><div class="label">Players</div></div>
+    <div class="stat"><div class="num" id="statAvg">0</div><div class="label">Average Rating</div></div>
+    <div class="stat"><div class="num" id="statTop">0</div><div class="label">S / A Players</div></div>
+    <div class="stat"><div class="num" id="statClubs">0</div><div class="label">Clubs</div></div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <h2>Add / Edit Player</h2>
+    <form id="playerForm">
+      <input type="hidden" id="editId">
+      <div class="form-grid">
+        <div class="field"><label>Name</label><input id="fName" required placeholder="e.g. Huy Pham"></div>
+        <div class="field"><label>Club</label><input id="fClub" required placeholder="e.g. VinUni Ultimate"></div>
+        <div class="field"><label>Position</label>
+          <select id="fPosition"><option>Handler</option><option>Cutter</option><option>Hybrid</option><option>Defender</option><option>Utility</option></select>
+        </div>
+        <div class="field"><label>Tier</label>
+          <select id="fTier"><option>S</option><option>A</option><option>B</option><option>C</option></select>
+        </div>
+        <div class="field"><label>Overall Rating (0–100)</label><input id="fRating" type="number" min="0" max="100" value="80" required></div>
+        <div class="field"><label>Player Photo</label><input id="fImage" type="file" accept="image/*"></div>
+        <div class="field full">
+          <div class="controls">
+            <img id="imagePreview" class="upload-preview" alt="Preview" style="display:none">
+            <span style="font-size:12px;color:var(--muted)">Upload a photo to show the player card on the 7v7 field.</span>
+          </div>
+        </div>
+        <div class="field full">
+          <div class="controls">
+            <button class="btn btn-primary" type="submit" id="savePlayerBtn">Add Player</button>
+            <button class="btn btn-ghost" type="button" id="cancelEdit" style="display:none">Cancel Edit</button>
+            <button class="btn btn-danger" type="button" id="resetPlayers">Reset Demo Data</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="controls">
+      <input id="search" placeholder="Search player..." style="flex:1">
+      <select id="tierFilter"><option value="">All tiers</option><option>S</option><option>A</option><option>B</option><option>C</option></select>
+      <select id="positionFilter"><option value="">All positions</option><option>Handler</option><option>Cutter</option><option>Hybrid</option><option>Defender</option><option>Utility</option></select>
+      <select id="clubFilter"><option value="">All clubs</option></select>
+    </div>
+    <div id="playerGrid" class="player-grid"></div>
+  </div>
+</section>
+
+<!-- GENERATOR -->
+<section id="generator" class="page">
+  <div class="hero">
+    <h1>7v7 Team Generator</h1>
+    <p>Randomized team selection with balance constraints, then visualized directly on an Ultimate field.</p>
+  </div>
+
+  <div class="panel">
+    <div class="generator-toolbar">
+      <div class="mode-wrap"><strong>Training date:</strong>
+        <select id="generatorDate" style="min-width:180px">
+          <option value="">Select saved session</option>
+        </select>
+      </div>
+      <div class="mode-wrap"><strong>Mode:</strong>
+        <select id="genMode">
+          <option value="competitive">Competitive — balanced + random</option>
+          <option value="balanced">Balanced — strongest balance</option>
+          <option value="random">Random — pure random</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="generateBtn">⚡ Generate 7v7</button>
+      <button class="btn btn-secondary" id="swapBtn">↔ Swap Teams</button>
+      <button class="btn btn-ghost" id="clearTeamsBtn">Clear</button>
+    </div>
+    <div id="generatorNotice" class="generator-summary">Need at least 14 players. The generator uses the current player database.</div>
+  </div>
+
+  <div id="teamsContainer"></div>
+</section>
+
+
+<!-- ATTENDANCE -->
+<section id="attendance" class="page">
+  <div class="hero">
+    <h1>Club Attendance</h1>
+    <p>Track who attended each training session. Only players marked present will be available for 7v7 team generation.</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="stat"><div class="num" id="attTotalMembers">0</div><div class="label">Total Members</div></div>
+    <div class="stat"><div class="num" id="attPresent">0</div><div class="label">Present This Session</div></div>
+    <div class="stat"><div class="num" id="attAbsent">0</div><div class="label">Absent This Session</div></div>
+    <div class="stat"><div class="num" id="attSessions">0</div><div class="label">Saved Sessions</div></div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="attendance-toolbar">
+      <div class="field">
+        <label>Training Date</label>
+        <input id="attendanceDate" type="date">
+      </div>
+      <button class="btn btn-primary" id="loadAttendanceBtn">Load Date</button>
+      <button class="btn btn-secondary" id="markAllPresentBtn">✓ Mark All Present</button>
+      <button class="btn btn-ghost" id="clearAllPresentBtn">Clear All</button>
+      <button class="btn btn-dark" id="saveAttendanceBtn">Save Training Session</button>
+      <button class="btn btn-secondary" id="exportAttendanceBtn">Export Attendance CSV</button>
+    </div>
+
+    <div class="attendance-help">
+      Tick <strong>Present</strong> for everyone who actually came to the training session.
+      The saved attendance record is also used by the <strong>7v7 Generator</strong>.
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="controls" style="justify-content:space-between">
+      <h2 style="margin:0">Club Roster</h2>
+      <input id="attendanceSearch" placeholder="Search member..." style="max-width:300px">
+    </div>
+    <div id="attendanceRoster" class="attendance-roster"></div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="controls" style="justify-content:space-between">
+      <h2 style="margin:0">Saved Training Sessions</h2>
+      <span style="font-size:12px;color:var(--muted)">Click a date to load its attendance.</span>
+    </div>
+    <div id="attendanceHistory" class="attendance-history"></div>
+  </div>
+</section>
+
+<!-- CLUBS -->
+<section id="clubs" class="page">
+  <div class="hero"><h1>Clubs</h1><p>Overview of players grouped by club.</p></div>
+  <div id="clubsGrid" class="grid grid-3"></div>
+</section>
+
+<!-- STATS -->
+<section id="stats" class="page">
+  <div class="hero"><h1>Statistics</h1><p>Quick overview of the current player database.</p></div>
+  <div class="grid grid-4">
+    <div class="stat"><div class="num" id="sTotal">0</div><div class="label">Total Players</div></div>
+    <div class="stat"><div class="num" id="sAvg">0</div><div class="label">Average Rating</div></div>
+    <div class="stat"><div class="num" id="sHighest">0</div><div class="label">Highest Rating</div></div>
+    <div class="stat"><div class="num" id="sMedian">0</div><div class="label">Median Rating</div></div>
+  </div>
+  <div class="grid grid-2" style="margin-top:18px">
+    <div class="panel"><h2>Tier Distribution</h2><div id="tierStats"></div></div>
+    <div class="panel"><h2>Position Distribution</h2><div id="positionStats"></div></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const STORAGE_KEY = "vinuniUltimatePlayers_v3";
+const tierWeight = {S:4,A:3,B:2,C:1};
+
+const demoPlayers = [
+  {id:"p01",name:"Minh Anh",club:"VinUni Ultimate",position:"Handler",tier:"S",rating:94,image:""},
+  {id:"p02",name:"Huy Pham",club:"VinUni Ultimate",position:"Hybrid",tier:"S",rating:92,image:""},
+  {id:"p03",name:"Bao Long",club:"VinUni Ultimate",position:"Cutter",tier:"A",rating:89,image:""},
+  {id:"p04",name:"Duc Minh",club:"VinUni Ultimate",position:"Handler",tier:"A",rating:88,image:""},
+  {id:"p05",name:"Quang Anh",club:"VinUni Ultimate",position:"Defender",tier:"A",rating:87,image:""},
+  {id:"p06",name:"Tuan Kiet",club:"VinUni Ultimate",position:"Cutter",tier:"A",rating:86,image:""},
+  {id:"p07",name:"Khanh Linh",club:"VinUni Ultimate",position:"Hybrid",tier:"A",rating:85,image:""},
+  {id:"p08",name:"Thanh Dat",club:"VinUni Ultimate",position:"Handler",tier:"B",rating:83,image:""},
+  {id:"p09",name:"Gia Bao",club:"VinUni Ultimate",position:"Cutter",tier:"B",rating:82,image:""},
+  {id:"p10",name:"Hoang Nam",club:"VinUni Ultimate",position:"Defender",tier:"B",rating:81,image:""},
+  {id:"p11",name:"Nhat Minh",club:"VinUni Ultimate",position:"Hybrid",tier:"B",rating:80,image:""},
+  {id:"p12",name:"Thanh Tung",club:"VinUni Ultimate",position:"Handler",tier:"B",rating:79,image:""},
+  {id:"p13",name:"Mai Chi",club:"VinUni Ultimate",position:"Cutter",tier:"C",rating:77,image:""},
+  {id:"p14",name:"Anh Khoa",club:"VinUni Ultimate",position:"Utility",tier:"C",rating:76,image:""},
+  {id:"p15",name:"Viet Hoang",club:"VinUni Ultimate",position:"Defender",tier:"C",rating:75,image:""},
+  {id:"p16",name:"Phuong Nam",club:"VinUni Ultimate",position:"Hybrid",tier:"C",rating:74,image:""},
+  {id:"p17",name:"Duy Khanh",club:"VinUni Ultimate",position:"Handler",tier:"B",rating:82,image:""},
+  {id:"p18",name:"Ngoc Anh",club:"VinUni Ultimate",position:"Cutter",tier:"B",rating:81,image:""}
+];
+
+let players = loadPlayers();
+let generatedTeamA = [];
+let generatedTeamB = [];
+let attendanceRecords = loadAttendanceRecords();
+let currentAttendanceDate = "";
+let editingImage = "";
+
+function loadPlayers(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return Array.isArray(saved) && saved.length ? saved : structuredClone(demoPlayers);
+  }catch(e){ return structuredClone(demoPlayers); }
+}
+function savePlayers(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(players)); }
+function loadAttendanceRecords(){
+  try{
+    const saved = JSON.parse(localStorage.getItem("vinuniUltimateAttendance_v1"));
+    return saved && typeof saved === "object" ? saved : {};
+  }catch(e){ return {}; }
+}
+function saveAttendanceRecords(){
+  localStorage.setItem("vinuniUltimateAttendance_v1", JSON.stringify(attendanceRecords));
+}
+function todayISO(){
+  const d=new Date();
+  const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+  return local.toISOString().slice(0,10);
+}
+function formatDate(dateString){
+  if(!dateString) return "";
+  const d=new Date(dateString+"T00:00:00");
+  return d.toLocaleDateString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric"});
+}
+function getAttendeeIds(date){
+  return new Set((attendanceRecords[date]?.attendees)||[]);
+}
+function getAttendees(date){
+  const ids=getAttendeeIds(date);
+  return players.filter(p=>ids.has(p.id));
+}
+function uid(){ return "p_" + Date.now() + "_" + Math.random().toString(36).slice(2,8); }
+function esc(v){
+  return String(v ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+function initials(name){
+  return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase() || "?";
+}
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function sumRating(team){return team.reduce((s,p)=>s+Number(p.rating||0),0)}
+function sumTier(team){return team.reduce((s,p)=>s+(tierWeight[p.tier]||1),0)}
+function avgRating(team){return team.length?(sumRating(team)/team.length).toFixed(1):"0.0"}
+
+function positionCounts(team){
+  const out={};
+  team.forEach(p=>out[p.position]=(out[p.position]||0)+1);
+  return out;
+}
+function positionDifference(a,b){
+  const positions=["Handler","Cutter","Hybrid","Defender","Utility"];
+  return positions.reduce((s,pos)=>s+Math.abs((positionCounts(a)[pos]||0)-(positionCounts(b)[pos]||0)),0);
+}
+
+/* Lower score = better balance */
+function balanceScore(a,b){
+  const ratingDiff=Math.abs(sumRating(a)-sumRating(b));
+  const tierDiff=Math.abs(sumTier(a)-sumTier(b));
+  const posDiff=positionDifference(a,b);
+  return ratingDiff*1.0 + tierDiff*12 + posDiff*14;
+}
+
+function makeRandomSplit(){
+  const s=shuffle(players);
+  return {a:s.slice(0,7),b:s.slice(7,14)};
+}
+
+function generateTeams(){
+  const selectedDate=document.getElementById("generatorDate").value;
+
+  if(!selectedDate){
+    alert("Please select a saved training session first. Teams are generated only from players marked Present.");
+    return;
+  }
+
+  const activePlayers=getAttendees(selectedDate);
+
+  if(activePlayers.length<14){
+    alert(`Only ${activePlayers.length} players are marked Present on ${formatDate(selectedDate)}. You need at least 14 for 7v7.`);
+    return;
+  }
+
+  const mode=document.getElementById("genMode").value;
+  let chosen;
+
+  /* Generate only from attendees of the selected training session. */
+  const originalPlayers=players;
+  players=activePlayers;
+
+  try{
+    if(mode==="random"){
+      chosen=makeRandomSplit();
+    }else{
+      const iterations=mode==="balanced"?5000:1500;
+      const candidates=[];
+      for(let i=0;i<iterations;i++){
+        const split=makeRandomSplit();
+        candidates.push({...split,score:balanceScore(split.a,split.b)});
+      }
+      candidates.sort((x,y)=>x.score-y.score);
+
+      if(mode==="balanced"){
+        chosen=candidates[0];
+      }else{
+        const topN=Math.max(10,Math.floor(candidates.length*.05));
+        chosen=candidates[Math.floor(Math.random()*topN)];
+      }
+    }
+  }finally{
+    players=originalPlayers;
+  }
+
+  generatedTeamA=shuffle(chosen.a);
+  generatedTeamB=shuffle(chosen.b);
+  renderTeams();
+
+  const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));
+  const modeText={
+    random:"Pure random",
+    balanced:"Strongly balanced",
+    competitive:"Balanced + randomized"
+  }[mode];
+
+  const extras=activePlayers.length-14;
+
+  document.getElementById("generatorNotice").innerHTML =
+    `<strong>${modeText}</strong> · Session: <strong>${formatDate(selectedDate)}</strong> · `+
+    `Present: <strong>${activePlayers.length}</strong> · `+
+    `Rating difference: <strong>${diff}</strong> · `+
+    `Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR`+
+    (extras>0?` · ${extras} present players not selected`:"");
+}
+function renderTeams(){
+  const container=document.getElementById("teamsContainer");
+  if(!generatedTeamA.length || !generatedTeamB.length){
+    container.innerHTML=`
+      <div class="panel empty" style="margin-top:20px">
+        <div style="font-size:40px">⚡</div>
+        <strong>Generate your 7v7 teams</strong>
+        <div style="margin-top:6px">The two teams will appear here as player cards on an Ultimate field.</div>
+      </div>`;
+    return;
+  }
+  container.innerHTML=`
+    <div class="teams-visual">
+      ${renderTeam(generatedTeamA,"TEAM BLUE","team-blue")}
+      ${renderTeam(generatedTeamB,"TEAM WHITE","team-white")}
+    </div>`;
+}
+
+const formation=[
+  {x:50,y:13,label:"Deep"},
+  {x:28,y:30,label:"Wing"},
+  {x:72,y:30,label:"Wing"},
+  {x:50,y:47,label:"Middle"},
+  {x:28,y:65,label:"Wing"},
+  {x:72,y:65,label:"Wing"},
+  {x:50,y:84,label:"Deep"}
+];
+
+function renderTeam(team,name,teamClass){
+  const score=sumRating(team);
+  const tier=sumTier(team);
+  const pc=positionCounts(team);
+  return `
+    <div class="ultimate-team ${teamClass}">
+      <div class="team-head">
+        <div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 PLAYERS · VISUAL LINEUP</span></div></div>
+        <div class="team-total">${score} OVR</div>
+      </div>
+
+      <div class="ultimate-field">
+        <div class="endzone left"><span class="zone-label">END ZONE</span></div>
+        <div class="endzone right"><span class="zone-label">END ZONE</span></div>
+
+        ${team.map((p,i)=>{
+          const pos=formation[i];
+          return `
+            <div class="field-player" style="left:${pos.x}%;top:${pos.y}%" title="${esc(p.name)} · ${esc(p.position)}">
+              <div class="card-art">
+                ${p.image
+                  ? `<img src="${p.image}" alt="${esc(p.name)}">`
+                  : `<div class="card-initials">${esc(initials(p.name))}</div>`}
+                <div class="card-rating">${Number(p.rating)||0}</div>
+                <div class="card-tier">${esc(p.tier)}</div>
+                <div class="card-name">${esc(p.name)}</div>
+              </div>
+              <div class="field-name">${esc(p.name)}</div>
+              <div class="field-pos">${esc(p.position)}</div>
+            </div>`;
+        }).join("")}
+      </div>
+
+      <div class="team-stats">
+        <div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div>
+        <div class="team-stat"><strong>${tier}</strong><span>TIER SCORE</span></div>
+        <div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div>
+        <div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div>
+      </div>
+    </div>`;
+}
+
+function renderPlayers(){
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const tier=document.getElementById("tierFilter").value;
+  const position=document.getElementById("positionFilter").value;
+  const club=document.getElementById("clubFilter").value;
+
+  const filtered=players.filter(p=>{
+    const matchQ=!q || `${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q);
+    return matchQ && (!tier||p.tier===tier) && (!position||p.position===position) && (!club||p.club===club);
+  }).sort((a,b)=>Number(b.rating)-Number(a.rating));
+
+  const grid=document.getElementById("playerGrid");
+  if(!filtered.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1">No players found.</div>`;return;}
+
+  grid.innerHTML=filtered.map(p=>`
+    <div class="player-card-db">
+      ${p.image?`<img class="photo" src="${p.image}" alt="${esc(p.name)}">`:`<div class="photo-placeholder">${esc(initials(p.name))}</div>`}
+      <div class="pbody">
+        <div class="pname">${esc(p.name)}</div>
+        <div class="meta">${esc(p.club)} · ${esc(p.position)}</div>
+        <div class="badges">
+          <span class="badge tier-${esc(p.tier)}">TIER ${esc(p.tier)}</span>
+          <span class="badge rating">${Number(p.rating)||0} OVR</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary" onclick="editPlayer('${p.id}')">Edit</button>
+          <button class="btn btn-danger" onclick="deletePlayer('${p.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function refreshClubFilter(){
+  const select=document.getElementById("clubFilter");
+  const current=select.value;
+  const clubs=[...new Set(players.map(p=>p.club).filter(Boolean))].sort();
+  select.innerHTML=`<option value="">All clubs</option>`+clubs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  if(clubs.includes(current)) select.value=current;
+}
+
+function updateTopStats(){
+  const avg=players.length?(players.reduce((s,p)=>s+Number(p.rating||0),0)/players.length).toFixed(1):0;
+  const top=players.filter(p=>p.tier==="S"||p.tier==="A").length;
+  document.getElementById("statPlayers").textContent=players.length;
+  document.getElementById("statAvg").textContent=avg;
+  document.getElementById("statTop").textContent=top;
+  document.getElementById("statClubs").textContent=new Set(players.map(p=>p.club)).size;
+}
+
+function renderClubs(){
+  const grid=document.getElementById("clubsGrid");
+  const map={};
+  players.forEach(p=>{if(!map[p.club])map[p.club]=[];map[p.club].push(p)});
+  const clubs=Object.entries(map).sort((a,b)=>b[1].length-a[1].length);
+  grid.innerHTML=clubs.map(([club,list])=>{
+    const avg=(list.reduce((s,p)=>s+Number(p.rating||0),0)/list.length).toFixed(1);
+    const max=Math.max(...list.map(p=>Number(p.rating||0)));
+    return `<div class="club-card">
+      <h3>${esc(club)}</h3>
+      <p>${list.length} players · average ${avg} · best ${max}</p>
+      <div class="bar"><i style="width:${Math.min(100,max)}%"></i></div>
+    </div>`;
+  }).join("") || `<div class="empty">No clubs yet.</div>`;
+}
+
+function renderStats(){
+  const ratings=players.map(p=>Number(p.rating||0)).sort((a,b)=>a-b);
+  const avg=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):0;
+  const median=ratings.length?(
+    ratings.length%2?ratings[Math.floor(ratings.length/2)]:
+    ((ratings[ratings.length/2-1]+ratings[ratings.length/2])/2).toFixed(1)
+  ):0;
+  document.getElementById("sTotal").textContent=players.length;
+  document.getElementById("sAvg").textContent=avg;
+  document.getElementById("sHighest").textContent=ratings.length?Math.max(...ratings):0;
+  document.getElementById("sMedian").textContent=median;
+
+  const tiers=["S","A","B","C"];
+  document.getElementById("tierStats").innerHTML=tiers.map(t=>{
+    const n=players.filter(p=>p.tier===t).length;
+    const pct=players.length?n/players.length*100:0;
+    return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>Tier ${t}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+
+  const positions=["Handler","Cutter","Hybrid","Defender","Utility"];
+  document.getElementById("positionStats").innerHTML=positions.map(pos=>{
+    const n=players.filter(p=>p.position===pos).length;
+    const pct=players.length?n/players.length*100:0;
+    return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>${pos}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`;
+  }).join("");
+}
+
+
+function renderAttendanceRoster(){
+  const date=document.getElementById("attendanceDate").value;
+  const q=document.getElementById("attendanceSearch").value.trim().toLowerCase();
+  const savedIds=getAttendeeIds(date);
+
+  const list=players.filter(p=>
+    !q || `${p.name} ${p.club} ${p.position}`.toLowerCase().includes(q)
+  ).sort((a,b)=>a.name.localeCompare(b.name));
+
+  const container=document.getElementById("attendanceRoster");
+  if(!date){
+    container.innerHTML=`<div class="empty" style="grid-column:1/-1">Choose a training date first.</div>`;
+    updateAttendanceStats();
+    return;
+  }
+  if(!list.length){
+    container.innerHTML=`<div class="empty" style="grid-column:1/-1">No club members found.</div>`;
+    updateAttendanceStats();
+    return;
+  }
+
+  container.innerHTML=list.map(p=>{
+    const present=savedIds.has(p.id);
+    return `
+      <label class="attendance-row ${present?'present':''}">
+        <input class="attendance-check" type="checkbox" data-player-id="${p.id}" ${present?'checked':''}>
+        <div class="att-avatar">
+          ${p.image?`<img src="${p.image}" alt="${esc(p.name)}">`:esc(initials(p.name))}
+        </div>
+        <div class="att-info">
+          <div class="att-name">${esc(p.name)}</div>
+          <div class="att-meta">${esc(p.position)} · ${esc(p.tier)} · ${Number(p.rating)||0} OVR</div>
+        </div>
+        <span class="att-status">${present?'Present':'Absent'}</span>
+      </label>`;
+  }).join("");
+
+  container.querySelectorAll(".attendance-check").forEach(cb=>{
+    cb.addEventListener("change",()=>{
+      const row=cb.closest(".attendance-row");
+      row.classList.toggle("present",cb.checked);
+      row.querySelector(".att-status").textContent=cb.checked?"Present":"Absent";
+      updateAttendanceStats();
+    });
+  });
+  updateAttendanceStats();
+}
+
+function getCheckedAttendanceIds(){
+  return [...document.querySelectorAll("#attendanceRoster .attendance-check:checked")]
+    .map(x=>x.dataset.playerId);
+}
+
+function updateAttendanceStats(){
+  const date=document.getElementById("attendanceDate").value;
+  const ids=getCheckedAttendanceIds();
+  const present=date?ids.length:(attendanceRecords[date]?.attendees?.length||0);
+  document.getElementById("attTotalMembers").textContent=players.length;
+  document.getElementById("attPresent").textContent=present;
+  document.getElementById("attAbsent").textContent=Math.max(0,players.length-present);
+  document.getElementById("attSessions").textContent=Object.keys(attendanceRecords).length;
+}
+
+function renderAttendanceHistory(){
+  const dates=Object.keys(attendanceRecords).sort((a,b)=>b.localeCompare(a));
+  const container=document.getElementById("attendanceHistory");
+  if(!dates.length){
+    container.innerHTML=`<div class="empty">No training sessions saved yet.</div>`;
+    return;
+  }
+  container.innerHTML=dates.map(date=>{
+    const count=(attendanceRecords[date].attendees||[]).length;
+    return `
+      <button class="session-chip" data-session-date="${date}">
+        <span class="session-date">${formatDate(date)}</span>
+        <span class="session-count">${count}/${players.length} present</span>
+      </button>`;
+  }).join("");
+  container.querySelectorAll("[data-session-date]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.getElementById("attendanceDate").value=btn.dataset.sessionDate;
+      currentAttendanceDate=btn.dataset.sessionDate;
+      renderAttendanceRoster();
+      window.scrollTo({top:document.getElementById("attendanceDate").getBoundingClientRect().top+window.scrollY-110,behavior:"smooth"});
+    });
+  });
+}
+
+function renderGeneratorDates(){
+  const select=document.getElementById("generatorDate");
+  const current=select.value;
+  const dates=Object.keys(attendanceRecords).sort((a,b)=>b.localeCompare(a));
+  select.innerHTML=`<option value="">Select saved session</option>`+
+    dates.map(d=>`<option value="${d}">${formatDate(d)} — ${(attendanceRecords[d].attendees||[]).length} present</option>`).join("");
+  if(dates.includes(current)) select.value=current;
+}
+
+function loadAttendanceDate(){
+  const date=document.getElementById("attendanceDate").value;
+  if(!date){
+    alert("Please choose a training date.");
+    return;
+  }
+  currentAttendanceDate=date;
+  renderAttendanceRoster();
+}
+
+function saveCurrentAttendance(){
+  const date=document.getElementById("attendanceDate").value;
+  if(!date){
+    alert("Please choose a training date.");
+    return;
+  }
+  const attendees=getCheckedAttendanceIds();
+  attendanceRecords[date]={
+    date,
+    attendees,
+    updatedAt:new Date().toISOString()
+  };
+  saveAttendanceRecords();
+  currentAttendanceDate=date;
+  renderAttendanceHistory();
+  renderGeneratorDates();
+  renderAttendanceRoster();
+  document.getElementById("generatorDate").value=date;
+
+  const count=attendees.length;
+  alert(`Attendance saved for ${formatDate(date)}: ${count}/${players.length} present.`);
+}
+
+function exportAttendanceCSV(){
+  const dates=Object.keys(attendanceRecords).sort();
+  if(!dates.length){
+    alert("No saved attendance data to export.");
+    return;
+  }
+
+  const lines=[];
+  lines.push(["Date","Player ID","Player Name","Club","Position","Tier","Rating","Present"].map(csvEscape).join(","));
+
+  dates.forEach(date=>{
+    const ids=new Set(attendanceRecords[date].attendees||[]);
+    players.forEach(p=>{
+      lines.push([
+        date,p.id,p.name,p.club,p.position,p.tier,p.rating,ids.has(p.id)?"Yes":"No"
+      ].map(csvEscape).join(","));
+    });
+  });
+
+  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="vinuni_ultimate_attendance.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function csvEscape(value){
+  return `"${String(value??"").replace(/"/g,'""')}"`;
+}
+
+function markAllAttendance(value){
+  document.querySelectorAll("#attendanceRoster .attendance-check").forEach(cb=>{
+    cb.checked=value;
+    const row=cb.closest(".attendance-row");
+    row.classList.toggle("present",value);
+    row.querySelector(".att-status").textContent=value?"Present":"Absent";
+  });
+  updateAttendanceStats();
+}
+
+function refreshAll(){
+  refreshClubFilter();
+  renderPlayers();
+  updateTopStats();
+  renderClubs();
+  renderStats();
+  renderAttendanceHistory();
+  renderGeneratorDates();
+  renderAttendanceRoster();
+  renderTeams();
+}
+
+function resetForm(){
+  document.getElementById("playerForm").reset();
+  document.getElementById("editId").value="";
+  document.getElementById("fRating").value=80;
+  document.getElementById("imagePreview").style.display="none";
+  document.getElementById("imagePreview").src="";
+  document.getElementById("savePlayerBtn").textContent="Add Player";
+  document.getElementById("cancelEdit").style.display="none";
+  editingImage="";
+}
+
+function editPlayer(id){
+  const p=players.find(x=>x.id===id); if(!p)return;
+  document.getElementById("editId").value=p.id;
+  document.getElementById("fName").value=p.name;
+  document.getElementById("fClub").value=p.club;
+  document.getElementById("fPosition").value=p.position;
+  document.getElementById("fTier").value=p.tier;
+  document.getElementById("fRating").value=p.rating;
+  editingImage=p.image||"";
+  if(editingImage){
+    document.getElementById("imagePreview").src=editingImage;
+    document.getElementById("imagePreview").style.display="block";
+  }else{
+    document.getElementById("imagePreview").style.display="none";
+  }
+  document.getElementById("savePlayerBtn").textContent="Save Changes";
+  document.getElementById("cancelEdit").style.display="inline-block";
+  window.scrollTo({top:document.getElementById("playerForm").getBoundingClientRect().top+window.scrollY-100,behavior:"smooth"});
+}
+
+function deletePlayer(id){
+  const p=players.find(x=>x.id===id); if(!p)return;
+  if(!confirm(`Delete ${p.name}?`))return;
+  players=players.filter(x=>x.id!==id);
+  savePlayers();refreshAll();
+}
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.page).classList.add("active");
+  });
+});
+
+["search","tierFilter","positionFilter","clubFilter"].forEach(id=>{
+  document.getElementById(id).addEventListener("input",renderPlayers);
+  document.getElementById(id).addEventListener("change",renderPlayers);
+});
+
+document.getElementById("fImage").addEventListener("change",e=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    editingImage=reader.result;
+    const img=document.getElementById("imagePreview");
+    img.src=reader.result;img.style.display="block";
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("playerForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const id=document.getElementById("editId").value;
+  const data={
+    name:document.getElementById("fName").value.trim(),
+    club:document.getElementById("fClub").value.trim(),
+    position:document.getElementById("fPosition").value,
+    tier:document.getElementById("fTier").value,
+    rating:Math.max(0,Math.min(100,Number(document.getElementById("fRating").value)||0)),
+    image:editingImage||""
+  };
+  if(!data.name||!data.club)return;
+  if(id){
+    const idx=players.findIndex(p=>p.id===id);
+    if(idx>=0)players[idx]={...players[idx],...data};
+  }else{
+    players.push({id:uid(),...data});
+  }
+  savePlayers();resetForm();refreshAll();
+});
+
+document.getElementById("cancelEdit").addEventListener("click",resetForm);
+
+document.getElementById("resetPlayers").addEventListener("click",()=>{
+  if(!confirm("Reset the database to the demo players?"))return;
+  players=structuredClone(demoPlayers);
+  attendanceRecords={};
+  savePlayers();
+  saveAttendanceRecords();
+  generatedTeamA=[];generatedTeamB=[];
+  resetForm();refreshAll();
+});
+
+document.getElementById("generateBtn").addEventListener("click",generateTeams);
+
+document.getElementById("swapBtn").addEventListener("click",()=>{
+  if(!generatedTeamA.length)return;
+  [generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];
+  renderTeams();
+});
+
+document.getElementById("clearTeamsBtn").addEventListener("click",()=>{
+  generatedTeamA=[];generatedTeamB=[];renderTeams();
+});
+
+
+document.getElementById("attendanceDate").value=todayISO();
+
+document.getElementById("attendanceDate").addEventListener("change",()=>{
+  currentAttendanceDate=document.getElementById("attendanceDate").value;
+  renderAttendanceRoster();
+});
+
+document.getElementById("loadAttendanceBtn").addEventListener("click",loadAttendanceDate);
+document.getElementById("saveAttendanceBtn").addEventListener("click",saveCurrentAttendance);
+document.getElementById("markAllPresentBtn").addEventListener("click",()=>markAllAttendance(true));
+document.getElementById("clearAllPresentBtn").addEventListener("click",()=>markAllAttendance(false));
+document.getElementById("exportAttendanceBtn").addEventListener("click",exportAttendanceCSV);
+document.getElementById("attendanceSearch").addEventListener("input",renderAttendanceRoster);
+
+document.getElementById("generatorDate").addEventListener("change",()=>{
+  const date=document.getElementById("generatorDate").value;
+  if(date){
+    document.getElementById("generatorNotice").innerHTML=
+      `Selected session: <strong>${formatDate(date)}</strong> · `+
+      `<strong>${(attendanceRecords[date]?.attendees||[]).length}</strong> players present. `+
+      `Only these players will be used for 7v7.`;
+  }
+});
+
+refreshAll();
+</script>
+</body>
+</html>
