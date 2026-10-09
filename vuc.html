@@ -278,6 +278,30 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   .performance-row{grid-template-columns:minmax(140px,1fr) repeat(4,55px) 65px 60px; gap: 8px;}
   .stat-btn { height: 30px; font-size: 11px; }
 }
+
+/* Mobile/tablet live substitutions and live team average OVR */
+.live-team-head{gap:10px;flex-wrap:wrap}
+.live-team-head .live-team-heading{display:flex;flex-direction:column;gap:5px}
+.live-team-head .live-team-average{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:10px;background:#eaf2ff;color:#1e40af;font-size:13px;font-weight:900;white-space:nowrap}
+.live-team-head .live-team-average strong{font-size:18px}
+.substitute-chip{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.substitute-chip.selected-sub{outline:3px solid #2563eb;background:#dbeafe;color:#1d4ed8;box-shadow:0 0 0 4px rgba(37,99,235,.14);transform:translateY(-2px)}
+.live-player{touch-action:manipulation;-webkit-tap-highlight-color:rgba(37,99,235,.25)}
+.live-player.tap-target{filter:drop-shadow(0 0 10px #2563eb);z-index:30}
+#dragHint .mobile-sub-hint{display:block;margin-top:6px;font-weight:800;color:#1d4ed8}
+@media(max-width:768px){
+  .live-team-grid{grid-template-columns:1fr!important;gap:18px}
+  .live-team-head h3{font-size:17px}
+  .live-team-head span{font-size:11px}
+  .live-team-average{padding:6px 8px!important;font-size:12px!important}
+  .live-team-average strong{font-size:16px!important}
+  .substitute-zone{padding:10px;gap:8px}
+  .substitute-chip{min-height:42px;padding:10px 12px;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+  .live-player{width:64px}
+  .live-card{width:48px;height:66px}
+  .live-player-name{font-size:9px;max-width:76px;margin-left:auto;margin-right:auto}
+}
+
 </style>
 </head>
 <body>
@@ -403,7 +427,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
       <button class="btn btn-primary" id="activateMatchBtn">▶ Activate Match</button>
       <button class="btn btn-danger" id="endMatchBtn" style="display:none">■ End Match</button>
     </div>
-    <div id="dragHint" class="generator-summary" style="margin-top:16px">Drag a substitute onto a player on the field to replace them. The substitution is synchronized to every device. Stats are recorded only for players currently on the field.</div>
+    <div id="dragHint" class="generator-summary" style="margin-top:16px">Desktop: drag a substitute onto a player on the field. On phone/tablet: tap a substitute, then tap the on-field player to replace. Team average OVR updates automatically after every substitution and syncs across devices. Stats are recorded only for players currently on the field.<span class="mobile-sub-hint">📱 Mobile: Select SUB → tap the player to come off.</span></div>
     <div id="liveTeamsContainer" style="margin-top:24px"></div>
     <div class="performance-panel">
       <div class="performance-tabs">
@@ -878,6 +902,7 @@ let activeScrimmagePlayers=[];
 let activeScrimmageEvents=[];
 let performanceTeam='A';
 let dragPlayerId=null;
+let selectedSubPlayerId=null;
 
 function tierFromRating(r){r=Number(r)||0;return r>=90?'S':r>=80?'A':r>=70?'B':'C';}
 function statTotalsForPlayer(playerId){const out={goal:0,assist:0,drop:0,block:0};activeScrimmageEvents.filter(e=>e.player_id===playerId).forEach(e=>{if(out[e.stat_type]!==undefined)out[e.stat_type]+=Number(e.delta||0)});return out;}
@@ -896,12 +921,29 @@ function renderLiveMatch(){
   const goalsB=activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   document.getElementById('scoreA').textContent=goalsA;document.getElementById('scoreB').textContent=goalsB;
   
-  const field=(team,subs,teamName)=>`<div class="live-team"><div class="live-team-head"><h3>${teamName}</h3><span>${team.length} ON FIELD · ${subs.length} SUB</span></div><div class="live-field"><div class="endzone top"></div><div class="endzone bottom"></div>${team.map((p,i)=>{const pos=formation[i]||formation[0];return `<div class="live-player" draggable="true" data-player-id="${esc(p.id)}" data-team="${teamName==='TEAM BLUE'?'A':'B'}" style="left:${pos.x}\%;top:${pos.y}%" title="Drag a substitute here to replace ${esc(p.name)}"><div class="live-card ${p.gender==='Female'?'gender-female':'gender-male'} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="live-player-name">${esc(p.name)}</div><div class="live-player-pos">${esc(p.position)}</div></div>`}).join('')}</div><div class="substitute-zone" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">${subs.length?subs.map(p=>`<div class="substitute-chip" draggable="true" data-player-id="${esc(p.id)}" data-sub-team="${teamName==='TEAM BLUE'?'A':'B'}">↔ ${esc(p.name)} ·${Number(p.rating||0)} OVR</div>`).join(''):'<span style="font-size:12px;color:var(--muted)">No substitutes</span>'}</div></div>`;
+  const field=(team,subs,teamName)=>{const teamKey=teamName==='TEAM BLUE'?'A':'B';const average=team.length?(team.reduce((sum,p)=>sum+(Number(p.rating)||0),0)/team.length).toFixed(1):'0.0';return `<div class="live-team"><div class="live-team-head"><div class="live-team-heading"><h3>${teamName}</h3><span>${team.length} ON FIELD · ${subs.length} SUB</span></div><div class="live-team-average" aria-live="polite">AVG OVR <strong>${average}</strong></div></div><div class="live-field"><div class="endzone top"></div><div class="endzone bottom"></div>${team.map((p,i)=>{const pos=formation[i]||formation[0];return `<div class="live-player ${selectedSubPlayerId?'tap-target':''}" role="button" tabindex="0" draggable="true" data-player-id="${esc(p.id)}" data-team="${teamKey}" style="left:${pos.x}%;top:${pos.y}%" title="Tap after selecting a substitute to replace ${esc(p.name)}"><div class="live-card ${p.gender==='Female'?'gender-female':'gender-male'} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="live-player-name">${esc(p.name)}</div><div class="live-player-pos">${esc(p.position)}</div></div>`}).join('')}</div><div class="substitute-zone" data-sub-team="${teamKey}">${subs.length?subs.map(p=>`<div class="substitute-chip ${selectedSubPlayerId===p.id?'selected-sub':''}" role="button" tabindex="0" draggable="true" data-player-id="${esc(p.id)}" data-sub-team="${teamKey}" aria-pressed="${selectedSubPlayerId===p.id}">↔ ${esc(p.name)} · ${Number(p.rating||0)} OVR${selectedSubPlayerId===p.id?' · SELECTED':''}</div>`).join(''):'<span style="font-size:12px;color:var(--muted)">No substitutes</span>'}</div></div>`};
   document.getElementById('liveTeamsContainer').innerHTML=`<div class="live-team-grid">${field(a,subsA,'TEAM BLUE')}${field(b,subsB,'TEAM WHITE')}</div>`;
   bindDragDrop();renderPerformance();
 }
-function bindDragDrop(){document.querySelectorAll('.live-player').forEach(el=>{el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over')});el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));el.addEventListener('drop',async e=>{e.preventDefault();el.classList.remove('drag-over');const source=dragPlayerId,target=el.dataset.playerId;if(source&&target&&source!==target)await substitutePlayer(source,target);});el.addEventListener('dragstart',()=>{dragPlayerId=el.dataset.playerId;});});document.querySelectorAll('.substitute-chip').forEach(el=>{el.addEventListener('dragstart',()=>{dragPlayerId=el.dataset.playerId;el.classList.add('dragging')});el.addEventListener('dragend',()=>{dragPlayerId=null;el.classList.remove('dragging')});});}
-async function substitutePlayer(sourceId,targetId){if(!activeScrimmageId)return;const source=activeScrimmagePlayers.find(x=>x.player_id===sourceId),target=activeScrimmagePlayers.find(x=>x.player_id===targetId);if(!source||!target)return;if(source.team!==target.team||source.on_field||!target.on_field){alert('For a substitution, drag a substitute onto a player from the same team.');return;}const {error:e1}=await supabaseClient.from('scrimmage_players').update({on_field:false,slot:null}).eq('match_id',activeScrimmageId).eq('player_id',targetId);if(e1){alert('Substitution failed: '+e1.message);return;}const {error:e2}=await supabaseClient.from('scrimmage_players').update({on_field:true,slot:target.slot}).eq('match_id',activeScrimmageId).eq('player_id',sourceId);if(e2){alert('Substitution failed: '+e2.message);return;}setSync('Substitution synced',true);await loadActiveScrimmage();}
+function bindDragDrop(){
+  document.querySelectorAll('.live-player').forEach(el=>{
+    el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over')});
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',async e=>{e.preventDefault();el.classList.remove('drag-over');const source=dragPlayerId||e.dataTransfer.getData('text/plain');const target=el.dataset.playerId;if(source&&target&&source!==target)await substitutePlayer(source,target);});
+    el.addEventListener('dragstart',e=>{dragPlayerId=el.dataset.playerId;e.dataTransfer.setData('text/plain',dragPlayerId);});
+    const tapTarget=async()=>{if(!selectedSubPlayerId)return;const source=selectedSubPlayerId,target=el.dataset.playerId;if(source===target)return;await substitutePlayer(source,target);};
+    el.addEventListener('click',tapTarget);
+    el.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&selectedSubPlayerId){e.preventDefault();tapTarget();}});
+  });
+  document.querySelectorAll('.substitute-chip').forEach(el=>{
+    el.addEventListener('dragstart',e=>{dragPlayerId=el.dataset.playerId;e.dataTransfer.setData('text/plain',dragPlayerId);el.classList.add('dragging')});
+    el.addEventListener('dragend',()=>{dragPlayerId=null;el.classList.remove('dragging')});
+    const selectSub=()=>{selectedSubPlayerId=selectedSubPlayerId===el.dataset.playerId?null:el.dataset.playerId;renderLiveMatch();};
+    el.addEventListener('click',selectSub);
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectSub();}});
+  });
+}
+async function substitutePlayer(sourceId,targetId){if(!activeScrimmageId)return;const source=activeScrimmagePlayers.find(x=>x.player_id===sourceId),target=activeScrimmagePlayers.find(x=>x.player_id===targetId);if(!source||!target)return;if(source.team!==target.team||source.on_field||!target.on_field){alert('For a substitution, drag a substitute onto a player from the same team.');return;}const {error:e1}=await supabaseClient.from('scrimmage_players').update({on_field:false,slot:null}).eq('match_id',activeScrimmageId).eq('player_id',targetId);if(e1){alert('Substitution failed: '+e1.message);return;}const {error:e2}=await supabaseClient.from('scrimmage_players').update({on_field:true,slot:target.slot}).eq('match_id',activeScrimmageId).eq('player_id',sourceId);if(e2){alert('Substitution failed: '+e2.message);return;}selectedSubPlayerId=null;dragPlayerId=null;setSync('Substitution synced',true);await loadActiveScrimmage();}
 
 function renderPerformance(){const list=document.getElementById('performanceList');const map=new Map(players.map(p=>[p.id,p]));const onField=activeScrimmagePlayers.filter(x=>x.team===performanceTeam&&x.on_field).sort((a,b)=>(a.slot??99)-(b.slot??99));if(!onField.length){list.innerHTML='<div class="empty">No players currently on the field.</div>';return;}list.innerHTML=`<div class="performance-row" style="font-size:11px;color:var(--muted);font-weight:900; letter-spacing:0.5px"><div>PLAYER</div><div>GOAL (+4)</div><div>AST (+2)</div><div>DROP (-3)</div><div>BLK (+3)</div><div>POINTS</div><div>Δ RATING</div></div>`+onField.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));return `<div class="performance-row"><div class="performance-player">${p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<div class="performance-avatar">${esc(initials(p.name))}</div>`}<div><strong>${esc(p.name)}</strong><span>${esc(p.position)} · ${esc(p.tier)} · ${Number(p.rating||0).toFixed(1)} OVR</span></div></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','assist')">+1 A</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');}
 window.recordMatchStat=async function(playerId,statType){if(!activeScrimmageId)return;const row=activeScrimmagePlayers.find(x=>x.player_id===playerId);if(!row||!row.on_field){alert('Only players currently on the field can receive match stats.');return;}const {error}=await supabaseClient.from('scrimmage_stat_events').insert({match_id:activeScrimmageId,player_id:playerId,team:row.team,stat_type:statType,delta:1});if(error){alert('Could not record stat: '+error.message);return;}await loadActiveScrimmage();};
