@@ -302,6 +302,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   .live-player-name{font-size:9px;max-width:76px;margin-left:auto;margin-right:auto}
 }
 
+.log-date{font-size:11px;color:var(--muted);margin-top:4px;font-weight:500;}
 </style>
 </head>
 <body>
@@ -626,22 +627,43 @@ let attendanceRows=[];
 let attendancePresentIds=new Set();
 let attendanceTeams={a:[],b:[],subA:[],subB:[]};
 
-/* === QUẢN LÝ DỮ LIỆU LOGISTIC VỚI LOCALSTORAGE === */
-let logisticData = JSON.parse(localStorage.getItem('vinuni_logistic')) || {
-  permanent: [
-    { id: 'p1', name: 'Đĩa Ultimate (DiscCraft)', qty: 15, assignees: ['Phạm Tiến Huy'] },
-    { id: 'p2', name: 'Áo Bibs Tập Luyện', qty: 20, assignees: [] }
-  ],
-  shopping: [
-    { id: 's1', name: 'Băng keo thể thao', qty: 5, assignees: [] },
-    { id: 's2', name: 'Bình nước đá lớn 20L', qty: 2, assignees: [] }
-  ],
-  borrow: []
-};
+/* === LOGISTICS: SUPABASE IS THE SOURCE OF TRUTH === */
+let logisticData = { permanent: [], shopping: [], borrow: [] };
+let logisticBusy = false;
 
-function saveLogisticData() {
-  localStorage.setItem('vinuni_logistic', JSON.stringify(logisticData));
+function mapInventoryRow(r){ return {id:r.id,name:r.name,qty:Number(r.quantity)||1,assignees:Array.isArray(r.assignees)?r.assignees:[],createdAt:r.created_at,updatedAt:r.updated_at,notes:r.notes||''}; }
+function mapPurchaseRow(r){ return {id:r.id,name:r.name,qty:Number(r.quantity)||1,assignees:Array.isArray(r.assignees)?r.assignees:[],createdAt:r.created_at,notes:r.notes||''}; }
+function mapBorrowRow(r){ return {id:r.id,name:r.item_name,qty:Number(r.quantity)||1,assignees:Array.isArray(r.assignees)?r.assignees:[],borrowDate:r.borrow_date,dueDate:r.return_date,createdAt:r.created_at,notes:r.notes||'',purpose:r.purpose||''}; }
+async function loadLogisticData(){
+  const results = await Promise.all([
+    supabaseClient.from('logistics_inventory').select('*').order('created_at',{ascending:false}),
+    supabaseClient.from('logistics_purchases').select('*').order('created_at',{ascending:false}),
+    supabaseClient.from('logistics_events').select('*').order('created_at',{ascending:false})
+  ]);
+  for(const r of results) if(r.error) throw r.error;
+  logisticData={permanent:(results[0].data||[]).map(mapInventoryRow),shopping:(results[1].data||[]).map(mapPurchaseRow),borrow:(results[2].data||[]).map(mapBorrowRow)};
   renderLogisticLists();
+}
+
+// One-time migration: read the old browser cache only if the shared tables are all empty.
+// New/updated data is never written to localStorage.
+async function migrateLegacyLogisticData(){
+  const legacyRaw=localStorage.getItem('vinuni_logistic');
+  if(!legacyRaw) return;
+  const counts=await Promise.all([
+    supabaseClient.from('logistics_inventory').select('id',{count:'exact',head:true}),
+    supabaseClient.from('logistics_purchases').select('id',{count:'exact',head:true}),
+    supabaseClient.from('logistics_events').select('id',{count:'exact',head:true})
+  ]);
+  for(const r of counts) if(r.error) throw r.error;
+  let legacy; try{legacy=JSON.parse(legacyRaw);}catch(e){console.warn('Legacy logistics cache could not be parsed',e);return;}
+  const inv=(legacy.permanent||[]).map(x=>({name:String(x.name||'Unnamed item'),quantity:Math.max(1,Number(x.qty)||1),assignees:Array.isArray(x.assignees)?x.assignees:[],notes:x.notes||null}));
+  const shop=(legacy.shopping||[]).map(x=>({name:String(x.name||'Unnamed item'),quantity:Math.max(1,Number(x.qty)||1),assignees:Array.isArray(x.assignees)?x.assignees:[],notes:x.notes||null}));
+  const borrow=(legacy.borrow||[]).map(x=>({item_name:String(x.name||'Unnamed item'),quantity:Math.max(1,Number(x.qty)||1),assignees:Array.isArray(x.assignees)?x.assignees:[],purpose:x.purpose||'Club activity',borrow_date:x.borrowDate||todayISO(),return_date:(x.dueDate&&x.dueDate>= (x.borrowDate||todayISO()))?x.dueDate:(x.borrowDate||todayISO()),notes:x.notes||null}));
+  if((counts[0].count||0)===0 && inv.length){const r=await supabaseClient.from('logistics_inventory').insert(inv);if(r.error)throw r.error;}
+  if((counts[1].count||0)===0 && shop.length){const r=await supabaseClient.from('logistics_purchases').insert(shop);if(r.error)throw r.error;}
+  if((counts[2].count||0)===0 && borrow.length){const r=await supabaseClient.from('logistics_events').insert(borrow);if(r.error)throw r.error;}
+  console.info('Migrated eligible legacy logistics lists to Supabase. The old local cache was preserved as a backup.');
 }
 /* ================================================= */
 
@@ -1013,142 +1035,77 @@ async function endMatch(){
 
 async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const rows=mp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};ev.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:x.team==='A'?'Team 1':'Team 2',Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ev.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:e.team==='A'?'Team 1':'Team 2',Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
 
-/* ===== THAO TÁC CỦA TAB LOGISTIC ===== */
+/* ===== LOGISTICS: ALL CRUD OPERATIONS USE SUPABASE ===== */
 function renderMemberPool(){
   const pool=document.getElementById('memberPool');
   if(!players.length){pool.innerHTML='<span style="color:var(--muted);font-size:13px;">Chưa có thành viên nào trong Database. Hãy thêm player ở tab Players.</span>';return;}
   pool.innerHTML=players.map(p=>`<div class="member-pool-item" draggable="true" ondragstart="dragMember(event, '${esc(p.name)}')">👤 ${esc(p.name)}</div>`).join('');
 }
-
 let draggedMemberName='';
-function dragMember(e, name){draggedMemberName=name;}
-function allowDrop(e){e.preventDefault();}
-
-function dropMember(e, type, id){
-  e.preventDefault();
-  if(!draggedMemberName) return;
-  const item=logisticData[type].find(x=>x.id===id);
-  if(item){
-    if(!item.assignees.includes(draggedMemberName)){
-      item.assignees.push(draggedMemberName);
-      saveLogisticData();
-    }
-  }
-  draggedMemberName='';
+function dragMember(e,name){draggedMemberName=name;if(e.dataTransfer){e.dataTransfer.setData('text/plain',name);e.dataTransfer.effectAllowed='copy';}}
+function allowDrop(e){e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';}
+function logisticsTable(type){return type==='permanent'?'logistics_inventory':type==='shopping'?'logistics_purchases':'logistics_events';}
+function logisticsIdColumn(type){return type==='borrow'?'id':'id';}
+function logisticsAssigneePatch(type,names){return type==='borrow'?{assignees:names}:{assignees:names,updated_at:new Date().toISOString()};}
+async function dropMember(e,type,id){
+  e.preventDefault();const name=draggedMemberName||(e.dataTransfer&&e.dataTransfer.getData('text/plain'));if(!name)return;
+  const item=logisticData[type].find(x=>x.id===id);if(!item)return;
+  if(item.assignees.includes(name))return;
+  if(item.assignees.length>=3){alert('Mỗi món đồ tối đa 3 người phụ trách.');return;}
+  const names=[...item.assignees,name];
+  const {error}=await supabaseClient.from(logisticsTable(type)).update(logisticsAssigneePatch(type,names)).eq('id',id);
+  if(error){alert('Không thể cập nhật người phụ trách: '+error.message);return;}
+  item.assignees=names;renderLogisticLists();draggedMemberName='';
 }
-
-function removeAssignee(type, id, name){
-  const item=logisticData[type].find(x=>x.id===id);
-  if(item){
-    item.assignees=item.assignees.filter(x=>x!==name);
-    saveLogisticData();
-  }
+async function removeAssignee(type,id,name){
+  const item=logisticData[type].find(x=>x.id===id);if(!item)return;
+  const names=item.assignees.filter(x=>x!==name);
+  const {error}=await supabaseClient.from(logisticsTable(type)).update(logisticsAssigneePatch(type,names)).eq('id',id);
+  if(error){alert('Không thể bỏ người phụ trách: '+error.message);return;}
+  item.assignees=names;renderLogisticLists();
 }
-
+function assigneeHtml(type,item,emptyText){
+  const tags=item.assignees.map(name=>`<span class="assignee-tag">${esc(name)} <button onclick="removeAssignee('${type}','${item.id}','${esc(name).replace(/'/g,"\\'")}')" title="Bỏ người phụ trách">×</button></span>`).join('');
+  return `<div class="assignee-dropzone" ondragover="allowDrop(event)" ondrop="dropMember(event,'${type}','${item.id}')">${tags}${!item.assignees.length?`<span style="font-size:11px;color:#94a3b8">${emptyText}</span>`:''}</div>`;
+}
+function stamp(v){return v?new Date(v).toLocaleString('vi-VN',{hour12:false}):'-';}
 function renderLogisticLists(){
-  document.getElementById('permanentInventoryBody').innerHTML=logisticData.permanent.map(item=>`
-    <tr>
-      <td><strong>${esc(item.name)}</strong></td>
-      <td>${item.qty}</td>
-      <td>
-        <div class="assignee-dropzone" ondragover="allowDrop(event)" ondrop="dropMember(event, 'permanent', '${item.id}')">
-          ${item.assignees.map(name=>`<span class="assignee-tag">${esc(name)} <button onclick="removeAssignee('permanent', '${item.id}', '${esc(name)}')">×</button></span>`).join('')}
-          ${!item.assignees.length?'<span style="font-size:11px;color:#94a3b8">Kéo thả thành viên vào đây</span>':''}
-        </div>
-      </td>
-      <td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deletePermanentItem('${item.id}')">Xóa</button></td>
-    </tr>
-  `).join('')||`<tr><td colspan="4" class="empty">Chưa có đồ cố định nào.</td></tr>`;
-
-  document.getElementById('shoppingListBody').innerHTML=logisticData.shopping.map(item=>`
-    <tr>
-      <td style="text-align:center;"><input type="checkbox" style="width:20px;height:20px;cursor:pointer;" onchange="markShoppingDone('${item.id}')" title="Tích Done để chuyển lên đồ Cố Định"></td>
-      <td><strong>${esc(item.name)}</strong></td>
-      <td>${item.qty}</td>
-      <td>
-        <div class="assignee-dropzone" ondragover="allowDrop(event)" ondrop="dropMember(event, 'shopping', '${item.id}')">
-          ${item.assignees.map(name=>`<span class="assignee-tag">${esc(name)} <button onclick="removeAssignee('shopping', '${item.id}', '${esc(name)}')">×</button></span>`).join('')}
-          ${!item.assignees.length?'<span style="font-size:11px;color:#94a3b8">Kéo thả người đi mua</span>':''}
-        </div>
-      </td>
-      <td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteShoppingItem('${item.id}')">Xóa</button></td>
-    </tr>
-  `).join('')||`<tr><td colspan="5" class="empty">Không có món đồ nào cần mua.</td></tr>`;
-
-  document.getElementById('borrowListBody').innerHTML=logisticData.borrow.map(item=>`
-    <tr>
-      <td><strong>${esc(item.name)}</strong></td>
-      <td>${item.qty}</td>
-      <td>${item.borrowDate||'-'}</td>
-      <td><span style="color:var(--red); font-weight:800;">${item.dueDate||'-'}</span></td>
-      <td>
-        <div class="assignee-dropzone" ondragover="allowDrop(event)" ondrop="dropMember(event, 'borrow', '${item.id}')">
-          ${item.assignees.map(name=>`<span class="assignee-tag">${esc(name)} <button onclick="removeAssignee('borrow', '${item.id}', '${esc(name)}')">×</button></span>`).join('')}
-          ${!item.assignees.length?'<span style="font-size:11px;color:#94a3b8">Kéo thả người mượn</span>':''}
-        </div>
-      </td>
-      <td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteBorrowItem('${item.id}')">Xóa</button></td>
-    </tr>
-  `).join('')||`<tr><td colspan="6" class="empty">There are not any borrowed items.</td></tr>`;
+  const invBody=document.getElementById('permanentInventoryBody'), shopBody=document.getElementById('shoppingListBody'), borrowBody=document.getElementById('borrowListBody');
+  if(!invBody||!shopBody||!borrowBody)return;
+  invBody.innerHTML=logisticData.permanent.map(item=>`<tr><td><strong>${esc(item.name)}</strong><div class="log-date">Tạo: ${esc(stamp(item.createdAt))}</div></td><td>${item.qty}</td><td>${assigneeHtml('permanent',item,'Kéo thả thành viên vào đây')}</td><td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deletePermanentItem('${item.id}')">Xóa</button></td></tr>`).join('')||'<tr><td colspan="4" class="empty">Chưa có đồ cố định nào.</td></tr>';
+  shopBody.innerHTML=logisticData.shopping.map(item=>`<tr><td style="text-align:center;"><input type="checkbox" style="width:20px;height:20px;cursor:pointer;" onchange="markShoppingDone('${item.id}')" title="Tích Done để chuyển lên đồ Cố Định"></td><td><strong>${esc(item.name)}</strong><div class="log-date">Thêm: ${esc(stamp(item.createdAt))}</div></td><td>${item.qty}</td><td>${assigneeHtml('shopping',item,'Kéo thả người đi mua')}</td><td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteShoppingItem('${item.id}')">Xóa</button></td></tr>`).join('')||'<tr><td colspan="5" class="empty">Không có món đồ nào cần mua.</td></tr>';
+  borrowBody.innerHTML=logisticData.borrow.map(item=>`<tr><td><strong>${esc(item.name)}</strong><div class="log-date">Ghi nhận: ${esc(stamp(item.createdAt))}</div></td><td>${item.qty}</td><td>${esc(item.borrowDate||'-')}</td><td><span style="color:var(--red);font-weight:800;">${esc(item.dueDate||'-')}</span></td><td>${assigneeHtml('borrow',item,'Kéo thả người mượn')}</td><td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteBorrowItem('${item.id}')">Xóa</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">Chưa có đồ mượn nào.</td></tr>';
 }
-
-function deletePermanentItem(id){
-  if(confirm("Do you want to delete this item from the permanent inventory?")) {
-    logisticData.permanent = logisticData.permanent.filter(x=>x.id!==id);
-    saveLogisticData();
-  }
+async function deleteLogisticRow(type,id,confirmText){if(!confirm(confirmText))return;const {error}=await supabaseClient.from(logisticsTable(type)).delete().eq('id',id);if(error){alert('Xóa thất bại: '+error.message);return;}await loadLogisticData();}
+function deletePermanentItem(id){return deleteLogisticRow('permanent',id,'Xóa món đồ này khỏi kho cố định?');}
+function deleteShoppingItem(id){return deleteLogisticRow('shopping',id,'Xóa món đồ này khỏi danh sách cần mua?');}
+function deleteBorrowItem(id){return deleteLogisticRow('borrow',id,'Xóa bản ghi mượn đồ này?');}
+async function markShoppingDone(id){
+  const item=logisticData.shopping.find(x=>x.id===id);if(!item)return;
+  const {data,error}=await supabaseClient.from('logistics_inventory').insert({name:item.name,quantity:item.qty,assignees:item.assignees,notes:[item.notes||'',`Chuyển từ Shopping List ngày ${new Date().toLocaleString('vi-VN')}`,`Người mua: ${item.assignees.join(', ')||'Chưa phân công'}`].filter(Boolean).join(' | ')}).select().single();
+  if(error){alert('Không thể chuyển sang kho cố định: '+error.message);await loadLogisticData();return;}
+  const del=await supabaseClient.from('logistics_purchases').delete().eq('id',id);
+  if(del.error){alert('Đã thêm vào kho nhưng không xóa được khỏi Shopping List: '+del.error.message);}
+  await loadLogisticData();alert(`Đã chuyển "${item.name}" sang kho cố định. Người mua được giữ lại trong danh sách phụ trách và ghi chú.`);
 }
-
-function deleteShoppingItem(id){
-  if(confirm("Do you want to delete this item from the shopping list?")) {
-    logisticData.shopping = logisticData.shopping.filter(x=>x.id!==id);
-    saveLogisticData();
-  }
-}
-
-function deleteBorrowItem(id){
-  if(confirm("Do you want to delete this borrowed item? (Already returned)")) {
-    logisticData.borrow = logisticData.borrow.filter(x=>x.id!==id);
-    saveLogisticData();
-  }
-}
-
-function markShoppingDone(id){
-  const idx = logisticData.shopping.findIndex(x=>x.id===id);
-  if(idx>-1){
-    const item = logisticData.shopping[idx];
-    logisticData.shopping.splice(idx, 1);
-    logisticData.permanent.push({ id: 'p_'+Date.now(), name: item.name, qty: item.qty, assignees: item.assignees });
-    saveLogisticData();
-    alert(`Done shopping for "${item.name}" and automatically moved to Permanent Inventory!`);
-  }
-}
-
-function openAddLogisticModal(type){
-  const name = prompt("Enter device name:");
-  if(!name) return;
-  const qty = prompt("Enter quantity:", "1");
+async function openAddLogisticModal(type){
+  const name=prompt(type==='borrow'?'Tên đồ mượn:':type==='shopping'?'Tên món cần mua:':'Tên đồ cố định:');if(!name||!name.trim())return;
+  const q=prompt('Số lượng:','1');const quantity=Math.max(1,parseInt(q||'1',10)||1);
+  let payload;
   if(type==='borrow'){
-    const borrowDate = prompt("Borrow Date (YYYY-MM-DD):", todayISO());
-    const dueDate = prompt("Due Date (YYYY-MM-DD):", todayISO());
-    logisticData.borrow.push({ id: 'b_'+Date.now(), name, qty: Number(qty)||1, borrowDate, dueDate, assignees: [] });
-  }else if(type==='shopping'){
-    logisticData.shopping.push({ id: 's_'+Date.now(), name, qty: Number(qty)||1, assignees: [] });
-  }else{
-    logisticData.permanent.push({ id: 'p_'+Date.now(), name, qty: Number(qty)||1, assignees: [] });
-  }
-  saveLogisticData();
+    const borrowDate=prompt('Ngày mượn (YYYY-MM-DD):',todayISO());if(!borrowDate)return;
+    const dueDate=prompt('Ngày trả (YYYY-MM-DD):',borrowDate);if(!dueDate)return;
+    if(dueDate<borrowDate){alert('Ngày trả không được trước ngày mượn.');return;}
+    const purpose=prompt('Mục đích / sự kiện:','Club activity')||'Club activity';
+    payload={item_name:name.trim(),quantity,borrow_date:borrowDate,return_date:dueDate,purpose,assignees:[]};
+  }else payload={name:name.trim(),quantity,assignees:[]};
+  const table=logisticsTable(type);const {error}=await supabaseClient.from(table).insert(payload);
+  if(error){alert('Không thể lưu lên Supabase: '+error.message+'\nHãy chạy file SQL logistics setup trước.');return;}
+  await loadLogisticData();
 }
-
-function exportLogisticExcel(){
+async function exportLogisticExcel(){
   if(typeof XLSX==='undefined'){alert('Excel library not loaded.');return;}
-  const permRows = logisticData.permanent.map(x=>({Loại: 'Permanent Item', Tên: x.name, SốLượng: x.qty, NgàyMượn: '', HạnTrả: '', NgườiPhụTrách: x.assignees.join(', ')}));
-  const shopRows = logisticData.shopping.map(x=>({Loại: 'Shopping Item', Tên: x.name, SốLượng: x.qty, NgàyMượn: '', HạnTrả: '', NgườiPhụTrách: x.assignees.join(', ')}));
-  const borrowRows = logisticData.borrow.map(x=>({Loại: 'Borrowed Item', Tên: x.name, SốLượng: x.qty, NgàyMượn: x.borrowDate, HạnTrả: x.dueDate, NgườiPhụTrách: x.assignees.join(', ')}));
-  
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([...permRows, ...shopRows, ...borrowRows]), 'Club Logistic');
-  XLSX.writeFile(wb, `VinUni_Club_Logistic_${todayISO()}.xlsx`);
+  try{await loadLogisticData();const permRows=logisticData.permanent.map(x=>({Loại:'Fixed Inventory',Tên:x.name,SốLượng:x.qty,NgườiPhụTrách:x.assignees.join(', '),GhiChú:x.notes||'',NgàyTạo:x.createdAt,NgàyCậpNhật:x.updatedAt||''}));const shopRows=logisticData.shopping.map(x=>({Loại:'Shopping List',Tên:x.name,SốLượng:x.qty,NgườiMua:x.assignees.join(', '),GhiChú:x.notes||'',NgàyThêm:x.createdAt}));const borrowRows=logisticData.borrow.map(x=>({Loại:'Borrowed Item',Tên:x.name,SốLượng:x.qty,NgàyMượn:x.borrowDate,NgàyTrả:x.dueDate,MụcĐích:x.purpose||'',NgườiPhụTrách:x.assignees.join(', '),GhiChú:x.notes||'',ThờiĐiểmGhiNhận:x.createdAt}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(permRows),'Fixed Inventory');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(shopRows),'Shopping List');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(borrowRows),'Borrowing Log');XLSX.writeFile(wb,`VinUni_Club_Logistic_${todayISO()}.xlsx`);}catch(e){console.error(e);alert('Xuất Excel thất bại: '+e.message);}
 }
 
 function updateDayOfWeek(){
@@ -1173,6 +1130,9 @@ async function subscribeRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_matches"},async()=>{try{await loadActiveScrimmage();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_players"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();else await loadActiveScrimmage();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"logistics_inventory"},async()=>{try{await loadLogisticData();}catch(e){console.error('Logistics realtime inventory:',e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"logistics_purchases"},async()=>{try{await loadLogisticData();}catch(e){console.error('Logistics realtime purchases:',e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"logistics_events"},async()=>{try{await loadLogisticData();}catch(e){console.error('Logistics realtime events:',e);}})
     .subscribe((status)=>{if(status==="SUBSCRIBED")setSync(activeScrimmageId?"Live scrimmage":"Live sync",true);else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setSync("Sync error",false);});
 }
 
@@ -1187,7 +1147,7 @@ document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",asyn
   }
   if(btn.dataset.page==="logistic"){
     renderMemberPool();
-    renderLogisticLists();
+    try{await loadLogisticData();}catch(e){console.error(e);alert('Không tải được Logistics từ Supabase: '+e.message);}
   }
 }));
 
@@ -1219,7 +1179,9 @@ async function bootstrapApp(){
     await loadAttendance(d);
     await loadAttendanceHistory();
     await loadActiveScrimmage();
-    renderLogisticLists();
+    await migrateLegacyLogisticData();
+    await loadLogisticData();
+    renderMemberPool();
     await subscribeRealtime();
   }catch(err){
     console.error(err);
