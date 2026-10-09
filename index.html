@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VinUni Ultimate Clubs Player Management · Attendance</title>
+<title>VinUni Ultimate Clubs Player Management · Logistic & Scrimmage</title>
 <style>
 :root{
   --vinuni-red: #C8102E;
@@ -30,20 +30,17 @@ body {
   margin:0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color:var(--text);
-  /* ẢNH NỀN FACEBOOK: 
-     Bạn cần thay thế link này bằng 1 link ảnh trực tiếp có đuôi .jpg hoặc .png. 
-     Link FB hiện tại là web HTML nên trình duyệt sẽ không tải được làm background. */
-  background-image: url('https://www.facebook.com/photo/?fbid=1032787159584111&set=a.119181300944706&__cft__[0]=AZiVu91_VRV6uJ1Ig9EFowzd5WslQvZRIdI_JcYlxGcF1m48domvOm-ZeIoAIUfP3nHWRyQlOas3QZ1E9fLwx0isYUoPyiKfD2MlvWQakv4hCJ8RWann-yLSzG55RZ0xNkh6X-yzc9FyX8lkb1V8Xlv7z-6-gwetQT6HNNZ9iMVdBs0Xk77S9_K9C7Gg7Q&__tn__=EH-R');
+  background-image: url('https://www.facebook.com/photo/?fbid=1032787159584111&set=a.119181300944706');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
-  background-color: #f4f7fb; /* Màu dự phòng nếu ảnh lỗi */
+  background-color: #f4f7fb; 
 }
 
 button,input,select{font:inherit}
 button{cursor:pointer}
 
-/* ===== TASKBAR (TOPBAR) MÀU XANH MỜ DẦN ===== */
+/* ===== TASKBAR (TOPBAR) ===== */
 .topbar {
   position: sticky; top: 0; z-index: 100;
   background: linear-gradient(90deg, rgba(6, 21, 45, 0.95) 0%, rgba(30, 58, 138, 0.8) 40%, rgba(59, 130, 246, 0.1) 100%);
@@ -52,22 +49,9 @@ button{cursor:pointer}
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   border-bottom: 1px solid rgba(255,255,255,0.2);
 }
-.nav{
-  max-width:1400px;margin:auto;min-height:76px;
-  display:flex;align-items:center;justify-content:space-between;gap:20px
-}
-.brand-wrap {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.brand-img {
-  height: 55px;
-  object-fit: contain;
-  background: #fff;
-  padding: 4px;
-  border-radius: 8px;
-}
+.nav{ max-width:1400px;margin:auto;min-height:76px; display:flex;align-items:center;justify-content:space-between;gap:20px }
+.brand-wrap { display: flex; align-items: center; gap: 16px; }
+.brand-img { height: 55px; object-fit: contain; background: #fff; padding: 4px; border-radius: 8px; }
 .brand {font-weight:900;letter-spacing:.05em;font-size:20px; color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5);}
 .brand small {display:block;font-weight:700;letter-spacing:.05em;color: #fca5a5;font-size:10px;margin-top:2px;text-transform: uppercase;}
 .tabs{display:flex;gap:8px;flex-wrap:wrap}
@@ -83,7 +67,6 @@ button{cursor:pointer}
 .user-pill{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--vinuni-blue); font-weight: 700; background: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 99px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
 .sync-dot{width:10px;height:10px;border-radius:50%;background:#f59e0b;box-shadow:0 0 0 3px rgba(245, 158, 11,.15)}.sync-dot.live{background:#10b981;box-shadow:0 0 0 3px rgba(16, 185, 129,.15)}
 
-
 main{max-width:1400px;margin:auto;padding:32px 28px}
 .page{display:none; animation: fadeIn 0.4s ease forwards;}
 .page.active{display:block}
@@ -91,29 +74,16 @@ main{max-width:1400px;margin:auto;padding:32px 28px}
 
 /* ===== HERO & PANELS ===== */
 .hero{
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(5px);
-  border: 1px solid var(--line);
-  border-left: 6px solid var(--vinuni-red);
-  border-radius: 20px;padding:30px;
-  margin-bottom:28px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px);
+  border: 1px solid var(--line); border-left: 6px solid var(--vinuni-red);
+  border-radius: 20px;padding:30px; margin-bottom:28px; box-shadow: 0 8px 25px rgba(0,0,0,0.05);
 }
 .hero h1{margin:0 0 10px;font-size:32px; color: var(--vinuni-blue); font-weight: 900;}
 .hero p{margin:0;color:var(--muted); font-size: 15px;}
-.panel{
-  background:rgba(255,255,255,0.97);border:1px solid var(--line);border-radius:24px;
-  padding:24px;box-shadow:0 10px 35px rgba(0,0,0,.08);
-}
+.panel{ background:rgba(255,255,255,0.97);border:1px solid var(--line);border-radius:24px; padding:24px;box-shadow:0 10px 35px rgba(0,0,0,.08); }
 .panel h2{margin:0 0 20px;font-size:20px; color: var(--blue-950); font-weight: 800;}
 
-/* TAB SCRIMMAGE NỀN TRẮNG */
-#generator {
-  background-color: #ffffff;
-  border-radius: 24px;
-  padding: 30px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-}
+#generator { background-color: #ffffff; border-radius: 24px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
 #generator .panel { box-shadow: none; border: 1px solid var(--line); background: #f8fafc; }
 #generator .hero { box-shadow: none; background: #fff; }
 
@@ -122,259 +92,103 @@ main{max-width:1400px;margin:auto;padding:32px 28px}
 .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-input,select{
-  border:2px solid #e2e8f0;border-radius:12px;padding:12px 14px;
-  background:#f8fafc;outline:none;min-width:150px;
-  font-weight: 500; transition: all 0.2s;
-}
+input,select{ border:2px solid #e2e8f0;border-radius:12px;padding:12px 14px; background:#f8fafc;outline:none;min-width:150px; font-weight: 500; transition: all 0.2s; }
 input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-shadow:0 0 0 4px rgba(30, 58, 138,.1)}
 
 /* ===== NÚT BẤM (BUTTONS) ===== */
-.btn{
-  border:0;border-radius:12px;padding:12px 20px;font-weight:800;font-size: 14px;
-  transition:all .2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-}
+.btn{ border:0;border-radius:12px;padding:12px 20px;font-weight:800;font-size: 14px; transition:all .2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn:hover{transform:translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15);}
-.btn:active{transform:translateY(0);}
-.btn-primary{background: linear-gradient(135deg, var(--vinuni-blue), #2563eb);color:#fff; box-shadow: 0 4px 12px rgba(37,99,235,.2);}
+.btn-primary{background: linear-gradient(135deg, var(--vinuni-blue), #2563eb);color:#fff;}
 .btn-secondary{background:var(--blue-100);color:var(--vinuni-blue);}
-.btn-danger{background: linear-gradient(135deg, #ef4444, #b91c1c);color:#fff; box-shadow: 0 4px 12px rgba(239,68,68,.2);}
+.btn-danger{background: linear-gradient(135deg, #ef4444, #b91c1c);color:#fff;}
 .btn-dark{background:var(--blue-950);color:#fff;}
 .btn-ghost{background:#e2e8f0;color:#475569;}
+.btn-success{background: linear-gradient(135deg, #10b981, #047857); color: #fff;}
 
-/* ===== STATS ===== */
-.stat{
-  padding:24px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg, #fff, #f8fafc);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.02); position: relative; overflow: hidden;
-}
+.stat{ padding:24px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg, #fff, #f8fafc); box-shadow: 0 8px 20px rgba(0,0,0,0.02); position: relative; overflow: hidden; }
 .stat::after { content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: var(--vinuni-blue); border-radius: 20px 0 0 20px;}
 .stat .num{font-size:36px;font-weight:900;color:var(--vinuni-blue); line-height: 1;}
 .stat .label{font-size:13px;color:var(--muted);font-weight:800;text-transform:uppercase; margin-top: 8px;}
 
-/* =========================================================
-   THẺ CẦU THỦ DATABASE (BOBOIBOY STYLE - REWORKED)
-   ========================================================= */
-.player-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px;margin-top:24px;
-}
-.player-card-db {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-  border: 6px solid #1e3a8a;
-  position: relative;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.player-card-db:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-}
-
+/* ===== THẺ CẦU THỦ DATABASE (BOBOIBOY STYLE) ===== */
+.player-grid{ display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px;margin-top:24px; }
+.player-card-db { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; border: 6px solid #1e3a8a; position: relative; transition: transform 0.3s; }
+.player-card-db:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
 .tier-S-border { border-color: #f59e0b; }
 .tier-A-border { border-color: #94a3b8; }
 .tier-B-border { border-color: #d97706; }
 .tier-C-border { border-color: #475569; }
-
-.card-header-image {
-  position: relative;
-  height: 260px;
-  width: 100%;
-  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-  overflow: hidden;
-}
-.card-header-image img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
-  transition: transform 0.4s;
-}
+.card-header-image { position: relative; height: 260px; width: 100%; background: linear-gradient(135deg, #1e3a8a, #3b82f6); overflow: hidden; }
+.card-header-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; display: block; }
 .player-card-db:hover .card-header-image img { transform: scale(1.05); }
-
-.photo-placeholder {
-  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  font-size:54px;font-weight:900; color: rgba(255,255,255,0.5);
-}
-
-.bobo-tier {
-  position: absolute;
-  top: 10px; left: 10px;
-  width: 45px; height: 45px;
-  background: #fff; color: #000;
-  border-radius: 50%;
-  font-size: 26px; font-weight: 1000;
-  display: flex; align-items: center; justify-content: center;
-  border: 4px solid #1e3a8a;
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.6);
-  z-index: 10;
-}
+.photo-placeholder { width:100%;height:100%;display:flex;align-items:center;justify-content:center; font-size:54px;font-weight:900; color: rgba(255,255,255,0.5); }
+.bobo-tier { position: absolute; top: 10px; left: 10px; width: 45px; height: 45px; background: #fff; color: #000; border-radius: 50%; font-size: 26px; font-weight: 1000; display: flex; align-items: center; justify-content: center; border: 4px solid #1e3a8a; box-shadow: 2px 2px 6px rgba(0,0,0,0.6); z-index: 10; }
 .tier-S-border .bobo-tier { border-color: #f59e0b; color: #b45309; }
 .tier-A-border .bobo-tier { border-color: #94a3b8; color: #334155; }
 .tier-B-border .bobo-tier { border-color: #d97706; color: #7c2d12; }
 .tier-C-border .bobo-tier { border-color: #475569; color: #0f172a; }
-
-.bobo-name {
-  position: absolute;
-  top: 10px; right: 10px;
-  color: #fff;
-  font-size: 17px; font-weight: 900;
-  text-transform: uppercase;
-  font-style: italic;
-  text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0 4px 10px rgba(0,0,0,0.8);
-  z-index: 15;
-  text-align: right;
-  max-width: 65%;
-  line-height: 1.1;
-}
-
-.bobo-stats {
-  position: absolute;
-  top: 48px;
-  right: -8px;
-  display: flex; flex-direction: column; gap: 6px;
-  z-index: 10;
-}
-.bobo-stat {
-  padding: 4px 16px;
-  color: #fff; font-weight: 900; font-size: 14px;
-  transform: skewX(-15deg);
-  border: 2px solid #fff;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.6);
-  display: flex; align-items: center; justify-content: center;
-}
+.bobo-name { position: absolute; top: 10px; right: 10px; color: #fff; font-size: 17px; font-weight: 900; text-transform: uppercase; font-style: italic; text-shadow: 2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000; z-index: 15; text-align: right; max-width: 65%; line-height: 1.1; }
+.bobo-stats { position: absolute; top: 48px; right: -8px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+.bobo-stat { padding: 4px 16px; color: #fff; font-weight: 900; font-size: 14px; transform: skewX(-15deg); border: 2px solid #fff; box-shadow: 2px 2px 8px rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
 .bobo-stat.stat-ovr { background: #e11d48; } 
 .bobo-stat.stat-pos { background: #16a34a; } 
-.bobo-stat span {
-  display: block;
-  transform: skewX(15deg); 
-  font-style: italic; letter-spacing: 0.5px;
-}
-
-.pbody {
-  padding: 14px 16px 16px;
-  background: #fff;
-  border-top: 5px solid #facc15; 
-  flex: 1;
-  display: flex; flex-direction: column; justify-content: flex-end;
-}
-
-.badges { 
-  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; 
-}
-.badge {
-  padding: 6px 12px;
-  border-radius: 4px; 
-  font-size: 11px;
-  font-weight: 900; 
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 1px solid rgba(0,0,0,0.1);
-  box-shadow: 2px 2px 0px rgba(0,0,0,0.15); 
-}
+.bobo-stat span { display: block; transform: skewX(15deg); font-style: italic; }
+.pbody { padding: 14px 16px 16px; background: #fff; border-top: 5px solid #facc15; flex: 1; display: flex; flex-direction: column; justify-content: flex-end; }
+.badges { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+.badge { padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; border: 1px solid rgba(0,0,0,0.1); box-shadow: 2px 2px 0px rgba(0,0,0,0.15); }
 .gender-badge-male { background: #1e3a8a; color: #fff; } 
 .gender-badge-female { background: #C8102E; color: #fff; } 
 .badge-pts { background: #facc15; color: #000; } 
-
 .bobo-actions { display:flex;gap:8px; }
 .bobo-actions .btn { flex:1;padding:8px;font-size:12px; border-radius: 8px;}
 
-/* ===== THẺ CẦU THỦ TRÊN SÂN (FIELD CARDS) ===== */
-.card-art, .live-card {
-  position:relative;width:64px;height:86px;margin:auto;border-radius:8px;overflow:hidden;
-  border:3px solid transparent; /* Đã nâng cấp viền thể hiện Tier */
-  background-clip: padding-box;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.4); transition: transform 0.2s;
-}
-
-/* ĐẶT VIỀN TIER RÕ RÀNG TRÊN SÂN */
+/* ===== THẺ CẦU THỦ TRÊN SÂN & MVP ===== */
+.card-art, .live-card { position:relative;width:64px;height:86px;margin:auto;border-radius:8px;overflow:hidden; border:3px solid transparent; background-clip: padding-box; box-shadow: 0 6px 15px rgba(0,0,0,0.4); transition: transform 0.2s; }
 .card-art.tier-S-card, .live-card.tier-S-card { background: linear-gradient(145deg, #fef08a, #b45309); border-color: #fbbf24; box-shadow: 0 4px 15px rgba(251,191,36,0.6); }
 .card-art.tier-A-card, .live-card.tier-A-card { background: linear-gradient(145deg, #e2e8f0, #475569); border-color: #cbd5e1; box-shadow: 0 4px 15px rgba(203,213,225,0.6); }
 .card-art.tier-B-card, .live-card.tier-B-card { background: linear-gradient(145deg, #fdba74, #9a3412); border-color: #b45309; }
 .card-art.tier-C-card, .live-card.tier-C-card { background: linear-gradient(145deg, #f1f5f9, #64748b); border-color: #64748b; }
-
-/* BỎ HIỆU ỨNG BÓNG MỜ TỐI ẢNH ĐỂ ẢNH HIỂN THỊ RÕ RÀNG */
 .card-art img, .live-card img{width:100%;height:100%;object-fit:cover; display: block;}
-
-.card-initials{
-  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-  font-size:24px;font-weight:1000;color: rgba(255,255,255,0.9); text-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
+.card-initials{ width:100%;height:100%;display:flex;align-items:center;justify-content:center; font-size:24px;font-weight:1000;color: rgba(255,255,255,0.9); text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 .card-rating{position:absolute;top:4px;left:5px;color:#fff;font-size:12px;font-weight:1000;text-shadow:0 2px 4px #000}
 .card-tier{position:absolute;top:4px;right:5px;color:#fff;background:rgba(0,0,0,.6);padding:1px 4px;border-radius:4px;font-size:8px;font-weight:900}
-
-/* HIỂN THỊ TÊN ĐẦY ĐỦ TRÊN 2 DÒNG NẾU DÀI */
-.card-name, .live-card .card-name{
-  position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75);
-  color:#fff;font-size:9px;font-weight:900;padding:4px 2px;
-  text-align: center;
-  white-space: normal; line-height: 1.1; word-wrap: break-word;
-}
-.field-name, .live-player-name{
-  margin-top:6px;color:#fff;font-size:10px;font-weight:900;text-shadow:0 2px 4px #000;
-  text-align: center;
-  white-space: normal; line-height: 1.1; word-wrap: break-word; /* Hiển thị đủ tên */
-}
+.card-name, .live-card .card-name{ position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.75); color:#fff;font-size:9px;font-weight:900;padding:4px 2px; text-align: center; white-space: normal; line-height: 1.1; word-wrap: break-word; }
+.field-name, .live-player-name{ margin-top:6px;color:#fff;font-size:10px;font-weight:900;text-shadow:0 2px 4px #000; text-align: center; white-space: normal; line-height: 1.1; word-wrap: break-word; }
 .field-pos, .live-player-pos{color:rgba(255,255,255,.9);font-size:8px;text-shadow:0 2px 3px #000; font-weight: 700; margin-top: 4px; text-align: center;}
 
-/* ===== FORM & KHÁC ===== */
+/* ===== FORM & SÂN BÓNG (VERTICAL) ===== */
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .field{display:flex;flex-direction:column;gap:8px}
 .field label{font-size:13px;font-weight:800;color:#334155}
 .field.full{grid-column:1/-1}
-.upload-preview{
-  width:120px;height:150px;border-radius:16px;object-fit:cover;border:2px solid var(--line);
-  background:#f8fafc; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
+.upload-preview{ width:120px;height:150px;border-radius:16px;object-fit:cover;border:2px solid var(--line); background:#f8fafc; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .empty{padding:40px;text-align:center;color:var(--muted); font-weight: 600; font-size: 15px; border-radius: 20px; background: #f8fafc; border: 2px dashed #cbd5e1;}
 
-/* ===== TEAM GENERATOR & SÂN BÓNG (VERTICAL) ===== */
 .generator-toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center; background: #f8fafc; padding: 16px; border-radius: 16px;}
 .mode-wrap{display:flex;align-items:center;gap:10px; font-weight: 800;}
-.teams-visual{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:24px
-}
-.ultimate-team{
-  background:#fff;border:1px solid var(--line);border-radius:24px;padding:20px;
-  box-shadow:0 12px 35px rgba(10,47,102,.06)
-}
+.teams-visual{ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:24px }
+.ultimate-team{ background:#fff;border:1px solid var(--line);border-radius:24px;padding:20px; box-shadow:0 12px 35px rgba(10,47,102,.06) }
 .team-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .team-title{display:flex;align-items:center;gap:12px}
 .team-dot{width:16px;height:16px;border-radius:50%; box-shadow: 0 0 0 4px rgba(0,0,0,0.05);}
 .team-blue .team-dot{background:#2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);}
 .team-white .team-dot{background:#f8fafc;border:2px solid #cbd5e1;}
 .team-title h3{margin:0;font-size:22px; font-weight: 900;}
-.team-title span{font-size:12px;color:var(--muted);font-weight:800; letter-spacing: 0.5px;}
 .team-total{font-weight:900;color:var(--vinuni-blue); font-size: 24px; background: var(--blue-50); padding: 6px 12px; border-radius: 12px;}
 
-/* SÂN BÓNG XOAY DỌC TỪ DƯỚI LÊN TRÊN */
 .ultimate-field, .live-field{
-  position:relative;width:100%;aspect-ratio:1 / 1.45; overflow:hidden;border-radius:16px;
-  border:4px solid #fff;
+  position:relative;width:100%;aspect-ratio:1 / 1.45; overflow:hidden;border-radius:16px; border:4px solid #fff;
   background:
-    linear-gradient(0deg,rgba(255,255,255,.05) 49.7%,rgba(255,255,255,.4) 49.8%,rgba(255,255,255,.4) 50.2%,rgba(255,255,255,.05) 50.3%), /* Vạch ngang giữa sân */
-    repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0,rgba(255,255,255,.04) 2px,transparent 2px,transparent 42px), /* Sọc cỏ dọc */
-    #15803d; /* Màu cỏ */
+    linear-gradient(0deg,rgba(255,255,255,.05) 49.7%,rgba(255,255,255,.4) 49.8%,rgba(255,255,255,.4) 50.2%,rgba(255,255,255,.05) 50.3%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0,rgba(255,255,255,.04) 2px,transparent 2px,transparent 42px), #15803d;
   box-shadow:0 10px 25px rgba(21, 128, 61,.3)
 }
-.ultimate-field:after, .live-field:after{
-  content:"";position:absolute;top:50%;left:0;right:0;height:3px;background:rgba(255,255,255,.6);transform:translateY(-50%);
-}
-.endzone{
-  position:absolute;left:0;right:0;height:14%;border:none;z-index:1;background:rgba(0,0,0,0.05);
-}
+.ultimate-field:after, .live-field:after{ content:"";position:absolute;top:50%;left:0;right:0;height:3px;background:rgba(255,255,255,.6);transform:translateY(-50%); }
+.endzone{ position:absolute;left:0;right:0;height:14%;border:none;z-index:1;background:rgba(0,0,0,0.05); }
 .endzone.top{top:0; border-bottom:3px solid rgba(255,255,255,.6);}
-.endzone.bottom{bottom:0; border-top:3px solid rgba(255,255,255,.6); background: rgba(200, 16, 46, 0.4);} /* Tô đỏ endzone đội nhà (bên dưới) */
-
-.zone-label{
-  position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);font-size:14px;
-  font-weight:900;letter-spacing:.2em;color:rgba(255,255,255,.8);
-}
-
-.field-player, .live-player{
-  position:absolute;transform:translate(-50%,-50%);width:75px;text-align:center;
-  z-index:5;transition:.2s cubic-bezier(0.2, 0.8, 0.2, 1);cursor:pointer
-}
+.endzone.bottom{bottom:0; border-top:3px solid rgba(255,255,255,.6); background: rgba(200, 16, 46, 0.4);} 
+.zone-label{ position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);font-size:14px; font-weight:900;letter-spacing:.2em;color:rgba(255,255,255,.8); }
+.field-player, .live-player{ position:absolute;transform:translate(-50%,-50%);width:75px;text-align:center; z-index:5;transition:.2s;cursor:pointer }
 .field-player:hover, .live-player:hover{z-index:20;transform:translate(-50%,-50%) scale(1.15)}
 .live-player:active{cursor:grabbing}
 .live-player.drag-over{filter:drop-shadow(0 0 12px #fff)}
@@ -382,12 +196,9 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .team-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
 .team-stat{background:var(--blue-50);border-radius:12px;text-align:center;padding:12px}
 .team-stat strong{display:block;color:var(--vinuni-blue);font-size:18px}.team-stat span{font-size:10px;color:var(--muted);font-weight:800}
-.generator-summary{
-  margin-top:20px;padding:16px;border-radius:16px;background:linear-gradient(145deg, #f8fafc, #f1f5f9);border:1px solid var(--line);
-  color:var(--muted);font-size:14px; line-height: 1.5; font-weight: 500;
-}
+.generator-summary{ margin-top:20px;padding:16px;border-radius:16px;background:linear-gradient(145deg, #f8fafc, #f1f5f9);border:1px solid var(--line); color:var(--muted);font-size:14px; line-height: 1.5; font-weight: 500; }
 
-/* ===== SCRIMMAGE LIVE MATCH & MVP MATCH SUMMARY ===== */
+/* ===== SCRIMMAGE LIVE MATCH & MVP PANEL ===== */
 .scrimmage-live-panel{border:3px solid var(--vinuni-red); background: #fff;}
 .scrimmage-live-head{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap; margin-bottom: 20px;}
 .scrimmage-live-head h2{margin:8px 0 4px;font-size:26px; color: var(--blue-950);}
@@ -414,14 +225,8 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .performance-avatar{width:45px;height:45px;border-radius:12px;object-fit:cover;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--vinuni-blue);flex:none; box-shadow: 0 2px 6px rgba(0,0,0,0.1);}
 .performance-player strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; font-size: 15px; color: var(--blue-950); font-weight: 800;}
 .performance-player span{display:block;font-size:11px;color:var(--muted); font-weight: 600; margin-top: 2px;}
-
-.stat-btn {
-  width: 100%; height: 36px; border-radius: 10px; border: none; font-size: 13px; font-weight: 900; color: #fff;
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
+.stat-btn { width: 100%; height: 36px; border-radius: 10px; border: none; font-size: 13px; font-weight: 900; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: all 0.2s;}
 .stat-btn:hover { transform: translateY(-3px); filter: brightness(1.15); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
-.stat-btn:active { transform: translateY(0); }
 .performance-row .stat-btn:nth-of-type(1) { background: linear-gradient(135deg, #10b981, #047857); } 
 .performance-row .stat-btn:nth-of-type(2) { background: linear-gradient(135deg, #3b82f6, #1d4ed8); } 
 .performance-row .stat-btn:nth-of-type(3) { background: linear-gradient(135deg, #ef4444, #b91c1c); } 
@@ -431,8 +236,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .rating-delta.pos{color:#15803d; background: #dcfce7;}
 .rating-delta.neg{color:#b91c1c; background: #fee2e2;}
 
-
-/* ===== ATTENDANCE & STATS ===== */
+/* ===== ATTENDANCE ===== */
 .attendance-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:20px}
 .attendance-player{display:flex;align-items:center;gap:14px;padding:14px;border:2px solid var(--line);border-radius:16px;background:#fff;transition:.2s; cursor: pointer;}
 .attendance-player:hover{border-color:var(--vinuni-blue);transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05);}
@@ -441,10 +245,24 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .attendance-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:var(--vinuni-blue);font-weight:900;flex:none; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
 .attendance-meta{min-width:0}.attendance-meta strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; font-size: 15px; font-weight: 800; color: var(--blue-950); margin-bottom: 2px;}
 .attendance-meta span{font-size:12px;color:var(--muted); font-weight: 600;}
-
 .table-wrap{overflow:auto; border-radius: 16px; border: 1px solid var(--line);}.table{width:100%;border-collapse:collapse; background: #fff;}.table th,.table td{padding:16px;border-bottom:1px solid var(--line);text-align:left;font-size:14px; font-weight: 600;}.table th{color:var(--muted);font-size:12px;text-transform:uppercase; background: #f8fafc;}
 .attendance-history tr{cursor:pointer; transition: 0.2s;}.attendance-history tr:hover{background:var(--blue-50)}
 .badge-sub{background:#fef3c7;color:#92400e; border: 1px solid #fde68a;}.badge-present{background:#dcfce7;color:#166534; border: 1px solid #bbf7d0;}
+
+/* ===== LOGISTIC STYLES ===== */
+.log-card { border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); background: #fff; }
+.log-card.permanent { border-left: 6px solid var(--green); }
+.log-card.shopping { border-left: 6px solid var(--red); }
+.log-card.borrow { border-left: 6px solid var(--gold); }
+.log-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+.log-table th, .log-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; }
+.log-table th { background: #f8fafc; color: var(--muted); font-size: 12px; text-transform: uppercase; }
+.assignee-dropzone { min-height: 40px; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 4px 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #fafafa; }
+.assignee-tag { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; }
+.assignee-tag button { background: none; border: none; color: #0369a1; cursor: pointer; font-weight: bold; padding: 0; }
+.member-pool-item { padding: 6px 12px; background: #fff; border-radius: 8px; font-size: 13px; font-weight: 800; color: var(--blue-950); cursor: grab; display: inline-block; margin: 4px; border: 1px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: 0.2s; }
+.member-pool-item:hover { border-color: var(--vinuni-blue); color: var(--vinuni-blue); transform: translateY(-2px); }
+.member-pool-item:active { cursor: grabbing; }
 
 .club-card{border:1px solid var(--line);border-radius:20px;padding:24px;background:#fff; box-shadow: 0 4px 15px rgba(0,0,0,0.03);}
 .club-card h3{margin:0 0 8px; font-size: 18px; color: var(--blue-950);}.club-card p{margin:0;color:var(--muted);font-size:13px; font-weight: 600;}
@@ -471,9 +289,10 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
       <div class="brand">VINUNI ULTIMATE<small>CLUBS PLAYER MANAGEMENT</small></div>
     </div>
     <div class="tabs">
-      <button class="tab active" data-page="players">Players</button>
-      <button class="tab" data-page="generator">Scrimmage</button>
+      <button class="tab active" data-page="players">Players Database</button>
+      <button class="tab" data-page="generator">Live Scrimmage</button>
       <button class="tab" data-page="attendance">Attendance</button>
+      <button class="tab" data-page="logistic">Logistic List</button>
       <button class="tab" data-page="stats">Statistics</button>
     </div>
     <div class="user-pill"><span id="syncDot" class="sync-dot"></span><span id="syncText">Connecting...</span></div>
@@ -481,7 +300,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 </header>
 
 <main>
-<!-- PLAYERS -->
+<!-- ================== PLAYERS ================== -->
 <section id="players" class="page active">
   <div class="hero">
     <h1>Player Database</h1>
@@ -538,7 +357,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   </div>
 </section>
 
-<!-- SCRIMMAGE -->
+<!-- ================== SCRIMMAGE ================== -->
 <section id="generator" class="page">
   <div class="hero">
     <h1>Scrimmage</h1>
@@ -595,7 +414,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
     </div>
   </div>
 
-  <!-- BẢNG TỔNG KẾT MATCH SUMMARY & MVP (SẼ HIỂN THỊ SAU KHI KẾT THÚC TRẬN) -->
+  <!-- BẢNG TỔNG KẾT MATCH SUMMARY & MVP -->
   <div id="matchSummaryPanel" class="panel scrimmage-live-panel" style="margin-top:28px;display:none; text-align: center; border-color: #f59e0b;">
     <h2 style="color: #b45309; font-size: 28px; margin-bottom: 20px;">🏆 MATCH SUMMARY</h2>
     <div class="scoreboard" style="justify-content: center; margin-bottom: 30px; display: inline-flex;">
@@ -607,10 +426,8 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
     <h3 style="margin: 0 0 16px; color: #1e3a8a; font-size: 22px;">🌟 MVP OF THE MATCH 🌟</h3>
     <div style="display: flex; justify-content: center; align-items: center; gap: 20px; background: #fffbf1; padding: 20px 30px; border-radius: 20px; border: 2px dashed #fcd34d; max-width: 550px; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
       <div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; flex: none;">
-        <!-- KHUNG ẢNH KHIÊN (SHIELD) -->
         <img src="image_d3bbdf.png" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1;">
-        <!-- AVATAR MVP -->
-        <img id="mvpAvatar" src="gold.jpg" style="position: relative; width: 72px; height: 72px; border-radius: 50%; object-fit: cover; z-index: 2; margin-top: -12px;">
+        <img id="mvpAvatar" src="" style="position: relative; width: 72px; height: 72px; border-radius: 50%; object-fit: cover; z-index: 2; margin-top: -12px;">
       </div>
       <div style="text-align: left;">
         <div id="mvpTier" class="bobo-tier" style="position: static; display: inline-flex; width: 32px; height: 32px; font-size: 16px; margin-bottom: 8px;">S</div>
@@ -621,12 +438,14 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
       </div>
     </div>
   </div>
-
 </section>
 
-<!-- ATTENDANCE -->
+<!-- ================== ATTENDANCE ================== -->
 <section id="attendance" class="page">
-  <div class="hero"><h1>Match Day Attendance</h1><p>Set the match date, mark who is present, save attendance, then generate balanced 7v7 teams and substitutions from the players who are actually there.</p></div>
+  <div class="hero">
+    <h1>Match Day Attendance</h1>
+    <p>Set the match date, mark who is present, save attendance, then generate balanced 7v7 teams and substitutions from the players who are actually there.</p>
+  </div>
   <div class="panel">
     <div class="controls" style="justify-content:space-between">
       <div class="controls"><div class="field" style="min-width:180px"><label>Match Date</label><input id="attendanceDate" type="date"></div><div style="padding-top:24px"><span class="badge badge-present" id="attendanceCount" style="padding:10px 16px; font-size: 13px;">0 PRESENT</span></div></div>
@@ -645,7 +464,102 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   </div>
 </section>
 
-<!-- STATS -->
+<!-- ================== LOGISTIC LIST ================== -->
+<section id="logistic" class="page">
+  <div class="hero">
+    <h1>Club Logistic Management</h1>
+    <p>Quản lý trang thiết bị câu lạc bộ: Đồ cố định (Xanh), Danh sách mua sắm (Đỏ) và Đồ mượn sự kiện (Vàng).</p>
+  </div>
+
+  <!-- BẢNG NGÀY THÁNG & XUẤT EXCEL -->
+  <div class="panel" style="background: #f8fafc;">
+    <div class="controls" style="justify-content: space-between;">
+      <div class="controls">
+        <div class="field"><label>📅 Ngày / Thời gian xem</label><input id="logDateDisplay" type="date" style="font-weight: 800; color: var(--vinuni-blue);"></div>
+        <div style="font-weight: 800; color: var(--muted); font-size: 14px; padding-top: 20px;" id="logDayOfWeekLabel">Thứ...</div>
+      </div>
+      <div>
+        <button class="btn btn-dark" onclick="exportLogisticExcel()">📊 Xuất File Excel Logistic</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMBER POOL ĐỂ KÉO THẢ -->
+  <div class="panel" style="border-left: 6px solid var(--vinuni-blue);">
+    <h2>👥 Thành viên phụ trách (Kéo thả vào ô Person in Charge bên dưới)</h2>
+    <div id="memberPool" style="display: flex; flex-wrap: wrap; gap: 8px; min-height: 50px; background: #f1f5f9; padding: 12px; border-radius: 12px;">
+      <!-- Members will be loaded here -->
+    </div>
+  </div>
+
+  <!-- PHẦN 1: ĐỒ CỐ ĐỊNH -->
+  <div class="panel log-card permanent">
+    <div class="controls" style="justify-content: space-between;">
+      <h2>🟢 Đồ Cố Định (Club Inventory)</h2>
+      <button class="btn btn-success" onclick="openAddLogisticModal('permanent')">+ Thêm Đồ Cố Định</button>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Tên Đồ</th>
+            <th>Số Lượng</th>
+            <th>Person in Charge (Kéo thả 2-3 người vào đây)</th>
+            <th style="width: 80px;">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="permanentInventoryBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PHẦN 2: ĐỒ CẦN MUA -->
+  <div class="panel log-card shopping">
+    <div class="controls" style="justify-content: space-between;">
+      <h2>🔴 Đồ Cần Mua (Shopping List) — Tích Done sẽ tự chuyển lên Cố Định</h2>
+      <button class="btn btn-danger" onclick="openAddLogisticModal('shopping')">+ Thêm Đồ Cần Mua</button>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th style="width: 70px; text-align: center;">Done ✓</th>
+            <th>Tên Đồ Cần Mua</th>
+            <th>Số Lượng</th>
+            <th>Person in Charge</th>
+            <th style="width: 80px;">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="shoppingListBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PHẦN 3: ĐỒ MƯỢN -->
+  <div class="panel log-card borrow">
+    <div class="controls" style="justify-content: space-between;">
+      <h2>🟡 Đồ Mượn Sự Kiện (Event Borrow List) — Có Date Trả</h2>
+      <button class="btn btn-primary" onclick="openAddLogisticModal('borrow')">+ Thêm Đồ Mượn</button>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Tên Đồ Mượn</th>
+            <th>Số Lượng</th>
+            <th>Ngày Mượn</th>
+            <th>📅 Hạn Trả (Due Date)</th>
+            <th>Person in Charge</th>
+            <th style="width: 80px;">Xóa</th>
+          </tr>
+        </thead>
+        <tbody id="borrowListBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ================== STATS ================== -->
 <section id="stats" class="page">
   <div class="hero"><h1>Statistics</h1><p>Quick overview of the current player database.</p></div>
   <div class="grid grid-4">
@@ -661,6 +575,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 </section>
 
 </main>
+
 <!-- Supabase JS client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -687,6 +602,25 @@ let attendanceRows=[];
 let attendancePresentIds=new Set();
 let attendanceTeams={a:[],b:[],subA:[],subB:[]};
 
+/* === QUẢN LÝ DỮ LIỆU LOGISTIC VỚI LOCALSTORAGE === */
+let logisticData = JSON.parse(localStorage.getItem('vinuni_logistic')) || {
+  permanent: [
+    { id: 'p1', name: 'Đĩa Ultimate (DiscCraft)', qty: 15, assignees: ['Phạm Tiến Huy'] },
+    { id: 'p2', name: 'Áo Bibs Tập Luyện', qty: 20, assignees: [] }
+  ],
+  shopping: [
+    { id: 's1', name: 'Băng keo thể thao', qty: 5, assignees: [] },
+    { id: 's2', name: 'Bình nước đá lớn 20L', qty: 2, assignees: [] }
+  ],
+  borrow: []
+};
+
+function saveLogisticData() {
+  localStorage.setItem('vinuni_logistic', JSON.stringify(logisticData));
+  renderLogisticLists();
+}
+/* ================================================= */
+
 function esc(v){return String(v ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
 function initials(name){return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"?";}
 function uid(){return crypto.randomUUID();}
@@ -711,6 +645,7 @@ async function loadPlayers(){
   const {data,error}=await supabaseClient.from("players").select("*").order("rating",{ascending:false});
   if(error){console.error(error);throw error;}
   players=(data||[]).map(row=>({...row,gender:row.gender||"Male",image:row.image_url||""}));
+  renderMemberPool(); // Load xong player thì vẽ Member Pool cho Logistic
 }
 
 function refreshAll(){refreshClubFilter();renderPlayers();updateTopStats();renderStats();renderTeams();}
@@ -784,10 +719,8 @@ function renderPlayers(){
     <div class="player-card-db tier-${esc(p.tier)}-border">
         <div class="card-header-image">
             ${p.image ? `<img src="${esc(p.image)}" loading="lazy">` : `<div class="photo-placeholder">${esc(initials(p.name))}</div>`}
-            
             <div class="bobo-tier">${esc(p.tier)}</div>
             <div class="bobo-name">${esc(p.name)}</div>
-            
             <div class="bobo-stats">
                 <div class="bobo-stat stat-ovr"><span>${Number(p.rating||0).toFixed(0)} OVR</span></div>
                 <div class="bobo-stat stat-pos"><span>${esc(p.position)}</span></div>
@@ -811,47 +744,28 @@ function refreshClubFilter(){const select=document.getElementById("clubFilter");
 function updateTopStats(){const avg=players.length?(players.reduce((s,p)=>s+Number(p.rating||0),0)/players.length).toFixed(1):0;const top=players.filter(p=>p.tier==="S"||p.tier==="A").length;document.getElementById("statPlayers").textContent=players.length;document.getElementById("statAvg").textContent=avg;document.getElementById("statTop").textContent=top;document.getElementById("statClubs").textContent="2";}
 function renderStats(){const ratings=players.map(p=>Number(p.rating||0)).sort((a,b)=>a-b);const avg=ratings.length?(ratings.reduce((a,b)=>a+b,0)/ratings.length).toFixed(1):0;const median=ratings.length?(ratings.length%2?ratings[Math.floor(ratings.length/2)]:((ratings[ratings.length/2-1]+ratings[ratings.length/2])/2).toFixed(1)):0;document.getElementById("sTotal").textContent=players.length;document.getElementById("sAvg").textContent=avg;document.getElementById("sHighest").textContent=ratings.length?Math.max(...ratings):0;document.getElementById("sMedian").textContent=median;const tiers=["S","A","B","C"];document.getElementById("tierStats").innerHTML=tiers.map(t=>{const n=players.filter(p=>p.tier===t).length;const pct=players.length?n/players.length*100:0;return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>Tier ${t}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join("");const positions=["Handler","Cutter","Hybrid","Defender","Utility"];document.getElementById("positionStats").innerHTML=positions.map(pos=>{const n=players.filter(p=>p.position===pos).length;const pct=players.length?n/players.length*100:0;return `<div style="margin:12px 0"><div class="controls" style="justify-content:space-between"><strong>${pos}</strong><span>${n}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`}).join("");}
 
+/* ===== SCRIMMAGE GENERATOR ===== */
 function makeRandomSplit(pool=players){const s=shuffle([...pool]);return{a:s.slice(0,7),b:s.slice(7,14),extras:s.slice(14)}}
 function teamMixPenalty(a,b){return a.filter(p=>p.club==="VinUni Ultimate Team 2").length+b.filter(p=>p.club==="VinUni Ultimate Team 1").length;}
 function makeByTeamSplit(pool=players,iterations=5000){if(pool.length<14)return null;let best=null;for(let i=0;i<iterations;i++){const s=shuffle([...pool]),a=s.slice(0,7),b=s.slice(7,14),extras=s.slice(14);const balance=balanceScore(a,b);const cross=teamMixPenalty(a,b);const score=balance+cross*900;const candidate={a,b,extras,score,balance,cross};if(!best||candidate.score<best.score)best=candidate;}return best;}
 function assignMainSubstitutes(extras,a,b){return assignSubstitutes(extras,a,b);}
-async function generateTeams(){
-  // Scrimmage generator now uses ONLY players marked Present for the selected Attendance date.
-  const dateStr=document.getElementById("attendanceDate").value||todayISO();
-  let present=[];
-  try{
-    const {data:session,error:sessionError}=await supabaseClient.from("attendance_sessions").select("id").eq("session_date",dateStr).maybeSingle();
-    if(sessionError)throw sessionError;
-    if(session){
-      const {data:records,error:recordsError}=await supabaseClient.from("attendance_records").select("player_id,present").eq("session_id",session.id).eq("present",true);
-      if(recordsError)throw recordsError;
-      const presentIds=new Set((records||[]).map(r=>r.player_id));
-      present=players.filter(p=>presentIds.has(p.id));
-    }
-  }catch(err){console.error(err);alert("Could not load attendance for team generation: "+err.message);return;}
-  if(present.length<14){alert(`Only ${present.length} player(s) are marked present for ${formatDate(dateStr)}. You need at least 14 for a 7v7 game.`);return;}
+function generateTeams(){
+  if(players.length<14){alert("You need at least 14 players for a 7v7 game.");return;}
   const mode=document.getElementById("genMode").value;let chosen;
-  if(mode==="random")chosen=makeRandomSplit(present);
-  else if(mode==="byteam")chosen=makeByTeamSplit(present,5000);
-  else if(mode==="gender2")chosen=makeGenderBalancedSplit(present,2,6000);
-  else if(mode==="gender1")chosen=makeGenderBalancedSplit(present,1,6000);
-  else{const iterations=mode==="balanced"?5000:1500;const candidates=[];for(let i=0;i<iterations;i++){const split=makeRandomSplit(present);candidates.push({...split,score:balanceScore(split.a,split.b)});}candidates.sort((x,y)=>x.score-y.score);if(mode==="balanced")chosen=candidates[0];else{const topN=Math.max(10,Math.floor(candidates.length*.05));chosen=candidates[Math.floor(Math.random()*topN)];}}
+  if(mode==="random")chosen=makeRandomSplit(players);
+  else if(mode==="byteam")chosen=makeByTeamSplit(players,5000);
+  else if(mode==="gender2")chosen=makeGenderBalancedSplit(players,2,6000);
+  else if(mode==="gender1")chosen=makeGenderBalancedSplit(players,1,6000);
+  else{const iterations=mode==="balanced"?5000:1500;const candidates=[];for(let i=0;i<iterations;i++){const split=makeRandomSplit(players);candidates.push({...split,score:balanceScore(split.a,split.b)});}candidates.sort((x,y)=>x.score-y.score);if(mode==="balanced")chosen=candidates[0];else{const topN=Math.max(10,Math.floor(candidates.length*.05));chosen=candidates[Math.floor(Math.random()*topN)];}}
   generatedTeamA=shuffle(chosen.a);generatedTeamB=shuffle(chosen.b);const subs=assignMainSubstitutes(chosen.extras||[],generatedTeamA,generatedTeamB);generatedSubsA=subs.subA;generatedSubsB=subs.subB;renderTeams();
+  
   document.getElementById('matchSummaryPanel').style.display = 'none';
+  
   const livePanel=document.getElementById("scrimmageMatchPanel"); if(livePanel && !activeScrimmageId) livePanel.scrollIntoView({behavior:"smooth",block:"nearest"});
-  const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));const modeText={random:"Pure random",balanced:"Strongly balanced",competitive:"Balanced + randomized",byteam:"Team-based grouping",gender2:"Balanced · 2 Female / team",gender1:"Balanced · 1 Female / team"}[mode];const genderText=(mode==="gender2"||mode==="gender1")?` · Female: ${femaleCount(generatedTeamA)} / ${femaleCount(generatedTeamB)}`:"";const cross=mode==="byteam"?` · Cross-team starters: <strong>${teamMixPenalty(generatedTeamA,generatedTeamB)}</strong>`:"";document.getElementById("generatorNotice").innerHTML=`<strong>${modeText}</strong> · Attendance: <strong>${present.length} present</strong> · Date: <strong>${formatDate(dateStr)}</strong> · Rating difference: <strong>${diff}</strong> · Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR · <strong>${(chosen.extras||[]).length} substitute(s)</strong>${genderText}${cross}`;
+  const diff=Math.abs(sumRating(generatedTeamA)-sumRating(generatedTeamB));const modeText={random:"Pure random",balanced:"Strongly balanced",competitive:"Balanced + randomized",byteam:"Team-based grouping",gender2:"Balanced · 2 Female / team",gender1:"Balanced · 1 Female / team"}[mode];const genderText=(mode==="gender2"||mode==="gender1")?` · Female: ${femaleCount(generatedTeamA)} / ${femaleCount(generatedTeamB)}`:"";const cross=mode==="byteam"?` · Cross-team starters: <strong>${teamMixPenalty(generatedTeamA,generatedTeamB)}</strong>`:"";document.getElementById("generatorNotice").innerHTML=`<strong>${modeText}</strong> · Rating difference: <strong>${diff}</strong> · Team A ${sumRating(generatedTeamA)} OVR vs Team B ${sumRating(generatedTeamB)} OVR · <strong>${(chosen.extras||[]).length} substitute(s)</strong>${genderText}${cross}`;
 }
 
-/* ĐỘI HÌNH XOAY DỌC TỪ DƯỚI LÊN TRÊN (BOTTOM -> TOP) */
-const formation=[
-  {x:50,y:85,label:"Handler"}, 
-  {x:25,y:68,label:"Handler"},
-  {x:75,y:68,label:"Handler"},
-  {x:50,y:50,label:"Mid"},
-  {x:25,y:32,label:"Cutter"},
-  {x:75,y:32,label:"Cutter"},
-  {x:50,y:15,label:"Deep"}    
-];
+const formation=[ {x:50,y:85,label:"Handler"}, {x:25,y:68,label:"Handler"}, {x:75,y:68,label:"Handler"}, {x:50,y:50,label:"Mid"}, {x:25,y:32,label:"Cutter"}, {x:75,y:32,label:"Cutter"}, {x:50,y:15,label:"Deep"} ];
 
 function makeBalanced14(starters){
   if(starters.length!==14)return null;let best=null;
@@ -872,6 +786,7 @@ function renderAttendanceTeams(){const c=document.getElementById("attendanceTeam
 
 function renderTeamWithSubs(team,subs,name,teamClass){const score=sumRating(team),pc=positionCounts(team);return `<div class="ultimate-team ${teamClass}"><div class="team-head"><div class="team-title"><span class="team-dot"></span><div><h3>${name}</h3><span>7 STARTERS${subs.length?` · ${subs.length} SUB${subs.length>1?'S':''}`:''}</span></div></div><div class="team-total">${score} OVR</div></div><div class="ultimate-field"><div class="endzone top"><span class="zone-label">END ZONE</span></div><div class="endzone bottom"><span class="zone-label">HOME ZONE</span></div>${team.map((p,i)=>{const pos=formation[i];return `<div class="field-player" style="left:${pos.x}%;top:${pos.y}%" title="${esc(p.name)} · ${esc(p.position)}"><div class="card-art ${p.gender==="Female"?"gender-female":"gender-male"} tier-${esc(p.tier)}-card">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}<div class="card-rating">${Number(p.rating)||0}</div><div class="card-tier">${esc(p.tier)}</div><div class="card-name">${esc(p.name)}</div></div><div class="field-name">${esc(p.name)}</div><div class="field-pos"><span class="badge ${p.gender==="Female"?"gender-badge-female":"gender-badge-male"}" style="font-size:8px;padding:2px 5px;box-shadow:none;">${p.gender==="Female"?"Female":"Male"}</span> · ${esc(p.position)}</div></div>`}).join('')}</div><div class="team-stats"><div class="team-stat"><strong>${avgRating(team)}</strong><span>AVG RATING</span></div><div class="team-stat"><strong>${sumTier(team)}</strong><span>TIER SCORE</span></div><div class="team-stat"><strong>${pc.Handler||0}</strong><span>HANDLER</span></div><div class="team-stat"><strong>${pc.Cutter||0}</strong><span>CUTTER</span></div></div>${subs.length?`<div class="sub-list" style="margin-top:16px;padding:16px;border:2px dashed #cbd5e1;border-radius:16px;background:#f8fafc"><strong>Substitution · ${subs.length}</strong><div class="badges" style="margin-top:10px">${subs.map((p,i)=>`<span class="badge badge-sub" style="padding:6px 12px;box-shadow:none;">${i+1}. ${esc(p.name)} · ${esc(p.position)} · ${Number(p.rating)||0}</span>`).join('')}</div></div>`:''}</div>`;}
 
+/* ===== ATTENDANCE LOGIC ===== */
 async function loadAttendance(dateStr){if(!dateStr)return;attendancePresentIds=new Set();attendanceTeams={a:[],b:[],subA:[],subB:[]};const {data:session,error}=await supabaseClient.from('attendance_sessions').select('id').eq('session_date',dateStr).maybeSingle();if(error)throw error;if(session){const {data:rows,error:re}=await supabaseClient.from('attendance_records').select('player_id,present,assignment').eq('session_id',session.id);if(re)throw re;attendanceRows=rows||[];attendanceRows.filter(r=>r.present).forEach(r=>attendancePresentIds.add(r.player_id));const byId=new Map(players.map(p=>[p.id,p])),a=[],b=[],subA=[],subB=[];(rows||[]).forEach(r=>{const p=byId.get(r.player_id);if(!p)return;if(r.assignment==='Team A')a.push(p);else if(r.assignment==='Team B')b.push(p);else if(r.assignment==='Sub A')subA.push(p);else if(r.assignment==='Sub B')subB.push(p);});if(a.length===7&&b.length===7)attendanceTeams={a,b,subA,subB};}else attendanceRows=[];renderAttendancePlayers();renderAttendanceTeams();updateAttendanceCount();}
 async function ensureAttendanceSession(dateStr){const {data,error}=await supabaseClient.from('attendance_sessions').upsert({session_date:dateStr},{onConflict:'session_date'}).select().single();if(error)throw error;return data;}
 async function saveAttendance(){const dateStr=document.getElementById('attendanceDate').value;if(!dateStr){alert('Choose a match date first.');return;}const btn=document.getElementById('saveAttendanceBtn');btn.disabled=true;try{const session=await ensureAttendanceSession(dateStr);const {error:delErr}=await supabaseClient.from('attendance_records').delete().eq('session_id',session.id);if(delErr)throw delErr;const rows=[...attendancePresentIds].map(player_id=>({session_id:session.id,player_id,present:true,assignment:null}));if(rows.length){const {error:insErr}=await supabaseClient.from('attendance_records').insert(rows);if(insErr)throw insErr;}attendanceRows=rows;attendanceTeams={a:[],b:[],subA:[],subB:[]};renderAttendanceTeams();await loadAttendanceHistory();setSync('Attendance saved',true);}catch(err){console.error(err);alert('Attendance save failed: '+err.message);setSync('Sync error',false);}finally{btn.disabled=false;}}
@@ -904,6 +819,7 @@ function renderTeams(){
   }
 }
 
+/* ===== SCRIMMAGE LIVE MATCH ===== */
 let activeScrimmageId=null;
 let activeScrimmagePlayers=[];
 let activeScrimmageEvents=[];
@@ -938,13 +854,12 @@ function renderPerformance(){const list=document.getElementById('performanceList
 window.recordMatchStat=async function(playerId,statType){if(!activeScrimmageId)return;const row=activeScrimmagePlayers.find(x=>x.player_id===playerId);if(!row||!row.on_field){alert('Only players currently on the field can receive match stats.');return;}const {error}=await supabaseClient.from('scrimmage_stat_events').insert({match_id:activeScrimmageId,player_id:playerId,team:row.team,stat_type:statType,delta:1});if(error){alert('Could not record stat: '+error.message);return;}await loadActiveScrimmage();};
 
 async function loadActiveScrimmage(){const {data:m,error}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();if(error)throw error;if(!m){activeScrimmageId=null;activeScrimmagePlayers=[];activeScrimmageEvents=[];const panel=document.getElementById("scrimmageMatchPanel");if(generatedTeamA.length===7&&generatedTeamB.length===7){panel.style.display="block";document.getElementById("activateMatchBtn").style.display="inline-flex";document.getElementById("endMatchBtn").style.display="none";document.getElementById("liveTeamsContainer").innerHTML="<div class=\"generator-summary\"><strong>Match ready.</strong> Activate this generated 7v7 to start live tracking.</div>";document.getElementById("performanceList").innerHTML="<div class=\"empty\">Activate the match to start recording live player performance.</div>";}else{renderLiveMatch();}return;}activeScrimmageId=m.id;const [{data:mp,error:pe},{data:ev,error:ee}]=await Promise.all([supabaseClient.from('scrimmage_players').select('*').eq('match_id',m.id),supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',m.id).order('created_at',{ascending:true})]);if(pe)throw pe;if(ee)throw ee;activeScrimmagePlayers=mp||[];activeScrimmageEvents=ev||[];document.getElementById('activateMatchBtn').style.display='none';document.getElementById('endMatchBtn').style.display='inline-flex';
-  
-  document.getElementById('matchSummaryPanel').style.display = 'none'; // Ẩn MVP panel khi đang live
+  document.getElementById('matchSummaryPanel').style.display = 'none';
   renderLiveMatch();
   setSync('Live scrimmage',true);
 }
 async function activateMatch(){if(activeScrimmageId){alert('A scrimmage is already active. End it before starting another.');return;}if(generatedTeamA.length!==7||generatedTeamB.length!==7){alert('Generate a 7v7 match first.');return;}const {data:m,error}=await supabaseClient.from('scrimmage_matches').insert({status:'active'}).select().single();if(error){alert('Could not activate match: '+error.message);return;}const rows=[...generatedTeamA.map((p,i)=>({match_id:m.id,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:m.id,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.map(p=>({match_id:m.id,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.map(p=>({match_id:m.id,player_id:p.id,team:'B',on_field:false,slot:null}))];const {error:pe}=await supabaseClient.from('scrimmage_players').insert(rows);if(pe){await supabaseClient.from('scrimmage_matches').delete().eq('id',m.id);alert('Could not save lineups: '+pe.message);return;}
-  document.getElementById('matchSummaryPanel').style.display = 'none'; // Ẩn MVP panel
+  document.getElementById('matchSummaryPanel').style.display = 'none';
   await loadActiveScrimmage();
 }
 
@@ -953,8 +868,6 @@ async function endMatch(){
   if(!confirm('End this match? This will permanently apply performance points and rating changes to all players.')) return;
   
   const matchId = activeScrimmageId;
-  
-  /* === TÍNH TOÁN KẾT QUẢ VÀ MVP TRƯỚC KHI DATABASE XÓA DỮ LIỆU === */
   const goalsA = activeScrimmageEvents.filter(e=>e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   const goalsB = activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   
@@ -969,21 +882,17 @@ async function endMatch(){
       if(pts > maxPts) { maxPts = pts; mvp = { p, t, pts, team: x.team }; }
   });
 
-  // Hiển thị Panel Tổng kết & MVP
   document.getElementById('summaryScoreA').textContent = goalsA;
   document.getElementById('summaryScoreB').textContent = goalsB;
   
   if(mvp) {
-      // Fallback ảnh API nếu không có ảnh gốc
       const mvpImgSrc = mvp.p.image ? esc(mvp.p.image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(mvp.p.name)}&background=e2e8f0&color=1e3a8a&size=150&bold=true`;
       document.getElementById('mvpAvatar').src = mvpImgSrc;
       document.getElementById('mvpName').textContent = mvp.p.name;
       document.getElementById('mvpTier').textContent = mvp.p.tier;
-      
       const tierColors = { 'S': '#f59e0b', 'A': '#94a3b8', 'B': '#d97706', 'C': '#475569' };
       document.getElementById('mvpTier').style.borderColor = tierColors[mvp.p.tier] || '#1e3a8a';
       document.getElementById('mvpTier').style.color = tierColors[mvp.p.tier] || '#1e3a8a';
-      
       document.getElementById('mvpTeam').textContent = mvp.team === 'A' ? 'TEAM BLUE' : 'TEAM WHITE';
       document.getElementById('mvpPts').textContent = mvp.pts + ' PTS';
       document.getElementById('mvpStatsText').textContent = `${mvp.t.goal} GOAL · ${mvp.t.assist} AST · ${mvp.t.drop} DROP · ${mvp.t.block} BLK`;
@@ -992,7 +901,6 @@ async function endMatch(){
   document.getElementById('matchSummaryPanel').style.display = 'block';
   document.getElementById('matchSummaryPanel').scrollIntoView({behavior: "smooth", block: "nearest"});
 
-  /* === KẾT THÚC TRẬN BẰNG RPC === */
   const {error} = await supabaseClient.rpc('end_scrimmage_match',{p_match_id:matchId});
   if(error){alert('Could not end match: '+error.message+'\n\nRun vinuni_scrimmage_setup.sql in Supabase first.');return;}
   
@@ -1003,12 +911,164 @@ async function endMatch(){
   activeScrimmagePlayers=[];
   activeScrimmageEvents=[];
   refreshAll();
-  renderLiveMatch(); // renderLiveMatch sẽ ẩn live panel đi khi id=null
+  renderLiveMatch();
   setSync('Match ended · ratings updated',true);
   alert('Match ended. Performance Excel has been downloaded and player ratings/tiers were updated.');
 }
 
 async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const rows=mp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};ev.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:x.team==='A'?'Team 1':'Team 2',Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ev.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:e.team==='A'?'Team 1':'Team 2',Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
+
+/* ===== THAO TÁC CỦA TAB LOGISTIC ===== */
+function renderMemberPool(){
+  const pool=document.getElementById('memberPool');
+  if(!players.length){pool.innerHTML='<span style="color:var(--muted);font-size:13px;">Chưa có thành viên nào trong Database. Hãy thêm player ở tab Players.</span>';return;}
+  pool.innerHTML=players.map(p=>`<div class="member-pool-item" draggable="true" ondragstart="dragMember(event, '${esc(p.name)}')">👤 ${esc(p.name)}</div>`).join('');
+}
+
+let draggedMemberName='';
+function dragMember(e, name){draggedMemberName=name;}
+function allowDrop(e){e.preventDefault();}
+
+function dropMember(e, type, id){
+  e.preventDefault();
+  if(!draggedMemberName) return;
+  const item=logisticData[type].find(x=>x.id===id);
+  if(item){
+    if(!item.assignees.includes(draggedMemberName)){
+      item.assignees.push(draggedMemberName);
+      saveLogisticData();
+    }
+  }
+  draggedMemberName='';
+}
+
+function removeAssignee(type, id, name){
+  const item=logisticData[type].find(x=>x.id===id);
+  if(item){
+    item.assignees=item.assignees.filter(x=>x!==name);
+    saveLogisticData();
+  }
+}
+
+function renderLogisticLists(){
+  document.getElementById('permanentInventoryBody').innerHTML=logisticData.permanent.map(item=>`
+    <tr>
+      <td><strong>${esc(item.name)}</strong></td>
+      <td>${item.qty}</td>
+      <td>
+        <div class="assignee-dropzone" ondragover="allowDrop(event)" ondrop="dropMember(event, 'permanent', '${item.id}')">
+          ${item.assignees.map(name=>`<span class="assignee-tag">${esc(name)} <button onclick="removeAssignee('permanent', '${item.id}', '${esc(name)}')">×</button></span>`).join('')}
+          ${!item.assignees.length?'<span style="font-size:11px;color:#94a3b8">Kéo thả thành viên vào đây</span>':''}
+        </div>
+      </td>
+      <td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deletePermanentItem('${item.id}')">Xóa</button></td>
+    </tr>
+  `).join('')||`<tr><td colspan="4" class="empty">Chưa có đồ cố định nào.</td></tr>`;
+
+  document.getElementById('shoppingListBody').innerHTML=logisticData.shopping.map(item=>`
+    <tr>
+      <td style="text-align:center;"><input type="checkbox" style="width:20px;height:20px;cursor:pointer;" onchange="markShoppingDone('${item.id}')" title="Tích Done để chuyển lên đồ Cố Định"></td>
+      <td><strong>${esc(item.name)}</strong></td>
+      <td>${item.qty}</td>
+      <td>
+        <div class="assignee-dropzone" ondragover="allowDrop(event)" ondrop="dropMember(event, 'shopping', '${item.id}')">
+          ${item.assignees.map(name=>`<span class="assignee-tag">${esc(name)} <button onclick="removeAssignee('shopping', '${item.id}', '${esc(name)}')">×</button></span>`).join('')}
+          ${!item.assignees.length?'<span style="font-size:11px;color:#94a3b8">Kéo thả người đi mua</span>':''}
+        </div>
+      </td>
+      <td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteShoppingItem('${item.id}')">Xóa</button></td>
+    </tr>
+  `).join('')||`<tr><td colspan="5" class="empty">Không có món đồ nào cần mua.</td></tr>`;
+
+  document.getElementById('borrowListBody').innerHTML=logisticData.borrow.map(item=>`
+    <tr>
+      <td><strong>${esc(item.name)}</strong></td>
+      <td>${item.qty}</td>
+      <td>${item.borrowDate||'-'}</td>
+      <td><span style="color:var(--red); font-weight:800;">${item.dueDate||'-'}</span></td>
+      <td>
+        <div class="assignee-dropzone" ondragover="allowDrop(event)" ondrop="dropMember(event, 'borrow', '${item.id}')">
+          ${item.assignees.map(name=>`<span class="assignee-tag">${esc(name)} <button onclick="removeAssignee('borrow', '${item.id}', '${esc(name)}')">×</button></span>`).join('')}
+          ${!item.assignees.length?'<span style="font-size:11px;color:#94a3b8">Kéo thả người mượn</span>':''}
+        </div>
+      </td>
+      <td><button class="btn btn-danger" style="padding:6px 10px;font-size:11px;" onclick="deleteBorrowItem('${item.id}')">Xóa</button></td>
+    </tr>
+  `).join('')||`<tr><td colspan="6" class="empty">There are not any borrowed items.</td></tr>`;
+}
+
+function deletePermanentItem(id){
+  if(confirm("Do you want to delete this item from the permanent inventory?")) {
+    logisticData.permanent = logisticData.permanent.filter(x=>x.id!==id);
+    saveLogisticData();
+  }
+}
+
+function deleteShoppingItem(id){
+  if(confirm("Do you want to delete this item from the shopping list?")) {
+    logisticData.shopping = logisticData.shopping.filter(x=>x.id!==id);
+    saveLogisticData();
+  }
+}
+
+function deleteBorrowItem(id){
+  if(confirm("Do you want to delete this borrowed item? (Already returned)")) {
+    logisticData.borrow = logisticData.borrow.filter(x=>x.id!==id);
+    saveLogisticData();
+  }
+}
+
+function markShoppingDone(id){
+  const idx = logisticData.shopping.findIndex(x=>x.id===id);
+  if(idx>-1){
+    const item = logisticData.shopping[idx];
+    logisticData.shopping.splice(idx, 1);
+    logisticData.permanent.push({ id: 'p_'+Date.now(), name: item.name, qty: item.qty, assignees: item.assignees });
+    saveLogisticData();
+    alert(`Done shopping for "${item.name}" and automatically moved to Permanent Inventory!`);
+  }
+}
+
+function openAddLogisticModal(type){
+  const name = prompt("Enter device name:");
+  if(!name) return;
+  const qty = prompt("Enter quantity:", "1");
+  if(type==='borrow'){
+    const borrowDate = prompt("Borrow Date (YYYY-MM-DD):", todayISO());
+    const dueDate = prompt("Due Date (YYYY-MM-DD):", todayISO());
+    logisticData.borrow.push({ id: 'b_'+Date.now(), name, qty: Number(qty)||1, borrowDate, dueDate, assignees: [] });
+  }else if(type==='shopping'){
+    logisticData.shopping.push({ id: 's_'+Date.now(), name, qty: Number(qty)||1, assignees: [] });
+  }else{
+    logisticData.permanent.push({ id: 'p_'+Date.now(), name, qty: Number(qty)||1, assignees: [] });
+  }
+  saveLogisticData();
+}
+
+function exportLogisticExcel(){
+  if(typeof XLSX==='undefined'){alert('Excel library not loaded.');return;}
+  const permRows = logisticData.permanent.map(x=>({Loại: 'Permanent Item', Tên: x.name, SốLượng: x.qty, NgàyMượn: '', HạnTrả: '', NgườiPhụTrách: x.assignees.join(', ')}));
+  const shopRows = logisticData.shopping.map(x=>({Loại: 'Shopping Item', Tên: x.name, SốLượng: x.qty, NgàyMượn: '', HạnTrả: '', NgườiPhụTrách: x.assignees.join(', ')}));
+  const borrowRows = logisticData.borrow.map(x=>({Loại: 'Borrowed Item', Tên: x.name, SốLượng: x.qty, NgàyMượn: x.borrowDate, HạnTrả: x.dueDate, NgườiPhụTrách: x.assignees.join(', ')}));
+  
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([...permRows, ...shopRows, ...borrowRows]), 'Club Logistic');
+  XLSX.writeFile(wb, `VinUni_Club_Logistic_${todayISO()}.xlsx`);
+}
+
+function updateDayOfWeek(){
+  const dateInput = document.getElementById('logDateDisplay').value;
+  if(!dateInput) return;
+  const d = new Date(dateInput);
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  document.getElementById('logDayOfWeekLabel').textContent = days[d.getDay()] + `, ${dateInput}`;
+}
+
+document.getElementById('logDateDisplay').value = todayISO();
+document.getElementById('logDateDisplay').addEventListener('change', updateDayOfWeek);
+updateDayOfWeek();
+
+/* ===== EVENT LISTENERS VÀ KHỞI TẠO APP ===== */
 async function subscribeRealtime(){
   if(realtimeChannel)await supabaseClient.removeChannel(realtimeChannel);
   realtimeChannel=supabaseClient.channel("vinuni-live")
@@ -1020,25 +1080,32 @@ async function subscribeRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error(e);}})
     .subscribe((status)=>{if(status==="SUBSCRIBED")setSync(activeScrimmageId?"Live scrimmage":"Live sync",true);else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setSync("Sync error",false);});
 }
-async function bootstrapApp(){setSync("Loading...",false);try{await loadPlayers();refreshAll();const d=todayISO();document.getElementById("attendanceDate").value=d;await loadAttendance(d);await loadAttendanceHistory();await loadActiveScrimmage();await subscribeRealtime();}catch(err){console.error(err);alert("Could not load the shared database. Check your Supabase URL, key, SQL setup and RLS policies.\n\n"+err.message);setSync("Database error",false);}}
 
-/* UI events */
-document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",async()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));btn.classList.add("active");document.getElementById(btn.dataset.page).classList.add("active");if(btn.dataset.page==="attendance"){try{await loadAttendanceHistory();await loadAttendance(document.getElementById("attendanceDate").value||todayISO());}catch(e){console.error(e);}}}));
+document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",async()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById(btn.dataset.page).classList.add("active");
+  
+  if(btn.dataset.page==="attendance"){
+    try{await loadAttendanceHistory();await loadAttendance(document.getElementById("attendanceDate").value||todayISO());}catch(e){console.error(e);}
+  }
+  if(btn.dataset.page==="logistic"){
+    renderMemberPool();
+    renderLogisticLists();
+  }
+}));
+
 ["search","tierFilter","positionFilter","clubFilter"].forEach(id=>{document.getElementById(id).addEventListener("input",renderPlayers);document.getElementById(id).addEventListener("change",renderPlayers);});
-
 document.getElementById("fImage").addEventListener("change",e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Please select an image file.");e.target.value="";return;}const reader=new FileReader();reader.onload=()=>{editingImage=reader.result;const img=document.getElementById("imagePreview");img.src=reader.result;img.style.display="block";};reader.readAsDataURL(file);});
-
 document.getElementById("playerForm").addEventListener("submit",async e=>{e.preventDefault();const btn=document.getElementById("savePlayerBtn");const original=btn.textContent;btn.disabled=true;btn.textContent="Saving...";try{const id=document.getElementById("editId").value||uid();const data={name:document.getElementById("fName").value.trim(),club:document.getElementById("fClub").value.trim(),gender:document.getElementById("fGender").value,position:document.getElementById("fPosition").value,tier:document.getElementById("fTier").value,rating:Math.max(0,Math.min(100,Number(document.getElementById("fRating").value)||0)),image:editingImage||""};const file=document.getElementById("fImage").files[0]||null;if(!data.name||!data.club)throw new Error("Name and club are required.");await savePlayerToDB(id,data,file);await loadPlayers();resetForm();refreshAll();}catch(err){console.error(err);alert("Save failed: "+err.message);}finally{btn.disabled=false;btn.textContent=original;}});
-
 document.getElementById("cancelEdit").addEventListener("click",resetForm);
 document.getElementById("generateBtn").addEventListener("click",generateTeams);
 document.getElementById("activateMatchBtn").addEventListener("click",activateMatch);
 document.getElementById("endMatchBtn").addEventListener("click",endMatch);
 document.querySelectorAll(".performance-tab").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".performance-tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");performanceTeam=btn.dataset.performanceTeam;renderPerformance();}));
 document.getElementById("swapBtn").addEventListener("click",()=>{if(!generatedTeamA.length)return;[generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];renderTeams();});
-document.getElementById("clearTeamsBtn").addEventListener("click",()=>{generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];renderTeams();
-  document.getElementById('matchSummaryPanel').style.display = 'none'; // Clear summary too
-});
+document.getElementById("clearTeamsBtn").addEventListener("click",()=>{generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];renderTeams();document.getElementById('matchSummaryPanel').style.display = 'none';});
 document.getElementById("attendanceDate").addEventListener("change",async()=>{try{await loadAttendance(document.getElementById("attendanceDate").value);}catch(err){alert("Could not load attendance: "+err.message);}});
 document.getElementById("attendanceSearch").addEventListener("input",renderAttendancePlayers);
 document.getElementById("markAllPresentBtn").addEventListener("click",()=>{players.forEach(p=>attendancePresentIds.add(p.id));updateAttendanceCount();renderAttendancePlayers();});
@@ -1047,6 +1114,24 @@ document.getElementById("saveAttendanceBtn").addEventListener("click",saveAttend
 document.getElementById("generateAttendanceBtn").addEventListener("click",generateFromAttendance);
 document.getElementById("exportAttendanceBtn").addEventListener("click",exportAttendanceExcel);
 
+async function bootstrapApp(){
+  setSync("Loading...",false);
+  try{
+    await loadPlayers();
+    refreshAll();
+    const d=todayISO();
+    document.getElementById("attendanceDate").value=d;
+    await loadAttendance(d);
+    await loadAttendanceHistory();
+    await loadActiveScrimmage();
+    renderLogisticLists();
+    await subscribeRealtime();
+  }catch(err){
+    console.error(err);
+    alert("Could not load the shared database. Check your Supabase URL, key, SQL setup and RLS policies.\n\n"+err.message);
+    setSync("Database error",false);
+  }
+}
 (async()=>{if(SUPABASE_URL.includes("YOUR_")||SUPABASE_PUBLISHABLE_KEY.includes("YOUR_")){setSync("Add Supabase URL + key",false);return;}await bootstrapApp();})();
 </script>
 </body>
