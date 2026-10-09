@@ -484,6 +484,13 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
     <div class="table-wrap" style="margin-top:16px"><table class="table attendance-history"><thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>Status</th></tr></thead><tbody id="attendanceHistoryBody"></tbody></table></div>
   </div>
   <div class="panel" style="margin-top:28px">
+    <div class="controls" style="justify-content:space-between; flex-wrap:wrap;">
+      <div><h2 style="margin:0">Completed Match Results</h2><div style="font-size:13px;color:var(--muted);margin-top:6px;font-weight:500;">All completed matches are kept in Supabase and listed here. New matches are added to this history; they do not replace older matches.</div></div>
+      <button class="btn btn-secondary" id="refreshMatchHistoryBtn" type="button">↻ Refresh match history</button>
+    </div>
+    <div class="table-wrap" style="margin-top:16px"><table class="table"><thead><tr><th>#</th><th>Date</th><th>Team Blue</th><th>Team White</th><th>Players</th><th>MVP</th><th>MVP Points</th></tr></thead><tbody id="completedMatchHistoryBody"><tr><td colspan="7" class="empty">Loading completed matches…</td></tr></tbody></table></div>
+  </div>
+  <div class="panel" style="margin-top:28px">
     <div class="controls" style="justify-content:space-between; flex-wrap: nowrap; align-items: flex-end;"><div><h2 style="margin:0">7v7 From This Attendance</h2><div style="font-size:13px;color:var(--muted);margin-top:6px;font-weight:500;max-width: 600px;">Only checked-in players are used. If there are more than 14, extra players become substitutes, split as evenly as possible.</div></div><div class="controls"><div class="field"><label>Team Split</label><select id="attendanceGenMode"><option value="gender2">Balanced — 2 Female / team</option><option value="gender1">Balanced — 1 Female / team</option><option value="balanced">Balanced — strongest balance</option><option value="random">Random — pure random</option><option value="byteam">By Team — keep Team 1 / Team 2 together</option></select></div><button class="btn btn-primary" id="generateAttendanceBtn">⚡ Generate From Attendance</button></div></div>
     <div id="attendanceTeamsContainer" style="margin-top:24px"></div>
   </div>
@@ -898,6 +905,37 @@ async function generateFromAttendance(){
   const dateStr=document.getElementById('attendanceDate').value;if(!dateStr){alert('Choose a match date first.');return;}
   const present=players.filter(p=>attendancePresentIds.has(p.id));if(present.length<14){alert(`Only ${present.length} player(s) are marked present. You need at least 14 for 7v7.`);return;}
   try{const mode=document.getElementById('attendanceGenMode').value;let result;if(mode==='random')result=makeRandomSplit(present);else if(mode==='byteam')result=makeByTeamSplit(present,5000);else if(mode==='gender2')result=makeGenderBalancedSplit(present,2,6000);else if(mode==='gender1')result=makeGenderBalancedSplit(present,1,6000);else result=bestBalancedSplitForAttendance(present);const subs=assignSubstitutes(result.extras||[],result.a,result.b);attendanceTeams={a:shuffle(result.a),b:shuffle(result.b),subA:subs.subA,subB:subs.subB};renderAttendanceTeams();const session=await ensureAttendanceSession(dateStr);await supabaseClient.from('attendance_records').delete().eq('session_id',session.id);const rows=[...attendanceTeams.a.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Team A'})),...attendanceTeams.b.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Team B'})),...attendanceTeams.subA.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Sub A'})),...attendanceTeams.subB.map(p=>({session_id:session.id,player_id:p.id,present:true,assignment:'Sub B'}))];if(rows.length){const {error}=await supabaseClient.from('attendance_records').insert(rows);if(error)throw error;}attendanceRows=rows;await loadAttendanceHistory();const extra=present.length-14,diff=Math.abs(sumRating(attendanceTeams.a)-sumRating(attendanceTeams.b));const genderText=(mode==='gender2'||mode==='gender1')?` · Female: ${femaleCount(attendanceTeams.a)} / ${femaleCount(attendanceTeams.b)}`:"";setSync(`Teams saved · ${present.length} present`,true);alert(`Teams generated and saved for ${formatDate(dateStr)}.\n\n${present.length} present · ${extra} substitute(s) · Team rating difference: ${diff}${genderText}`);}catch(err){console.error(err);alert('Team generation failed: '+err.message);setSync('Sync error',false);}}
+async function loadCompletedMatchHistory(){
+  const body=document.getElementById('completedMatchHistoryBody');
+  if(!body)return;
+  body.innerHTML='<tr><td colspan="7" class="empty">Loading completed matches…</td></tr>';
+  try{
+    const {data:matches,error}=await supabaseClient.from('scrimmage_matches').select('id,status,created_at,ended_at').eq('status','ended').order('created_at',{ascending:false});
+    if(error)throw error;
+    if(!matches||!matches.length){body.innerHTML='<tr><td colspan="7" class="empty">No completed matches yet. Each match will appear here after End Match.</td></tr>';return;}
+    const ids=matches.map(m=>m.id);
+    const [{data:matchPlayers,error:pe},{data:events,error:ee}]=await Promise.all([
+      supabaseClient.from('scrimmage_players').select('match_id,player_id,team').in('match_id',ids),
+      supabaseClient.from('scrimmage_stat_events').select('match_id,player_id,team,stat_type,delta').in('match_id',ids)
+    ]);
+    if(pe)throw pe;if(ee)throw ee;
+    const pMap=new Map(players.map(p=>[p.id,p]));
+    body.innerHTML=matches.map((m,index)=>{
+      const mps=(matchPlayers||[]).filter(x=>x.match_id===m.id);
+      const ev=(events||[]).filter(x=>x.match_id===m.id);
+      const scoreA=ev.filter(e=>e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
+      const scoreB=ev.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
+      const totals=new Map();
+      ev.forEach(e=>{if(!totals.has(e.player_id))totals.set(e.player_id,{goal:0,assist:0,drop:0,block:0});const t=totals.get(e.player_id);if(t[e.stat_type]!==undefined)t[e.stat_type]+=Number(e.delta||0);});
+      let mvpName='—',mvpPts=-Infinity;
+      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};const t=totals.get(x.player_id)||{goal:0,assist:0,drop:0,block:0};const pts=performancePoints(t);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||'Unknown';}});
+      const when=m.ended_at||m.created_at;
+      const date=when?new Date(when).toLocaleString():'—';
+      return '<tr><td>'+(matches.length-index)+'</td><td>'+esc(date)+'</td><td><strong>'+scoreA+'</strong></td><td><strong>'+scoreB+'</strong></td><td>'+mps.length+'</td><td>'+esc(mvpName)+'</td><td>'+(Number.isFinite(mvpPts)?mvpPts:0)+'</td></tr>';
+    }).join('');
+  }catch(err){console.error('Match history load failed:',err);body.innerHTML='<tr><td colspan="7" class="empty">Could not load match history: '+esc(err.message||String(err))+'</td></tr>';}
+}
+
 async function exportAttendanceExcel(){
   if(typeof XLSX==='undefined'){alert('Excel library did not load. Check your internet connection.');return;}
   try{
@@ -1176,7 +1214,7 @@ async function subscribeRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"players"},async()=>{try{await loadPlayers();refreshAll();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"attendance_sessions"},async()=>{try{await loadAttendanceHistory();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"attendance_records"},async()=>{try{const d=document.getElementById("attendanceDate").value;if(d)await loadAttendance(d);}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_matches"},async()=>{try{await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_matches"},async()=>{try{await loadActiveScrimmage();await loadCompletedMatchHistory();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_players"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();else await loadActiveScrimmage();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"logistics_inventory"},async()=>{try{await loadLogisticData();}catch(e){console.error('Logistics realtime inventory:',e);}})
@@ -1192,7 +1230,7 @@ document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",asyn
   document.getElementById(btn.dataset.page).classList.add("active");
   
   if(btn.dataset.page==="attendance"){
-    try{await loadAttendanceHistory();await loadAttendance(document.getElementById("attendanceDate").value||todayISO());}catch(e){console.error(e);}
+    try{await loadAttendanceHistory();await loadCompletedMatchHistory();await loadAttendance(document.getElementById("attendanceDate").value||todayISO());}catch(e){console.error(e);}
   }
   if(btn.dataset.page==="logistic"){
     renderMemberPool();
@@ -1217,6 +1255,7 @@ document.getElementById("clearAttendanceBtn").addEventListener("click",()=>{atte
 document.getElementById("saveAttendanceBtn").addEventListener("click",saveAttendance);
 document.getElementById("generateAttendanceBtn").addEventListener("click",generateFromAttendance);
 document.getElementById("exportAttendanceBtn").addEventListener("click",exportAttendanceExcel);
+document.getElementById("refreshMatchHistoryBtn")?.addEventListener("click",loadCompletedMatchHistory);
 
 async function bootstrapApp(){
   setSync("Loading...",false);
@@ -1227,6 +1266,7 @@ async function bootstrapApp(){
     document.getElementById("attendanceDate").value=d;
     await loadAttendance(d);
     await loadAttendanceHistory();
+    await loadCompletedMatchHistory();
     await loadActiveScrimmage();
     await migrateLegacyLogisticData();
     await loadLogisticData();
