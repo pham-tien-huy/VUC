@@ -1674,7 +1674,7 @@ async function checkRegistrationSchema(){
   if(error.code==="42703"||(error.code==="PGRST204"&&/member_type|expires_at/.test(error.message||""))){
     registrationSchemaReady=false;
     const notice=document.getElementById("registrationSchemaNotice");
-    notice.textContent="Registration is not ready yet. Run vinuni_registration_guest_setup.sql in the Supabase SQL Editor, then reload this page.";
+    notice.textContent="Guest registration is not ready yet. Run vinuni_registration_guest_setup.sql in the Supabase SQL Editor, then reload this page. Permanent member registration and edits remain available.";
     notice.style.display="block";
     return false;
   }
@@ -1730,8 +1730,12 @@ async function savePlayerToDB(id,data,file,memberType,existingPlayer){
   let imageUrl=data.image||"";
   if(file) imageUrl=await uploadPlayerImage(id,file);
   const normalizedRating=Math.max(0,Math.min(100,Number(data.rating)||0));
-  const expiresAt=memberType==="guest"?(existingPlayer?.member_type==="guest"&&existingPlayer.expires_at?existingPlayer.expires_at:new Date(Date.now()+24*60*60*1000).toISOString()):null;
-  const payload={id,name:data.name,club:data.club,position:data.position,gender:data.gender||"Male",tier:data.tier||tierFromRating(normalizedRating),rating:normalizedRating,image_url:imageUrl,member_type:memberType,expires_at:expiresAt};
+  const payload={id,name:data.name,club:data.club,position:data.position,gender:data.gender||"Male",tier:data.tier||tierFromRating(normalizedRating),rating:normalizedRating,image_url:imageUrl};
+  if(registrationSchemaReady){
+    const expiresAt=memberType==="guest"?(existingPlayer?.member_type==="guest"&&existingPlayer.expires_at?existingPlayer.expires_at:new Date(Date.now()+24*60*60*1000).toISOString()):null;
+    payload.member_type=memberType;
+    payload.expires_at=expiresAt;
+  }
   const {error}=await supabaseClient.from("players").upsert(payload,{onConflict:"id"});
   if(error)throw error;
 }
@@ -2706,7 +2710,7 @@ document.getElementById("registrationSearch").addEventListener("input",renderReg
 document.getElementById("fMemberType").addEventListener("change",e=>{if(!document.getElementById("editId").value)document.getElementById("savePlayerBtn").textContent=e.target.value==="guest"?"Add Guest":"Add Member";});
 document.getElementById("fRating").addEventListener("input",e=>{document.getElementById("fTier").value=tierFromRating(e.target.value);});
 document.getElementById("fImage").addEventListener("change",e=>{const file=e.target.files[0];if(!file)return;if(!file.type.startsWith("image/")){alert("Please select an image file.");e.target.value="";return;}const reader=new FileReader();reader.onload=()=>{editingImage=reader.result;const img=document.getElementById("imagePreview");img.src=reader.result;img.style.display="block";};reader.readAsDataURL(file);});
-document.getElementById("playerForm").addEventListener("submit",async e=>{e.preventDefault();if(!registrationSchemaReady){alert("Run vinuni_registration_guest_setup.sql in the Supabase SQL Editor before using Registration.");return;}const btn=document.getElementById("savePlayerBtn");btn.disabled=true;btn.textContent="Saving...";try{const editId=document.getElementById("editId").value,id=editId||uid(),memberType=document.getElementById("fMemberType").value,existingPlayer=players.find(player=>player.id===editId);const data={name:document.getElementById("fName").value.trim(),club:document.getElementById("fClub").value.trim(),gender:document.getElementById("fGender").value,position:document.getElementById("fPosition").value,tier:document.getElementById("fTier").value,rating:Math.max(0,Math.min(100,Number(document.getElementById("fRating").value)||0)),image:editingImage||""};const file=document.getElementById("fImage").files[0]||null;if(!data.name||!data.club)throw new Error("Name and club are required.");await savePlayerToDB(id,data,file,memberType,existingPlayer);await loadPlayers();if(memberType==="guest"&&!editId&&document.getElementById("attendanceDate").value===todayISO()){attendancePresentIds.add(id);renderAttendancePlayers();updateAttendanceCount();try{await addGuestToSavedTodayAttendance(id);}catch(attendanceError){console.error(attendanceError);alert("Guest was registered, but could not be added to saved attendance. Save Attendance again to include them: "+attendanceError.message);}}resetForm();refreshAll();}catch(err){console.error(err);alert("Save failed: "+err.message);}finally{btn.disabled=!registrationSchemaReady;btn.textContent=document.getElementById("editId").value?"Save Changes":(document.getElementById("fMemberType").value==="guest"?"Add Guest":"Add Member");}});
+document.getElementById("playerForm").addEventListener("submit",async e=>{e.preventDefault();const btn=document.getElementById("savePlayerBtn");const editId=document.getElementById("editId").value,memberType=document.getElementById("fMemberType").value;if(!registrationSchemaReady&&memberType==="guest"){alert("Run vinuni_registration_guest_setup.sql in the Supabase SQL Editor before registering guests.");return;}btn.disabled=true;btn.textContent="Saving...";try{const id=editId||uid(),existingPlayer=players.find(player=>player.id===editId);const data={name:document.getElementById("fName").value.trim(),club:document.getElementById("fClub").value.trim(),gender:document.getElementById("fGender").value,position:document.getElementById("fPosition").value,tier:document.getElementById("fTier").value,rating:Math.max(0,Math.min(100,Number(document.getElementById("fRating").value)||0)),image:editingImage||""};const file=document.getElementById("fImage").files[0]||null;if(!data.name||!data.club)throw new Error("Name and club are required.");await savePlayerToDB(id,data,file,memberType,existingPlayer);await loadPlayers();if(memberType==="guest"&&!editId&&document.getElementById("attendanceDate").value===todayISO()){attendancePresentIds.add(id);renderAttendancePlayers();updateAttendanceCount();try{await addGuestToSavedTodayAttendance(id);}catch(attendanceError){console.error(attendanceError);alert("Guest was registered, but could not be added to saved attendance. Save Attendance again to include them: "+attendanceError.message);}}resetForm();refreshAll();}catch(err){console.error(err);alert("Save failed: "+err.message);}finally{btn.disabled=false;btn.textContent=document.getElementById("editId").value?"Save Changes":(document.getElementById("fMemberType").value==="guest"?"Add Guest":"Add Member");}});
 document.getElementById("cancelEdit").addEventListener("click",resetForm);
 document.getElementById("generateBtn").addEventListener("click",generateTeams);
 document.getElementById("activateMatchBtn").addEventListener("click",activateMatch);
@@ -2740,7 +2744,7 @@ async function bootstrapApp(){
   setSync("Loading...",false);
   try{
     await checkRegistrationSchema();
-    document.getElementById("savePlayerBtn").disabled=!registrationSchemaReady;
+    document.getElementById("savePlayerBtn").disabled=false;
     await loadPlayers();
     refreshAll();
     const d=todayISO();
