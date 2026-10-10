@@ -31,7 +31,7 @@ body {
   margin:0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color:var(--text);
-  background-image: linear-gradient(135deg, #07101b 0%, #0b1424 55%, #10172b 100%);
+  background-image: url('https://www.facebook.com/photo/?fbid=1032787159584111&set=a.119181300944706');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -945,6 +945,18 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   font-weight:800;
 }
 .live-offline-notice.visible{display:block}
+.prep-offline-notice{
+  display:none;
+  margin:12px 0;
+  padding:11px 14px;
+  border:1px solid #f59e0b88;
+  border-radius:12px;
+  color:#fef3c7;
+  background:#78350f55;
+  font-size:13px;
+  font-weight:800;
+}
+.prep-offline-notice.visible{display:block}
 @media(hover:hover) and (pointer:fine){
   #liveView .live-player:hover{
     transform:translate(-50%,-50%) translateY(-8px) perspective(700px) rotateX(7deg) rotateY(-3deg) scale(1.16);
@@ -1216,8 +1228,8 @@ select option{color:#e5edf9;background:#0b1424}
 <header class="topbar">
   <div class="nav">
     <div class="brand-wrap">
-      <img src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/vinuniversity-logo.jpg" alt="VinUniversity Logo" class="brand-img">
-      <img src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/vinuni-ultimate-club-logo.png" alt="VinUni Ultimate Club Logo" class="club-brand-logo">
+      <img src="https://media.loveitopcdn.com/3807/logo-vinuniversity-compressed.jpg" alt="VinUniversity Logo" class="brand-img">
+      <img src="vinuni-ultimate-club-logo.png" alt="VinUni Ultimate Club Logo" class="club-brand-logo">
       <div class="brand">VINUNI ULTIMATE<small>CLUBS PLAYER MANAGEMENT</small></div>
     </div>
     <div class="tabs">
@@ -1241,8 +1253,8 @@ select option{color:#e5edf9;background:#0b1424}
       <p>One team. Every play. Meet the players who make VinUni Ultimate.</p>
     </div>
     <div class="player-db-visual" aria-label="VinUni Ultimate team photograph">
-      <img class="player-db-team-photo" src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/vinuni-ultimate-team-photo.png" alt="VinUni Ultimate team together on the field">
-      <img class="player-db-hero-crest" src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/vinuni-ultimate-club-logo.png" alt="">
+      <img class="player-db-team-photo" src="vinuni-ultimate-team-photo.png" alt="VinUni Ultimate team together on the field">
+      <img class="player-db-hero-crest" src="vinuni-ultimate-club-logo.png" alt="">
       <div class="player-db-team-caption">One team · One flight</div>
     </div>
   </div>
@@ -1273,7 +1285,7 @@ select option{color:#e5edf9;background:#0b1424}
 <!-- ================== REGISTRATION ================== -->
 <section id="registration" class="page">
   <div class="registration-photo-banner">
-    <img src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/registration-team-photo.png" alt="VinUni Ultimate teammates tying green team bands before a game" loading="lazy">
+    <img src="registration-team-photo.png" alt="VinUni Ultimate teammates tying green team bands before a game" loading="lazy">
     <div class="registration-photo-copy"><h1>Registration</h1><p>Add a permanent member or register a one-day guest.</p></div>
   </div>
   <div class="panel" id="registrationFormPanel">
@@ -1304,7 +1316,7 @@ select option{color:#e5edf9;background:#0b1424}
 <!-- ================== SCRIMMAGE ================== -->
 <section id="generator" class="page">
   <div class="live-scrimmage-photo-banner">
-    <img src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/live-scrimmage-team-photo.png" alt="VinUni Ultimate teammates huddled together before a match" loading="lazy">
+    <img src="live-scrimmage-team-photo.png" alt="VinUni Ultimate teammates huddled together before a match" loading="lazy">
     <div class="live-scrimmage-photo-copy"><h1>Scrimmage</h1><p>Generate teams, prepare the lineup, and play together.</p></div>
   </div>
 
@@ -1332,6 +1344,7 @@ select option{color:#e5edf9;background:#0b1424}
     <div id="generatorNotice" class="generator-summary" hidden></div>
   </div>
 
+  <div id="prepOfflineNotice" class="prep-offline-notice" role="status" aria-live="polite"></div>
   <div id="teamsContainer"></div>
   </div><!-- /prepView -->
 
@@ -1379,7 +1392,7 @@ select option{color:#e5edf9;background:#0b1424}
     <h3 style="margin: 0 0 16px; color: #1e3a8a; font-size: 22px;">🌟 MVP OF THE MATCH 🌟</h3>
     <div style="display: flex; justify-content: center; align-items: center; gap: 20px; background: #fffbf1; padding: 20px 30px; border-radius: 20px; border: 2px dashed #fcd34d; max-width: 550px; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
       <div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; flex: none;">
-        <img src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/vinuni-ultimate-club-logo.png" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1;">
+        <img src="image_d3bbdf.png" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1;">
         <img id="mvpAvatar" src="" style="position: relative; width: 72px; height: 72px; border-radius: 50%; object-fit: cover; z-index: 2; margin-top: -12px;">
       </div>
       <div style="text-align: left;">
@@ -1550,8 +1563,25 @@ let generatedUnassigned=[];
 let prepAttendanceDate='';
 let selectedPrepPlayerId=null;
 let prepSaveInProgress=false;
-let prepSaveRequested=false;
 let lastPrepUpdatedAt='';
+const PREPARATION_CACHE_KEY='vuc_scrimmage_preparation_pending_v1';
+let pendingPreparationPayload=null;
+let pendingPreparationIsDurable=false;
+let prepSaveRetryTimer=null;
+try{
+  const storedPreparation=localStorage.getItem(PREPARATION_CACHE_KEY);
+  if(storedPreparation){
+    const parsedPreparation=JSON.parse(storedPreparation);
+    if(parsedPreparation?.id===true&&Array.isArray(parsedPreparation.team_a)&&Array.isArray(parsedPreparation.team_b)&&Array.isArray(parsedPreparation.subs_a)&&Array.isArray(parsedPreparation.subs_b)&&Array.isArray(parsedPreparation.unassigned)&&typeof parsedPreparation.updated_at==='string'){
+      pendingPreparationPayload=parsedPreparation;
+      pendingPreparationIsDurable=true;
+    }else{
+      throw new Error('Stored Team Preparation cache has an invalid format.');
+    }
+  }
+}catch(error){
+  console.error('Could not read pending Team Preparation from local storage:',error);
+}
 let editingImage="";
 let realtimeChannel=null;
 let attendancePresentIds=new Set();
@@ -2183,22 +2213,110 @@ function bindPreparationDnD(){
  document.getElementById('cancelPrepSelection')?.addEventListener('click',()=>{selectedPrepPlayerId=null;updatePrepSelection();});
  document.getElementById('savePrepBtn')?.addEventListener('click',savePreparationToDB);
 }
-async function savePreparationToDB(){
- if(prepSaveInProgress){prepSaveRequested=true;return;}
- prepSaveInProgress=true;
+function updatePreparationOfflineNotice(message){
+ const notice=document.getElementById('prepOfflineNotice');
+ if(!notice)return;
+ if(message){notice.textContent=message;notice.classList.add('visible');return;}
+ if(pendingPreparationPayload){notice.textContent=pendingPreparationIsDurable?`Team Preparation is saved on this device and waiting to sync${navigator.onLine?'':' (offline)'}.`:'Team Preparation could not be cached on this device. Keep this page open and restore the connection to avoid losing changes.';notice.classList.add('visible');return;}
+ notice.textContent='';
+ notice.classList.remove('visible');
+}
+function persistPendingPreparation(payload){
+ pendingPreparationPayload=payload;
  try{
-  do{
-   prepSaveRequested=false;
-   const payload={id:true,attendance_date:prepAttendanceDate||document.getElementById('attendanceDate').value||null,team_a:generatedTeamA.map(p=>p?.id||null),team_b:generatedTeamB.map(p=>p?.id||null),subs_a:generatedSubsA.map(p=>p?.id||null),subs_b:generatedSubsB.map(p=>p?.id||null),unassigned:generatedUnassigned.filter(Boolean).map(p=>p.id),updated_at:new Date().toISOString()};
+  localStorage.setItem(PREPARATION_CACHE_KEY,JSON.stringify(payload));
+  pendingPreparationIsDurable=true;
+  updatePreparationOfflineNotice();
+  return true;
+ }catch(error){
+  pendingPreparationIsDurable=false;
+  console.error('Could not save pending Team Preparation locally:',error);
+  updatePreparationOfflineNotice('Could not cache Team Preparation on this device. Keep this page open and restore your connection to avoid losing changes.');
+  return false;
+ }
+}
+function clearPendingPreparation(updatedAt){
+ if(pendingPreparationPayload?.updated_at!==updatedAt)return;
+ pendingPreparationPayload=null;
+ pendingPreparationIsDurable=false;
+ try{localStorage.removeItem(PREPARATION_CACHE_KEY);}
+ catch(error){console.error('Could not clear synced Team Preparation from local storage:',error);}
+ updatePreparationOfflineNotice();
+}
+function schedulePreparationRetry(){
+ if(prepSaveRetryTimer)clearTimeout(prepSaveRetryTimer);
+ prepSaveRetryTimer=setTimeout(()=>{
+  prepSaveRetryTimer=null;
+  void flushPendingPreparation();
+ },10000);
+}
+function applyPreparationPayload(data){
+ const byId=new Map(players.map(p=>[p.id,p]));
+ const hydrate=ids=>(Array.isArray(ids)?ids:[]).map(id=>id?(byId.get(id)||null):null);
+ generatedTeamA=hydrate(data.team_a);
+ generatedTeamB=hydrate(data.team_b);
+ generatedSubsA=hydrate(data.subs_a);
+ generatedSubsB=hydrate(data.subs_b);
+ generatedUnassigned=hydrate(data.unassigned);
+ prepAttendanceDate=data.attendance_date||'';
+ lastPrepUpdatedAt=data.updated_at||'';
+ renderTeams();
+}
+async function flushPendingPreparation(){
+ if(prepSaveInProgress||!pendingPreparationPayload)return;
+ if(!navigator.onLine){updatePreparationOfflineNotice();setSync('Preparation saved locally',false);return;}
+ prepSaveInProgress=true;
+ let syncFailed=false;
+ try{
+  while(pendingPreparationPayload&&navigator.onLine){
+   const payload=pendingPreparationPayload;
    const {error}=await supabaseClient.from('scrimmage_preparation').upsert(payload,{onConflict:'id'});
    if(error)throw error;
    lastPrepUpdatedAt=payload.updated_at;
-   setSync('Preparation saved',true);
-  }while(prepSaveRequested);
- }catch(e){console.error(e);alert('Could not save Team Preparation to Supabase. Run the scrimmage preparation SQL migration first. '+e.message);setSync('Preparation save error',false);}
- finally{prepSaveInProgress=false;}
+   clearPendingPreparation(payload.updated_at);
+   if(prepSaveRetryTimer){clearTimeout(prepSaveRetryTimer);prepSaveRetryTimer=null;}
+   setSync('Preparation synced',true);
+  }
+ }catch(error){
+  syncFailed=true;
+  console.error('Team Preparation sync failed; it remains queued:',error);
+  updatePreparationOfflineNotice(`Could not sync Team Preparation: ${error.message||error}. ${pendingPreparationIsDurable?'It is saved on this device and will retry.':'This device could not cache it; keep this page open and restore the connection.'}`);
+  setSync('Preparation waiting to sync',false);
+  schedulePreparationRetry();
+ }finally{
+  prepSaveInProgress=false;
+  if(pendingPreparationPayload&&navigator.onLine&&!syncFailed)void flushPendingPreparation();
+ }
 }
-async function loadPreparationFromDB(){const {data,error}=await supabaseClient.from('scrimmage_preparation').select('*').eq('id',true).maybeSingle();if(error){console.warn('Preparation table not ready:',error.message);return;}if(!data)return;const byId=new Map(players.map(p=>[p.id,p]));const hydrate=ids=>(Array.isArray(ids)?ids:[]).map(id=>id?(byId.get(id)||null):null);generatedTeamA=hydrate(data.team_a);generatedTeamB=hydrate(data.team_b);generatedSubsA=hydrate(data.subs_a);generatedSubsB=hydrate(data.subs_b);generatedUnassigned=hydrate(data.unassigned);prepAttendanceDate=data.attendance_date||'';lastPrepUpdatedAt=data.updated_at||'';renderTeams();}
+async function savePreparationToDB(){
+ const payload={id:true,attendance_date:prepAttendanceDate||document.getElementById('attendanceDate').value||null,team_a:generatedTeamA.map(p=>p?.id||null),team_b:generatedTeamB.map(p=>p?.id||null),subs_a:generatedSubsA.map(p=>p?.id||null),subs_b:generatedSubsB.map(p=>p?.id||null),unassigned:generatedUnassigned.filter(Boolean).map(p=>p.id),updated_at:new Date().toISOString()};
+ const cached=persistPendingPreparation(payload);
+ if(!cached&& !navigator.onLine){
+  setSync('Preparation cache error',false);
+  return;
+ }
+ await flushPendingPreparation();
+}
+async function loadPreparationFromDB(){
+ const {data,error}=await supabaseClient.from('scrimmage_preparation').select('*').eq('id',true).maybeSingle();
+ if(error){
+  console.warn('Preparation could not be loaded from Supabase:',error.message);
+  if(pendingPreparationPayload){
+   applyPreparationPayload(pendingPreparationPayload);
+   updatePreparationOfflineNotice(`${pendingPreparationIsDurable?'Showing the locally saved Team Preparation. It will sync when the connection is restored.':'Showing the current Team Preparation, but it could not be cached locally. Keep this page open and restore the connection.'} ${error.message}`);
+  }
+  return;
+ }
+ if(pendingPreparationPayload&&(!data||Date.parse(pendingPreparationPayload.updated_at)>Date.parse(data.updated_at||''))){
+  applyPreparationPayload(pendingPreparationPayload);
+  void flushPendingPreparation();
+  return;
+ }
+ if(pendingPreparationPayload)clearPendingPreparation(pendingPreparationPayload.updated_at);
+ if(data)applyPreparationPayload(data);
+}
+window.addEventListener('online',()=>{updatePreparationOfflineNotice();void flushPendingPreparation();});
+window.addEventListener('offline',()=>updatePreparationOfflineNotice());
 function showScrimmageView(view){const prep=view==='prepView';document.getElementById('prepView').style.display=prep?'block':'none';document.getElementById('liveView').style.display=prep?'none':'block';document.querySelectorAll('.scrim-subtab').forEach(b=>b.classList.toggle('active',b.dataset.scrimView===view));if(!prep&&activeScrimmageId)renderLiveMatch();}
 
 /* ===== SCRIMMAGE LIVE MATCH ===== */
