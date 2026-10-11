@@ -2864,7 +2864,7 @@ function saveQuickPassState(){
 }
 function updateQuickPassControls(){
  const button=document.getElementById('quickPassToggle');
- if(button){button.disabled=!activeScrimmageId;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'QUICK PASS · ON':'QUICK PASS · OFF';}
+ if(button){button.disabled=!activeScrimmageId||quickPassActive;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'QUICK PASS · ON':'QUICK PASS · OFF';button.title=quickPassActive?'Quick Pass stays on until a goal is recorded':'Enable Quick Pass tracking';}
  document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);row.classList.toggle('quick-pass-holder',quickPassActive&&holder);row.classList.toggle('quick-pass-row-tappable',quickPassActive);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap anywhere on this row to set this player as the new disc holder':quickPassHolderId?'Tap anywhere on this row to record a pass to this player':'Tap anywhere on this row to set the current disc holder';}const [goalButton,dropButton,blockButton]=row.querySelectorAll('.stat-btn');const holderTeam=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team;const waitingForPass=quickPassActive&&(!quickPassHolderId||!quickPassLastPasserId);if(goalButton){goalButton.disabled=!quickPassActive||!quickPassHolderId||!player||!holder||waitingForPass;goalButton.style.visibility=waitingForPass?'hidden':'';goalButton.title=waitingForPass?'Goal is available after a successful pass':goalButton.disabled?'Only the player holding the disc can score a goal':'Record a goal for the disc holder';}if(dropButton)dropButton.disabled=!quickPassActive||!holder||!player;if(blockButton)blockButton.disabled=!quickPassActive||!quickPassHolderId||!player||player.team===holderTeam;});
  updateLivePerformancePoints();
 }
@@ -2872,7 +2872,7 @@ function updateLivePerformancePoints(){document.querySelectorAll('#performanceLi
 setInterval(updateLivePerformancePoints,30000);
 function toggleQuickPass(){
  if(!activeScrimmageId){return;}
- if(quickPassActive){quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();updateQuickPassControls();return;}
+ if(quickPassActive)return;
  if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}
  quickPassActive=true;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;selectedSubPlayerId=null;saveQuickPassState();updateQuickPassControls();
 }
