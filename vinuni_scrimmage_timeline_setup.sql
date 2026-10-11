@@ -1,6 +1,10 @@
 -- Live Scrimmage event timeline: passes, possession, goals, assists, substitutions, drops, blocks, and team changes.
 -- Run this script in the Supabase SQL Editor. It is safe to rerun to update an existing timeline table.
 
+-- Quick Pass state is stored with the active match so connected devices share possession and mode.
+alter table public.scrimmage_matches
+  add column if not exists quick_pass_state jsonb not null default '{"active": false}'::jsonb;
+
 create table if not exists public.scrimmage_timeline_events (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null references public.scrimmage_matches(id) on delete cascade,
@@ -67,4 +71,11 @@ do $$ begin
 exception
   when duplicate_object then null;
   when others then raise notice 'Realtime Scrimmage timeline publication: %', SQLERRM;
+end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.scrimmage_matches;
+exception
+  when duplicate_object then null;
+  when others then raise notice 'Realtime Scrimmage match state publication: %', SQLERRM;
 end $$;

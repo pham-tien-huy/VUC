@@ -2792,12 +2792,16 @@ let quickPassLastPasserId=null;
 let quickPassAwaitingTeam=null;
 const QUICK_PASS_STATE_KEY='vuc_quick_pass_state_v1';
 
-function saveQuickPassState(){try{if(!quickPassActive){localStorage.removeItem(QUICK_PASS_STATE_KEY);return;}localStorage.setItem(QUICK_PASS_STATE_KEY,JSON.stringify({matchId:activeScrimmageId,holderId:quickPassHolderId,lastPasserId:quickPassLastPasserId,awaitingTeam:quickPassAwaitingTeam}));}catch(error){console.warn('Quick Pass state could not be saved:',error);}}
+function saveQuickPassState(){
+ const state={matchId:activeScrimmageId,active:quickPassActive,holderId:quickPassHolderId,lastPasserId:quickPassLastPasserId,awaitingTeam:quickPassAwaitingTeam,updatedAt:new Date().toISOString()};
+ try{localStorage.setItem(QUICK_PASS_STATE_KEY,JSON.stringify(state));}catch(error){console.warn('Quick Pass state could not be saved locally:',error);updateLiveOfflineNotice('Quick Pass state could not be cached on this device. Check browser storage.');}
+ if(activeScrimmageId)enqueueLiveAction({id:`quick-pass-state-${activeScrimmageId}`,type:'quick_pass_state',matchId:activeScrimmageId,state,createdAt:state.updatedAt});
+}
 function updateQuickPassControls(){
  const button=document.getElementById('quickPassToggle'),status=document.getElementById('quickPassStatus');
  if(button){button.disabled=!activeScrimmageId;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'QUICK PASS · ON':'QUICK PASS · OFF';}
  if(status){if(!activeScrimmageId)status.textContent='Activate a match to enable Quick Pass.';else if(!quickPassActive)status.textContent='Quick Pass is off. Only substitutions are available; turn it on to record match events.';else if(quickPassAwaitingTeam)status.textContent=`${scrimmageTeamName(quickPassAwaitingTeam)} attacks. Tap the avatar of the player holding the disc.`;else if(!quickPassHolderId)status.textContent='Tap the avatar of the player holding the disc to start the possession.';else{const p=players.find(item=>item.id===quickPassHolderId);status.textContent=`${scrimmageTeamName(activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team||'A')} attacks · ${p?.name||'Player'} has the disc. Tap the receiver after each pass.`;}}
- document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);row.classList.toggle('quick-pass-holder',quickPassActive&&holder);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap to set this player as the new disc holder':quickPassHolderId?'Tap the receiver after the completed pass':'Tap to set the current disc holder';}const [goalButton,dropButton,blockButton]=row.querySelectorAll('.stat-btn');const holderTeam=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team;if(goalButton)goalButton.disabled=!quickPassActive||!quickPassHolderId||!player||player.team!==holderTeam;if(dropButton)dropButton.disabled=!quickPassActive||!holder||!player;if(blockButton)blockButton.disabled=!quickPassActive||!quickPassHolderId||!player||player.team===holderTeam;});
+ document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);row.classList.toggle('quick-pass-holder',quickPassActive&&holder);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap to set this player as the new disc holder':quickPassHolderId?'Tap the receiver after the completed pass':'Tap to set the current disc holder';}const [goalButton,dropButton,blockButton]=row.querySelectorAll('.stat-btn');const holderTeam=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team;if(goalButton)goalButton.disabled=!quickPassActive||!quickPassHolderId||!player;if(dropButton)dropButton.disabled=!quickPassActive||!holder||!player;if(blockButton)blockButton.disabled=!quickPassActive||!quickPassHolderId||!player||player.team===holderTeam;});
 }
 function toggleQuickPass(){
  if(!activeScrimmageId){return;}
@@ -2805,8 +2809,12 @@ function toggleQuickPass(){
  if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}
  quickPassActive=true;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;selectedSubPlayerId=null;saveQuickPassState();updateQuickPassControls();
 }
-function restoreQuickPassState(matchId){
- try{const saved=JSON.parse(localStorage.getItem(QUICK_PASS_STATE_KEY)||'null');if(saved?.matchId===matchId){quickPassActive=true;quickPassHolderId=saved.holderId||null;quickPassLastPasserId=saved.lastPasserId||null;quickPassAwaitingTeam=saved.awaitingTeam||null;}else if(saved){localStorage.removeItem(QUICK_PASS_STATE_KEY);quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;}}catch(error){console.warn('Quick Pass state could not be restored:',error);}
+function restoreQuickPassState(matchId,remoteState=null){
+ let saved=null;try{saved=JSON.parse(localStorage.getItem(QUICK_PASS_STATE_KEY)||'null');}catch(error){console.warn('Quick Pass state could not be restored:',error);}
+ const pending=[...liveActionQueue].reverse().find(action=>action.type==='quick_pass_state'&&action.matchId===matchId);
+ const state=pending?.state||(remoteState?.matchId===matchId?remoteState:null)||(saved?.matchId===matchId?saved:null);
+ if(state){quickPassActive=!!state.active;quickPassHolderId=state.holderId||null;quickPassLastPasserId=state.lastPasserId||null;quickPassAwaitingTeam=state.awaitingTeam||null;}
+ else{quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;}
  updateQuickPassControls();
 }
 function queueQuickPassTimelineAction(action){if(!enqueueLiveAction(action))return false;applyPendingLiveActions(activeScrimmageId);renderScrimmageTimeline();return true;}
@@ -2815,7 +2823,7 @@ function handleQuickPassPlayerTap(playerId){
  const row=activeScrimmagePlayers.find(item=>item.player_id===playerId&&item.on_field);if(!row)return true;
  if(quickPassAwaitingTeam){if(row.team!==quickPassAwaitingTeam){updateQuickPassControls();return true;}const action={id:uid(),type:'possession',matchId:activeScrimmageId,team:row.team,playerId,createdAt:new Date().toISOString()};if(queueQuickPassTimelineAction(action)){quickPassHolderId=playerId;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();updateQuickPassControls();}return true;}
  if(!quickPassHolderId){const action={id:uid(),type:'possession',matchId:activeScrimmageId,team:row.team,playerId,createdAt:new Date().toISOString()};if(queueQuickPassTimelineAction(action)){quickPassHolderId=playerId;quickPassLastPasserId=null;saveQuickPassState();updateQuickPassControls();}return true;}
- const holder=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId&&item.on_field);if(!holder||row.team!==holder.team||playerId===quickPassHolderId){updateQuickPassControls();return true;}
+ const holder=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId&&item.on_field);if(!holder){updateQuickPassControls();return true;}if(row.team!==holder.team){const action={id:uid(),type:'possession',matchId:activeScrimmageId,team:row.team,playerId,createdAt:new Date().toISOString()};if(queueQuickPassTimelineAction(action)){quickPassHolderId=playerId;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();updateQuickPassControls();}return true;}if(playerId===quickPassHolderId){updateQuickPassControls();return true;}
  const action={id:uid(),type:'pass',matchId:activeScrimmageId,team:row.team,playerId:quickPassHolderId,relatedPlayerId:playerId,createdAt:new Date().toISOString()};if(queueQuickPassTimelineAction(action)){quickPassLastPasserId=quickPassHolderId;quickPassHolderId=playerId;saveQuickPassState();updateQuickPassControls();}return true;
 }
 
@@ -2863,6 +2871,11 @@ function applyPendingLiveActions(matchId){
   }
 }
 async function syncLiveAction(action){
+  if(action.type==='quick_pass_state'){
+    const {error}=await supabaseClient.from('scrimmage_matches').update({quick_pass_state:action.state}).eq('id',action.matchId);
+    if(error)throw error;
+    return;
+  }
   if(action.type==='pass'||action.type==='possession'){
     const {error}=await supabaseClient.from('scrimmage_timeline_events').upsert({id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,created_at:action.createdAt},{onConflict:'id',ignoreDuplicates:true});
     if(error)throw error;
@@ -3101,8 +3114,7 @@ function recordQuickPassStat(playerId,statType,row){
   quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=row.team;saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();return;
  }
  if(statType==='goal'){
-  if(holder.team!==row.team){updateQuickPassControls();return;}
-  const passer=activeScrimmagePlayers.find(item=>item.player_id===quickPassLastPasserId&&item.team===row.team);
+  const passer=holder.team===row.team?activeScrimmagePlayers.find(item=>item.player_id===quickPassLastPasserId&&item.team===row.team):null;
   const action={id:uid(),type:'goal',matchId:activeScrimmageId,playerId,team:row.team,assistantPlayerId:passer&&passer.player_id!==playerId?passer.player_id:null,assistStatId:passer&&passer.player_id!==playerId?uid():null,createdAt:new Date().toISOString()};
   if(!enqueueLiveAction(action))return;
   quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();return;
@@ -3157,7 +3169,7 @@ async function loadActiveScrimmage(){
     return;
   }
   activeScrimmageId=m.id;
-  restoreQuickPassState(m.id);
+  restoreQuickPassState(m.id,m.quick_pass_state);
   const [{data:mp,error:pe},{data:ev,error:ee},{data:timeline,error:te}]=await Promise.all([
     supabaseClient.from('scrimmage_players').select('*').eq('match_id',m.id),
     supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',m.id).order('created_at',{ascending:true}),
