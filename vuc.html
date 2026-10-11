@@ -388,6 +388,7 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .performance-player span{display:block;font-size:11px;color:var(--muted); font-weight: 600; margin-top: 2px;}
 .stat-btn { width: 100%; height: 36px; border-radius: 10px; border: none; font-size: 13px; font-weight: 900; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.15); transition: all 0.2s;}
 .stat-btn:hover { transform: translateY(-3px); filter: brightness(1.15); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+.stat-btn:disabled{opacity:.35;filter:grayscale(.8);cursor:not-allowed;box-shadow:none;transform:none}
 .performance-row .stat-btn:nth-of-type(1) { background: linear-gradient(135deg, #10b981, #047857); } 
 .performance-row .stat-btn:nth-of-type(2) { background: linear-gradient(135deg, #ef4444, #b91c1c); } 
 .performance-row .stat-btn:nth-of-type(3) { background: linear-gradient(135deg, #f59e0b, #d97706); } 
@@ -2796,7 +2797,7 @@ function updateQuickPassControls(){
  const button=document.getElementById('quickPassToggle'),status=document.getElementById('quickPassStatus');
  if(button){button.disabled=!activeScrimmageId;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'QUICK PASS · ON':'QUICK PASS · OFF';}
  if(status){if(!activeScrimmageId)status.textContent='Activate a match to enable Quick Pass.';else if(!quickPassActive)status.textContent='Tap Quick Pass to track passes. Substitutions pause while it is on.';else if(quickPassAwaitingTeam)status.textContent=`${scrimmageTeamName(quickPassAwaitingTeam)} attacks. Tap the avatar of the player holding the disc.`;else if(!quickPassHolderId)status.textContent='Tap the avatar of the player holding the disc to start the possession.';else{const p=players.find(item=>item.id===quickPassHolderId);status.textContent=`${scrimmageTeamName(activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team||'A')} attacks · ${p?.name||'Player'} has the disc. Tap the receiver after each pass.`;}}
- document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;row.classList.toggle('quick-pass-holder',quickPassActive&&holder);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap to set this player as the new disc holder':quickPassHolderId?'Tap the receiver after the completed pass':'Tap to set the current disc holder';}});
+ document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);row.classList.toggle('quick-pass-holder',quickPassActive&&holder);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap to set this player as the new disc holder':quickPassHolderId?'Tap the receiver after the completed pass':'Tap to set the current disc holder';}const [goalButton,dropButton,blockButton]=row.querySelectorAll('.stat-btn');const holderTeam=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team;if(goalButton)goalButton.disabled=quickPassActive&&(!quickPassHolderId||!player||player.team!==holderTeam);if(dropButton)dropButton.disabled=quickPassActive&&(!holder||!player);if(blockButton)blockButton.disabled=quickPassActive&&(!quickPassHolderId||!player||player.team===holderTeam);});
 }
 function toggleQuickPass(){
  if(!activeScrimmageId){return;}
@@ -2971,7 +2972,17 @@ function renderScrimmageTimeline(){
   const playerMap=new Map(players.map(player=>[player.id,player]));
   const linkedGoalStats=new Set(activeScrimmageTimelineEvents.filter(event=>event.event_type==='goal'&&event.stat_event_id).map(event=>event.stat_event_id));
   const legacyGoals=activeScrimmageEvents.filter(event=>event.stat_type==='goal'&&!linkedGoalStats.has(event.id)).map(event=>({id:`legacy-${event.id}`,event_type:'goal',team:event.team,player_id:event.player_id,related_player_id:null,created_at:event.created_at,legacy:true}));
-  const rows=[...activeScrimmageTimelineEvents,...legacyGoals].sort((a,b)=>Date.parse(b.created_at||'')-Date.parse(a.created_at||''));
+  const chronological=[...activeScrimmageTimelineEvents,...legacyGoals].sort((a,b)=>Date.parse(a.created_at||'')-Date.parse(b.created_at||''));
+  const grouped=[];let passChain=null;
+  const flushPassChain=()=>{if(passChain){grouped.push(passChain);passChain=null;}};
+  chronological.forEach(event=>{
+    if(event.event_type==='pass'){
+      if(passChain&&passChain.team===event.team&&passChain.passPlayerIds[passChain.passPlayerIds.length-1]===event.player_id){passChain.passPlayerIds.push(event.related_player_id);passChain.created_at=event.created_at;passChain.id=`${passChain.id}-${event.id}`;}
+      else{flushPassChain();passChain={...event,event_type:'pass_chain',passPlayerIds:[event.player_id,event.related_player_id]};}
+    }else{flushPassChain();grouped.push(event);}
+  });
+  flushPassChain();
+  const rows=grouped.sort((a,b)=>Date.parse(b.created_at||'')-Date.parse(a.created_at||''));
   count.textContent=`${rows.length} EVENT${rows.length===1?'':'S'}`;
   if(!rows.length){
     container.innerHTML='<div class="timeline-empty">No goals or substitutions recorded yet. Use +1 G or replace a player to add the first event.</div>';
@@ -2987,8 +2998,8 @@ function renderScrimmageTimeline(){
       ?`<span class="timeline-event-sub">SUB OUT</span> ${esc(playerName)} <span aria-hidden="true">→</span> <span class="timeline-event-sub">SUB IN</span> ${esc(relatedName)}`
       :event.event_type==='team_change'
         ?`<span class="timeline-event-team">TEAMS CHANGED</span> Team Preparation synced · score unchanged`
-      :event.event_type==='pass'
-        ?`<span class="timeline-event-sub">PASS</span> ${esc(playerName)} <span aria-hidden="true">→</span> ${esc(relatedName)}`
+      :event.event_type==='pass_chain'
+        ?`<span class="timeline-event-sub">PASS</span> ${event.passPlayerIds.map(id=>esc(playerMap.get(id)?.name||'Unknown player')).join(' <span aria-hidden="true">→</span> ')}`
       :event.event_type==='possession'
         ?`<span class="timeline-event-team">POSSESSION</span> ${esc(playerName)} has the disc · ${esc(scrimmageTeamName(event.team))} attack`
       :event.event_type==='goal'
@@ -3081,22 +3092,25 @@ async function chooseScrimmageRelatedPlayer(eventType,playerId,team){
   return new Promise(resolve=>{const onClose=()=>resolve(dialog.returnValue==='confirm'?select.value:null);dialog.addEventListener('close',onClose,{once:true});dialog.showModal();});
 }
 function recordQuickPassStat(playerId,statType,row){
+ const holder=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId&&item.on_field);
+ if(!holder){updateQuickPassControls();return;}
  if(statType==='block'){
-  const passer=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId&&item.on_field);
-  if(!passer||passer.team===row.team){updateQuickPassControls();return;}
-  const action={id:uid(),type:'block',matchId:activeScrimmageId,playerId,team:row.team,statType:'block',relatedPlayerId:passer.player_id,blockedDropStatId:uid(),blockedDropTimelineId:uid(),quickPassBlock:true,createdAt:new Date().toISOString()};
+  if(holder.team===row.team){updateQuickPassControls();return;}
+  const action={id:uid(),type:'block',matchId:activeScrimmageId,playerId,team:row.team,statType:'block',relatedPlayerId:holder.player_id,blockedDropStatId:uid(),blockedDropTimelineId:uid(),quickPassBlock:true,createdAt:new Date().toISOString()};
   if(!enqueueLiveAction(action))return;
   quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=row.team;saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();return;
  }
  if(statType==='goal'){
+  if(holder.team!==row.team){updateQuickPassControls();return;}
   const passer=activeScrimmagePlayers.find(item=>item.player_id===quickPassLastPasserId&&item.team===row.team);
   const action={id:uid(),type:'goal',matchId:activeScrimmageId,playerId,team:row.team,assistantPlayerId:passer&&passer.player_id!==playerId?passer.player_id:null,assistStatId:passer&&passer.player_id!==playerId?uid():null,createdAt:new Date().toISOString()};
   if(!enqueueLiveAction(action))return;
   quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();return;
  }
- const action={id:uid(),type:'drop',matchId:activeScrimmageId,playerId,team:row.team,createdAt:new Date().toISOString()};
+ if(statType!=='drop'||holder.player_id!==playerId||holder.team!==row.team){updateQuickPassControls();return;}
+ const action={id:uid(),type:'drop',matchId:activeScrimmageId,playerId:holder.player_id,team:holder.team,createdAt:new Date().toISOString()};
  if(!enqueueLiveAction(action))return;
- quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=row.team==='A'?'B':'A';saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();
+ quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=holder.team==='A'?'B':'A';saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();
 }
 window.recordMatchStat=async function(playerId,statType){
   if(!activeScrimmageId)return;const row=activeScrimmagePlayers.find(x=>x.player_id===playerId);if(!row||!row.on_field){alert('Only players currently on the field can receive match stats.');return;}
