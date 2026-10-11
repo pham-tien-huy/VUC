@@ -768,6 +768,15 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
   .prep-match-vs,#prepView .prep-field:after,#prepView .prep-team{animation:none}
   #prepView .prep-team,#prepView .prep-slot,#prepView .prep-slot .live-card{transition:none}
 }
+@media(pointer:coarse){
+  #prepView .prep-team{perspective:none;transition:none}
+  #prepView .prep-field{transform:none;box-shadow:0 8px 16px #02061788,inset 0 0 16px #05081688}
+  #prepView .prep-slot,#prepView .prep-sub-slot{transform-style:flat;backface-visibility:visible;transition:none}
+  #prepView .prep-slot.filled{filter:none}
+  #prepView .prep-slot.filled .live-card,#prepView .prep-sub-slot.filled .live-card{box-shadow:0 2px 5px #02061766!important;transition:none}
+  #prepView .prep-slot.filled .live-card::after,#prepView .prep-sub-slot.filled .live-card::after{box-shadow:none!important}
+  #prepView .prep-mini-name,#prepView .prep-mini-meta{transform:none}
+}
 
 /* Match the Live Scrimmage field and player cards to Team Preparation */
 #liveView .live-team{
@@ -1165,7 +1174,7 @@ select option{color:#e5edf9;background:#0b1424}
 @media(max-width:560px){
   #prepView .prep-summary,#prepView .prep-team{animation:none}
   #teamsContainer .prep-slot,#teamsContainer .prep-sub-slot,#teamsContainer .prep-pool-card{-webkit-tap-highlight-color:transparent;user-select:none}
-  #teamsContainer .prep-slot.selected,#teamsContainer .prep-sub-slot.selected,#teamsContainer .prep-pool-card.selected{filter:drop-shadow(0 0 12px #f59e0b)!important}
+  #teamsContainer .prep-slot.selected,#teamsContainer .prep-sub-slot.selected,#teamsContainer .prep-pool-card.selected{filter:none!important;outline:3px solid #f59e0b;outline-offset:2px}
   #teamsContainer .prep-selection-bar{
     position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:120;
     display:none;align-items:center;justify-content:space-between;gap:10px;
@@ -2205,7 +2214,13 @@ function bindPreparationDnD(){
  document.querySelectorAll('[data-prep-player]').forEach(el=>{
   const id=el.dataset.prepPlayer;
   if(window.matchMedia('(pointer: coarse)').matches)el.draggable=false;
-  el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',id);e.dataTransfer.effectAllowed='move';});
+  el.addEventListener('dragstart',e=>{
+   e.dataTransfer.setData('text/plain',id);
+   e.dataTransfer.effectAllowed='move';
+   const preview=el.querySelector('.prep-mini-card')||el;
+   const bounds=preview.getBoundingClientRect();
+   e.dataTransfer.setDragImage(preview,bounds.width/2,bounds.height/2);
+  });
   el.addEventListener('click',e=>{
    e.stopPropagation();
    const zone=el.dataset.prepZone;
