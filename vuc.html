@@ -372,6 +372,13 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .live-stat-team .performance-row:first-of-type{border-top:0}
 .live-stat-team .performance-row:hover{background:#14243a}
 .live-stat-team-b .performance-row:hover{background:#241b39}
+.performance-row.quick-pass-holder{outline:2px solid #34d399;outline-offset:-2px;background:#07352d!important}
+.quick-pass-toolbar{display:flex;align-items:center;gap:12px;margin:12px 0;padding:12px 14px;border:1px solid #38bdf855;border-radius:14px;background:linear-gradient(100deg,#0b1c32,#131630)}
+.quick-pass-toggle{min-height:44px;padding:10px 18px;border:1px solid #60a5fa77;border-radius:11px;color:#dbeafe;font-weight:900;background:#172b49;cursor:pointer;touch-action:manipulation}
+.quick-pass-toggle.active{color:#052e2b;background:#34d399;border-color:#6ee7b7;box-shadow:0 0 18px #10b98155}
+.quick-pass-status{min-width:0;color:#bdcbe3;font-size:13px;font-weight:750}
+.quick-pass-status strong{color:#f0abfc}
+@media(max-width:560px){.quick-pass-toolbar{align-items:stretch;flex-direction:column;gap:8px;padding:10px}.quick-pass-toggle{width:100%;min-height:48px}.quick-pass-status{text-align:center;font-size:12px}}
 
 .swap-player-avatar{display:block;padding:0;border:0;border-radius:12px;background:transparent;cursor:pointer;flex:none}
 .swap-player-avatar:focus-visible{outline:3px solid #38bdf8;outline-offset:3px}
@@ -1646,6 +1653,7 @@ select option{color:#e5edf9;background:#0b1424}
       <button class="btn btn-danger" id="endMatchBtn" style="display:none">■ End Match</button>
     </div>
     <div id="dragHint" class="generator-summary" style="margin-top:16px">Tap a player avatar, choose a substitute from the same team, then confirm the change. Stats can be recorded for players currently on the field.</div>
+    <div class="quick-pass-toolbar"><button type="button" id="quickPassToggle" class="quick-pass-toggle" disabled>QUICK PASS · OFF</button><div id="quickPassStatus" class="quick-pass-status" role="status" aria-live="polite">Activate a match to enable quick pass tracking.</div></div>
     <div id="liveOfflineNotice" class="live-offline-notice" role="status" aria-live="polite"></div>
     <div id="liveTeamsContainer" hidden style="display:none"></div>
     <div class="performance-panel">
@@ -1671,7 +1679,7 @@ select option{color:#e5edf9;background:#0b1424}
     </dialog>
     <section class="match-timeline" aria-labelledby="scrimmageTimelineTitle">
       <div class="match-timeline-head">
-        <div><h3 id="scrimmageTimelineTitle">Live match timeline</h3><p>Goals and substitutions update across connected devices.</p></div>
+        <div><h3 id="scrimmageTimelineTitle">Live match timeline</h3><p>Passes, possession, goals and substitutions update across connected devices.</p></div>
         <span id="scrimmageTimelineCount" class="match-timeline-count">0 EVENTS</span>
       </div>
       <div id="scrimmageTimeline" aria-live="polite"></div>
@@ -2777,6 +2785,38 @@ try{
 let performanceTeam='A';
 let dragPlayerId=null;
 let selectedSubPlayerId=null;
+let quickPassActive=false;
+let quickPassHolderId=null;
+let quickPassLastPasserId=null;
+let quickPassAwaitingTeam=null;
+const QUICK_PASS_STATE_KEY='vuc_quick_pass_state_v1';
+
+function saveQuickPassState(){try{if(!quickPassActive){localStorage.removeItem(QUICK_PASS_STATE_KEY);return;}localStorage.setItem(QUICK_PASS_STATE_KEY,JSON.stringify({matchId:activeScrimmageId,holderId:quickPassHolderId,lastPasserId:quickPassLastPasserId,awaitingTeam:quickPassAwaitingTeam}));}catch(error){console.warn('Quick Pass state could not be saved:',error);}}
+function updateQuickPassControls(){
+ const button=document.getElementById('quickPassToggle'),status=document.getElementById('quickPassStatus');
+ if(button){button.disabled=!activeScrimmageId;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'QUICK PASS · ON':'QUICK PASS · OFF';}
+ if(status){if(!activeScrimmageId)status.textContent='Activate a match to enable Quick Pass.';else if(!quickPassActive)status.textContent='Tap Quick Pass to track passes. Substitutions pause while it is on.';else if(quickPassAwaitingTeam)status.textContent=`${scrimmageTeamName(quickPassAwaitingTeam)} attacks. Tap the avatar of the player holding the disc.`;else if(!quickPassHolderId)status.textContent='Tap the avatar of the player holding the disc to start the possession.';else{const p=players.find(item=>item.id===quickPassHolderId);status.textContent=`${scrimmageTeamName(activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team||'A')} attacks · ${p?.name||'Player'} has the disc. Tap the receiver after each pass.`;}}
+ document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;row.classList.toggle('quick-pass-holder',quickPassActive&&holder);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap to set this player as the new disc holder':quickPassHolderId?'Tap the receiver after the completed pass':'Tap to set the current disc holder';}});
+}
+function toggleQuickPass(){
+ if(!activeScrimmageId){return;}
+ if(quickPassActive){quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();updateQuickPassControls();return;}
+ if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}
+ quickPassActive=true;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;selectedSubPlayerId=null;saveQuickPassState();updateQuickPassControls();
+}
+function restoreQuickPassState(matchId){
+ try{const saved=JSON.parse(localStorage.getItem(QUICK_PASS_STATE_KEY)||'null');if(saved?.matchId===matchId){quickPassActive=true;quickPassHolderId=saved.holderId||null;quickPassLastPasserId=saved.lastPasserId||null;quickPassAwaitingTeam=saved.awaitingTeam||null;}else if(saved){localStorage.removeItem(QUICK_PASS_STATE_KEY);quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;}}catch(error){console.warn('Quick Pass state could not be restored:',error);}
+ updateQuickPassControls();
+}
+function queueQuickPassTimelineAction(action){if(!enqueueLiveAction(action))return false;applyPendingLiveActions(activeScrimmageId);renderScrimmageTimeline();return true;}
+function handleQuickPassPlayerTap(playerId){
+ if(!quickPassActive)return false;
+ const row=activeScrimmagePlayers.find(item=>item.player_id===playerId&&item.on_field);if(!row)return true;
+ if(quickPassAwaitingTeam){if(row.team!==quickPassAwaitingTeam){updateQuickPassControls();return true;}const action={id:uid(),type:'possession',matchId:activeScrimmageId,team:row.team,playerId,createdAt:new Date().toISOString()};if(queueQuickPassTimelineAction(action)){quickPassHolderId=playerId;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();updateQuickPassControls();}return true;}
+ if(!quickPassHolderId){const action={id:uid(),type:'possession',matchId:activeScrimmageId,team:row.team,playerId,createdAt:new Date().toISOString()};if(queueQuickPassTimelineAction(action)){quickPassHolderId=playerId;quickPassLastPasserId=null;saveQuickPassState();updateQuickPassControls();}return true;}
+ const holder=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId&&item.on_field);if(!holder||row.team!==holder.team||playerId===quickPassHolderId){updateQuickPassControls();return true;}
+ const action={id:uid(),type:'pass',matchId:activeScrimmageId,team:row.team,playerId:quickPassHolderId,relatedPlayerId:playerId,createdAt:new Date().toISOString()};if(queueQuickPassTimelineAction(action)){quickPassLastPasserId=quickPassHolderId;quickPassHolderId=playerId;saveQuickPassState();updateQuickPassControls();}return true;
+}
 
 function tierFromRating(r){r=Number(r)||0;return r>=90?'S':r>=80?'A':r>=70?'B':'C';}
 function statTotalsForPlayer(playerId){const out={goal:0,assist:0,drop:0,block:0};activeScrimmageEvents.filter(e=>e.player_id===playerId).forEach(e=>{if(out[e.stat_type]!==undefined)out[e.stat_type]+=Number(e.delta||0)});return out;}
@@ -2796,7 +2836,9 @@ function updateLiveOfflineNotice(message){
 }
 function applyPendingLiveActions(matchId){
   for(const action of liveActionQueue.filter(item=>item.matchId===matchId)){
-    if(action.type==='substitution'){
+    if(action.type==='pass'||action.type==='possession'){
+      if(!activeScrimmageTimelineEvents.some(event=>event.id===action.id))activeScrimmageTimelineEvents.push({id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,created_at:action.createdAt});
+    }else if(action.type==='substitution'){
       const source=activeScrimmagePlayers.find(row=>row.player_id===action.sourceId);
       const target=activeScrimmagePlayers.find(row=>row.player_id===action.targetId);
       if(source&&target){target.on_field=false;target.slot=null;source.on_field=true;source.slot=action.slot;}
@@ -2814,12 +2856,17 @@ function applyPendingLiveActions(matchId){
     }else if(['stat','drop','block'].includes(action.type)){
       const statType=action.type==='stat'?action.statType:action.type;
       if(!activeScrimmageEvents.some(event=>event.id===action.id))activeScrimmageEvents.push({id:action.id,match_id:action.matchId,player_id:action.playerId,team:action.team,stat_type:statType,delta:1,created_at:action.createdAt});
-      if(action.type==='block'&&action.relatedPlayerId){const dropId=action.blockedDropStatId||`${action.id}-opponent-drop`;if(!activeScrimmageEvents.some(event=>event.id===dropId))activeScrimmageEvents.push({id:dropId,match_id:action.matchId,player_id:action.relatedPlayerId,team:action.team==='A'?'B':'A',stat_type:'drop',delta:1,created_at:action.createdAt});}
-      if(['drop','block'].includes(action.type)&&!activeScrimmageTimelineEvents.some(event=>event.id===action.id))activeScrimmageTimelineEvents.push({id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,stat_event_id:action.id,created_at:action.createdAt});
+      if(action.type==='block'&&action.relatedPlayerId){const dropId=action.blockedDropStatId||`${action.id}-opponent-drop`;if(!activeScrimmageEvents.some(event=>event.id===dropId))activeScrimmageEvents.push({id:dropId,match_id:action.matchId,player_id:action.relatedPlayerId,team:action.team==='A'?'B':'A',stat_type:'drop',delta:1,created_at:action.createdAt});if(action.quickPassBlock){const dropTimelineId=action.blockedDropTimelineId||`${action.id}-drop-timeline`;if(!activeScrimmageTimelineEvents.some(event=>event.id===dropTimelineId))activeScrimmageTimelineEvents.push({id:dropTimelineId,match_id:action.matchId,event_type:'drop',team:action.team==='A'?'B':'A',player_id:action.relatedPlayerId,related_player_id:null,stat_event_id:dropId,created_at:action.createdAt});}}
+      if(['drop','block'].includes(action.type)&&!activeScrimmageTimelineEvents.some(event=>event.id===action.id)&&!(action.type==='block'&&action.quickPassBlock))activeScrimmageTimelineEvents.push({id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,stat_event_id:action.id,created_at:action.createdAt});
     }
   }
 }
 async function syncLiveAction(action){
+  if(action.type==='pass'||action.type==='possession'){
+    const {error}=await supabaseClient.from('scrimmage_timeline_events').upsert({id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,created_at:action.createdAt},{onConflict:'id',ignoreDuplicates:true});
+    if(error)throw error;
+    return;
+  }
   if(action.type==='substitution'){
     const {error:targetError}=await supabaseClient.from('scrimmage_players').update({on_field:false,slot:null}).eq('match_id',action.matchId).eq('player_id',action.targetId);
     if(targetError)throw targetError;
@@ -2854,7 +2901,8 @@ async function syncLiveAction(action){
   );
   if(error)throw error;
   if(action.type==='block'&&action.relatedPlayerId){const blockedDropStatId=action.blockedDropStatId||`${action.id}-opponent-drop`;const {error:dropError}=await supabaseClient.from('scrimmage_stat_events').upsert({id:blockedDropStatId,match_id:action.matchId,player_id:action.relatedPlayerId,team:action.team==='A'?'B':'A',stat_type:'drop',delta:1,created_at:action.createdAt},{onConflict:'id',ignoreDuplicates:true});if(dropError)throw dropError;}
-  if(['drop','block'].includes(action.type)){
+  if(action.type==='block'&&action.quickPassBlock&&action.relatedPlayerId){const dropId=action.blockedDropStatId||`${action.id}-opponent-drop`,dropTimelineId=action.blockedDropTimelineId||`${action.id}-drop-timeline`;const {error:dropTimelineError}=await supabaseClient.from('scrimmage_timeline_events').upsert({id:dropTimelineId,match_id:action.matchId,event_type:'drop',team:action.team==='A'?'B':'A',player_id:action.relatedPlayerId,related_player_id:null,stat_event_id:dropId,created_at:action.createdAt},{onConflict:'id',ignoreDuplicates:true});if(dropTimelineError)throw dropTimelineError;}
+  if(['drop','block'].includes(action.type)&&!(action.type==='block'&&action.quickPassBlock)){
     const {error:timelineError}=await supabaseClient.from('scrimmage_timeline_events').upsert(
       {id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,stat_event_id:action.id,created_at:action.createdAt},
       {onConflict:'id',ignoreDuplicates:true}
@@ -2939,6 +2987,10 @@ function renderScrimmageTimeline(){
       ?`<span class="timeline-event-sub">SUB OUT</span> ${esc(playerName)} <span aria-hidden="true">→</span> <span class="timeline-event-sub">SUB IN</span> ${esc(relatedName)}`
       :event.event_type==='team_change'
         ?`<span class="timeline-event-team">TEAMS CHANGED</span> Team Preparation synced · score unchanged`
+      :event.event_type==='pass'
+        ?`<span class="timeline-event-sub">PASS</span> ${esc(playerName)} <span aria-hidden="true">→</span> ${esc(relatedName)}`
+      :event.event_type==='possession'
+        ?`<span class="timeline-event-team">POSSESSION</span> ${esc(playerName)} has the disc · ${esc(scrimmageTeamName(event.team))} attack`
       :event.event_type==='goal'
         ?`<span class="timeline-event-goal">GOAL</span> ${esc(playerName)}${relatedName?` <span class="timeline-event-assist">(Assist: ${esc(relatedName)})</span>`:''}${event.legacy?'':''}`
         :event.event_type==='drop'
@@ -2951,13 +3003,13 @@ function renderScrimmageTimeline(){
 function renderLiveMatch(){
   updateScrimmageTeamNameLabels();
   const panel=document.getElementById('scrimmageMatchPanel');
-  if(!activeScrimmageId){panel.style.display='block';document.getElementById('activateMatchBtn').style.display=(generatedTeamA.filter(Boolean).length===7&&generatedTeamB.filter(Boolean).length===7)?'inline-flex':'none';document.getElementById('endMatchBtn').style.display='none';document.getElementById('performanceList').innerHTML='<div class="empty">Player statistics will appear here after a match is activated.</div>';renderScrimmageTimeline();return;}
+  if(!activeScrimmageId){panel.style.display='block';document.getElementById('activateMatchBtn').style.display=(generatedTeamA.filter(Boolean).length===7&&generatedTeamB.filter(Boolean).length===7)?'inline-flex':'none';document.getElementById('endMatchBtn').style.display='none';document.getElementById('performanceList').innerHTML='<div class="empty">Player statistics will appear here after a match is activated.</div>';renderScrimmageTimeline();updateQuickPassControls();return;}
   panel.style.display='block';
   const goalsA=activeScrimmageEvents.filter(e=>e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   const goalsB=activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   document.getElementById('scoreA').textContent=goalsA;document.getElementById('scoreB').textContent=goalsB;
   document.getElementById('liveTeamsContainer')?.replaceChildren();
-  renderPerformance();renderScrimmageTimeline();
+  renderPerformance();renderScrimmageTimeline();updateQuickPassControls();
 }
 function bindDragDrop(){
   document.querySelectorAll('.live-player').forEach(el=>{
@@ -2978,6 +3030,8 @@ function bindDragDrop(){
   });
 }
 async function substitutePlayer(sourceId,targetId){if(!activeScrimmageId)return;if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}const source=activeScrimmagePlayers.find(x=>x.player_id===sourceId),target=activeScrimmagePlayers.find(x=>x.player_id===targetId);if(!source||!target)return;if(source.team!==target.team||source.on_field||!target.on_field){alert('For a substitution, drag a substitute onto a player from the same team.');return;}const action={id:uid(),type:'substitution',matchId:activeScrimmageId,sourceId,targetId,team:source.team,slot:target.slot,createdAt:new Date().toISOString()};if(!enqueueLiveAction(action))return;target.on_field=false;target.slot=null;source.on_field=true;source.slot=action.slot;selectedSubPlayerId=null;dragPlayerId=null;applyPendingLiveActions(activeScrimmageId);renderLiveMatch();const dateStr=prepAttendanceDate||document.getElementById('attendanceDate').value||todayISO();void syncLateAttendanceForPreparation(dateStr,source.team==='A'?[sourceId]:[],source.team==='B'?[sourceId]:[]).catch(error=>{console.error('Late attendance sync failed:',error);updatePreparationOfflineNotice(`Player is on the field, but Late attendance could not be recorded: ${error.message||error}`);});}
+const normalSubstitutePlayer=substitutePlayer;
+substitutePlayer=async function(sourceId,targetId){if(quickPassActive){updateQuickPassControls();return;}return normalSubstitutePlayer(sourceId,targetId);};
 
 function renderPerformance(){
   const list=document.getElementById('performanceList');const map=new Map(players.map(p=>[p.id,p]));
@@ -2998,9 +3052,11 @@ function renderPerformance(){
   }).join('');
   list.innerHTML=teamSections;
   list.dataset.rosterKey=rosterKey;
-  list.querySelectorAll('.swap-player-avatar').forEach(button=>button.addEventListener('click',()=>showLiveSubstitutes(button.dataset.playerId,button)));
+  list.querySelectorAll('.swap-player-avatar').forEach(button=>button.addEventListener('click',()=>{if(quickPassActive){handleQuickPassPlayerTap(button.dataset.playerId);return;}showLiveSubstitutes(button.dataset.playerId,button);}));
+  updateQuickPassControls();
 }
 async function showLiveSubstitutes(playerId,anchor){
+  if(quickPassActive)return;
   const row=activeScrimmagePlayers.find(x=>x.player_id===playerId&&x.on_field);if(!row)return;
   const map=new Map(players.map(p=>[p.id,p]));const subs=activeScrimmagePlayers.filter(x=>x.team===row.team&&!x.on_field).map(x=>map.get(x.player_id)).filter(Boolean);
   if(!subs.length){alert('There are no substitutes available for this team.');return;}
@@ -3024,10 +3080,29 @@ async function chooseScrimmageRelatedPlayer(eventType,playerId,team){
   select.innerHTML=(isBlock?'<option value="">Choose opponent...</option>':'<option value="">No assist</option>')+candidates.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
   return new Promise(resolve=>{const onClose=()=>resolve(dialog.returnValue==='confirm'?select.value:null);dialog.addEventListener('close',onClose,{once:true});dialog.showModal();});
 }
+function recordQuickPassStat(playerId,statType,row){
+ if(statType==='block'){
+  const passer=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId&&item.on_field);
+  if(!passer||passer.team===row.team){updateQuickPassControls();return;}
+  const action={id:uid(),type:'block',matchId:activeScrimmageId,playerId,team:row.team,statType:'block',relatedPlayerId:passer.player_id,blockedDropStatId:uid(),blockedDropTimelineId:uid(),quickPassBlock:true,createdAt:new Date().toISOString()};
+  if(!enqueueLiveAction(action))return;
+  quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=row.team;saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();return;
+ }
+ if(statType==='goal'){
+  const passer=activeScrimmagePlayers.find(item=>item.player_id===quickPassLastPasserId&&item.team===row.team);
+  const action={id:uid(),type:'goal',matchId:activeScrimmageId,playerId,team:row.team,assistantPlayerId:passer&&passer.player_id!==playerId?passer.player_id:null,assistStatId:passer&&passer.player_id!==playerId?uid():null,createdAt:new Date().toISOString()};
+  if(!enqueueLiveAction(action))return;
+  quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();return;
+ }
+ const action={id:uid(),type:'drop',matchId:activeScrimmageId,playerId,team:row.team,createdAt:new Date().toISOString()};
+ if(!enqueueLiveAction(action))return;
+ quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=row.team==='A'?'B':'A';saveQuickPassState();applyPendingLiveActions(activeScrimmageId);renderLiveMatch();
+}
 window.recordMatchStat=async function(playerId,statType){
   if(!activeScrimmageId)return;const row=activeScrimmagePlayers.find(x=>x.player_id===playerId);if(!row||!row.on_field){alert('Only players currently on the field can receive match stats.');return;}
   if(!['goal','drop','block'].includes(statType)){alert('Invalid match stat type.');return;}
   if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}
+  if(quickPassActive){recordQuickPassStat(playerId,statType,row);return;}
   let relatedPlayerId=null;
   if(statType==='goal'||statType==='block'){
     relatedPlayerId=await chooseScrimmageRelatedPlayer(statType,playerId,row.team);
@@ -3067,6 +3142,7 @@ async function loadActiveScrimmage(){
     return;
   }
   activeScrimmageId=m.id;
+  restoreQuickPassState(m.id);
   const [{data:mp,error:pe},{data:ev,error:ee},{data:timeline,error:te}]=await Promise.all([
     supabaseClient.from('scrimmage_players').select('*').eq('match_id',m.id),
     supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',m.id).order('created_at',{ascending:true}),
@@ -3171,6 +3247,7 @@ async function endMatch(){
   await loadPlayers();
   
   activeScrimmageId=null;
+  quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();
   activeScrimmagePlayers=[];
   activeScrimmageEvents=[];
   activeScrimmageTimelineEvents=[];
@@ -3311,6 +3388,7 @@ document.getElementById("endMatchBtn").addEventListener("click",endMatch);
 document.getElementById("swapBtn").addEventListener("click",async()=>{if(!generatedTeamA.length)return;[generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];[generatedSubsA,generatedSubsB]=[generatedSubsB,generatedSubsA];renderTeams();await savePreparationToDB();});
 document.getElementById("clearTeamsBtn").addEventListener("click",async()=>{if(!confirm('Clear the saved team preparation?'))return;generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];generatedUnassigned=[];selectedPrepPlayerId=null;renderTeams();document.getElementById('matchSummaryPanel').style.display='none';await savePreparationToDB();});
 document.querySelectorAll('.scrim-subtab').forEach(btn=>btn.addEventListener('click',()=>showScrimmageView(btn.dataset.scrimView)));
+document.getElementById('quickPassToggle').addEventListener('click',toggleQuickPass);
 document.getElementById('syncPrepToLiveBtn').addEventListener('click',syncLiveFromPreparation);
 document.getElementById("attendanceDate").addEventListener("change",async()=>{try{await loadAttendance(document.getElementById("attendanceDate").value);}catch(err){alert("Could not load attendance: "+err.message);}});
 document.getElementById("attendanceSearch").addEventListener("input",renderAttendancePlayers);

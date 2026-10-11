@@ -1,10 +1,10 @@
--- Live Scrimmage event timeline: goals, assists, substitutions, drops, blocks, and team changes.
+-- Live Scrimmage event timeline: passes, possession, goals, assists, substitutions, drops, blocks, and team changes.
 -- Run this script in the Supabase SQL Editor. It is safe to rerun to update an existing timeline table.
 
 create table if not exists public.scrimmage_timeline_events (
   id uuid primary key default gen_random_uuid(),
   match_id uuid not null references public.scrimmage_matches(id) on delete cascade,
-  event_type text not null check (event_type in ('goal', 'substitution', 'drop', 'block', 'team_change')),
+  event_type text not null check (event_type in ('goal', 'substitution', 'drop', 'block', 'team_change', 'pass', 'possession')),
   team text not null check (team in ('A', 'B')),
   player_id uuid references public.players(id) on delete cascade,
   related_player_id uuid references public.players(id) on delete cascade,
@@ -15,6 +15,8 @@ create table if not exists public.scrimmage_timeline_events (
     or (event_type = 'substitution' and related_player_id is not null and related_player_id <> player_id)
     or (event_type = 'drop' and related_player_id is null)
     or (event_type = 'block' and related_player_id is not null and related_player_id <> player_id)
+    or (event_type = 'pass' and related_player_id is not null and related_player_id <> player_id)
+    or (event_type = 'possession' and related_player_id is null)
     or (event_type = 'team_change' and player_id is null and related_player_id is null)
   )
 );
@@ -26,7 +28,7 @@ alter table public.scrimmage_timeline_events
   drop constraint if exists scrimmage_timeline_events_event_type_check;
 alter table public.scrimmage_timeline_events
   add constraint scrimmage_timeline_events_event_type_check
-  check (event_type in ('goal', 'substitution', 'drop', 'block', 'team_change'));
+  check (event_type in ('goal', 'substitution', 'drop', 'block', 'team_change', 'pass', 'possession'));
 alter table public.scrimmage_timeline_events
   drop constraint if exists scrimmage_timeline_related_player_check;
 alter table public.scrimmage_timeline_events
@@ -35,6 +37,8 @@ alter table public.scrimmage_timeline_events
     or (event_type = 'substitution' and related_player_id is not null and related_player_id <> player_id)
     or (event_type = 'drop' and related_player_id is null)
     or (event_type = 'block' and related_player_id is not null and related_player_id <> player_id)
+    or (event_type = 'pass' and related_player_id is not null and related_player_id <> player_id)
+    or (event_type = 'possession' and related_player_id is null)
     or (event_type = 'team_change' and player_id is null and related_player_id is null)
   );
 
