@@ -2171,18 +2171,18 @@ function playedMinutesForAppearance(appearance,substitutions){
 }
 
 function renderPlayerProfile(player,appearances,events){
-  const totals={goal:0,assist:0,block:0,drop:0};
+  const totals={goal:0,assist:0,block:0,drop:0,passes:0};
   const eventByMatch=new Map();
   events.forEach(event=>{
     if(totals[event.stat_type]!==undefined)totals[event.stat_type]+=Number(event.delta||0);
-    if(!eventByMatch.has(event.match_id))eventByMatch.set(event.match_id,{goal:0,assist:0,block:0,drop:0});
+    if(!eventByMatch.has(event.match_id))eventByMatch.set(event.match_id,{goal:0,assist:0,block:0,drop:0,passes:0});
     const matchTotals=eventByMatch.get(event.match_id);
     if(matchTotals[event.stat_type]!==undefined)matchTotals[event.stat_type]+=Number(event.delta||0);
   });
-  const matchCount=appearances.length,minutes=appearances.reduce((sum,match)=>sum+Number(match.minutes_played||0),0),per60=key=>minutes?totals[key]*60/minutes:0,matchPoints=performancePoints(totals);
+  const matchCount=appearances.length,minutes=appearances.reduce((sum,match)=>sum+Number(match.minutes_played||0),0),per60=key=>minutes?totals[key]*60/minutes:0,matchPoints=appearances.reduce((sum,match)=>sum+performancePoints(eventByMatch.get(match.match_id)||{},match.minutes_played),0);
   const teamOneAppearances=appearances.filter(match=>match.team==="A").length,teamTwoAppearances=appearances.length-teamOneAppearances;
   const lastMatches=[...appearances].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,4);
-  const perGame=[{key:"goal",label:"Goals",short:"G"},{key:"assist",label:"Assists",short:"A"},{key:"block",label:"Blocks",short:"B"},{key:"drop",label:"Drops",short:"D"}];
+  const perGame=[{key:"goal",label:"Goals",short:"G"},{key:"assist",label:"Assists",short:"A"},{key:"passes",label:"Pass involvements",short:"P"},{key:"block",label:"Blocks",short:"B"},{key:"drop",label:"Drops",short:"D"}];
   const maxRate=Math.max(1,...perGame.map(stat=>per60(stat.key)));
   const clubLabel=(player.club||"VinUni Ultimate").replace("VinUni Ultimate ","");
   const expiry=isGuest(player)&&player.expires_at?` · Guest expires ${new Date(player.expires_at).toLocaleString()}`:"";
@@ -2236,19 +2236,20 @@ async function openPlayerProfile(playerId,trigger){
     let appearances=[],events=[];
     const matchIds=(matches||[]).map(match=>match.id);
     if(matchIds.length){
-      const [{data:playerMatches,error:appearanceError},{data:playerEvents,error:eventError},{data:substitutions,error:substitutionError}]=await Promise.all([
+    const [{data:playerMatches,error:appearanceError},{data:playerEvents,error:eventError},{data:timeline,error:substitutionError}]=await Promise.all([
         supabaseClient.from("scrimmage_players").select("match_id,player_id,team,on_field").eq("player_id",player.id).in("match_id",matchIds),
         supabaseClient.from("scrimmage_stat_events").select("match_id,stat_type,delta").eq("player_id",player.id).in("match_id",matchIds),
-        supabaseClient.from("scrimmage_timeline_events").select("match_id,event_type,player_id,related_player_id,created_at").eq("event_type","substitution").in("match_id",matchIds)
+        supabaseClient.from("scrimmage_timeline_events").select("match_id,event_type,player_id,related_player_id,created_at").in("match_id",matchIds)
       ]);
       if(appearanceError)throw appearanceError;
       if(eventError)throw eventError;
       if(substitutionError)throw substitutionError;
       const matchById=new Map(matches.map(match=>[match.id,match]));
       const substitutionsByMatch=new Map();
-      (substitutions||[]).forEach(event=>{if(!substitutionsByMatch.has(event.match_id))substitutionsByMatch.set(event.match_id,[]);substitutionsByMatch.get(event.match_id).push(event);});
+      (timeline||[]).filter(event=>event.event_type==='substitution').forEach(event=>{if(!substitutionsByMatch.has(event.match_id))substitutionsByMatch.set(event.match_id,[]);substitutionsByMatch.get(event.match_id).push(event);});
       appearances=(playerMatches||[]).map(appearance=>{const match={...matchById.get(appearance.match_id),...appearance};return {...match,minutes_played:playedMinutesForAppearance(match,substitutionsByMatch.get(appearance.match_id)||[])};});
       events=playerEvents||[];
+      (timeline||[]).filter(event=>event.event_type==='pass'&&(event.player_id===player.id||event.related_player_id===player.id)).forEach(event=>events.push({match_id:event.match_id,stat_type:'passes',delta:1}));
     }
     if(request!==playerProfileRequest)return;
     content.innerHTML=renderPlayerProfile(player,appearances,events);
@@ -2378,11 +2379,12 @@ async function loadCompletedMatchHistory(){
     if(error)throw error;
     if(!matches||!matches.length){body.innerHTML='<tr><td colspan="7" class="empty">No completed matches yet. Each match will appear here after End Match.</td></tr>';return;}
     const ids=matches.map(m=>m.id);
-    const [{data:matchPlayers,error:pe},{data:events,error:ee}]=await Promise.all([
+    const [{data:matchPlayers,error:pe},{data:events,error:ee},{data:timeline,error:te}]=await Promise.all([
       supabaseClient.from('scrimmage_players').select('match_id,player_id,team').in('match_id',ids),
-      supabaseClient.from('scrimmage_stat_events').select('match_id,player_id,team,stat_type,delta').in('match_id',ids)
+      supabaseClient.from('scrimmage_stat_events').select('match_id,player_id,team,stat_type,delta').in('match_id',ids),
+      supabaseClient.from('scrimmage_timeline_events').select('match_id,event_type,player_id,related_player_id,created_at').in('match_id',ids)
     ]);
-    if(pe)throw pe;if(ee)throw ee;
+    if(pe)throw pe;if(ee)throw ee;if(te)throw te;
     const pMap=new Map(players.map(p=>[p.id,p]));
     body.innerHTML=matches.map((m,index)=>{
       const mps=(matchPlayers||[]).filter(x=>x.match_id===m.id);
@@ -2391,8 +2393,10 @@ async function loadCompletedMatchHistory(){
       const scoreB=ev.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0)+Number(m.guest_goals_b||0);
       const totals=new Map();
       ev.forEach(e=>{if(!totals.has(e.player_id))totals.set(e.player_id,{goal:0,assist:0,drop:0,block:0});const t=totals.get(e.player_id);if(t[e.stat_type]!==undefined)t[e.stat_type]+=Number(e.delta||0);});
+      const matchTimeline=(timeline||[]).filter(event=>event.match_id===m.id);
+      matchTimeline.filter(event=>event.event_type==='pass').forEach(event=>[event.player_id,event.related_player_id].forEach(playerId=>{if(!playerId)return;if(!totals.has(playerId))totals.set(playerId,{goal:0,assist:0,drop:0,block:0,passes:0});const t=totals.get(playerId);t.passes=(t.passes||0)+1;}));
       let mvpName='—',mvpPts=-Infinity;
-      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=totals.get(x.player_id)||{goal:0,assist:0,drop:0,block:0};const pts=performancePoints(t);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||'Unknown';}});
+      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=totals.get(x.player_id)||{goal:0,assist:0,drop:0,block:0,passes:0};const minutes=playedMinutesForAppearance({...m,...x},matchTimeline.filter(event=>event.event_type==='substitution'));const pts=performancePoints(t,minutes);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||'Unknown';}});
       const when=m.ended_at||m.created_at;
       const date=when?new Date(when).toLocaleString():'—';
       return '<tr><td>'+(matches.length-index)+'</td><td>'+esc(date)+'</td><td><strong>'+scoreA+'</strong></td><td><strong>'+scoreB+'</strong></td><td>'+mps.length+'</td><td>'+esc(mvpName)+'</td><td>'+(Number.isFinite(mvpPts)?mvpPts:0)+'</td></tr>';
@@ -2432,16 +2436,18 @@ async function exportAttendanceExcel(){
     }
     const pMap=new Map(players.map(p=>[p.id,p]));
     const eventsByMatchPlayer=new Map();
-    events.forEach(e=>{const key=`${e.match_id}|${e.player_id}`;if(!eventsByMatchPlayer.has(key))eventsByMatchPlayer.set(key,{goal:0,assist:0,drop:0,block:0});const t=eventsByMatchPlayer.get(key);if(t[e.stat_type]!==undefined)t[e.stat_type]+=Number(e.delta||0);});
+    events.forEach(e=>{const key=`${e.match_id}|${e.player_id}`;if(!eventsByMatchPlayer.has(key))eventsByMatchPlayer.set(key,{goal:0,assist:0,drop:0,block:0,passes:0});const t=eventsByMatchPlayer.get(key);if(t[e.stat_type]!==undefined)t[e.stat_type]+=Number(e.delta||0);});
+    timelineEvents.filter(event=>event.event_type==='pass').forEach(event=>[event.player_id,event.related_player_id].forEach(playerId=>{if(!playerId)return;const key=`${event.match_id}|${playerId}`;if(!eventsByMatchPlayer.has(key))eventsByMatchPlayer.set(key,{goal:0,assist:0,drop:0,block:0,passes:0});eventsByMatchPlayer.get(key).passes++;}));
     const matchPerformance=[];
     const matchSummary=(matches||[]).map((m,index)=>{
       const shortId=m.id.slice(0,8);const mps=matchPlayers.filter(x=>x.match_id===m.id);const matchEventsForMatch=events.filter(e=>e.match_id===m.id);
       const scoreA=matchEventsForMatch.filter(e=>e.team==='A'&&e.stat_type==='goal').reduce((sum,e)=>sum+Number(e.delta||0),0)+Number(m.guest_goals_a||0);
       const scoreB=matchEventsForMatch.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((sum,e)=>sum+Number(e.delta||0),0)+Number(m.guest_goals_b||0);
       let mvpName='',mvpPts=-Infinity;
-      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0};const pts=performancePoints(t);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||x.player_id;}
+      const matchTimeline=timelineEvents.filter(event=>event.match_id===m.id);
+      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0,passes:0};const minutes=playedMinutesForAppearance({...m,...x},matchTimeline.filter(event=>event.event_type==='substitution'));const pts=performancePoints(t,minutes);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||x.player_id;}
         const delta=Math.max(-5,Math.min(5,pts*0.5));
-        matchPerformance.push({Match_No:index+1,Match_ID:shortId,Match_Date:m.created_at?new Date(m.created_at).toLocaleString():'',Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,Current_Rating:Number(p.rating)||0,Current_Tier:p.tier||tierFromRating(p.rating)});
+        matchPerformance.push({Match_No:index+1,Match_ID:shortId,Match_Date:m.created_at?new Date(m.created_at).toLocaleString():'',Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Minutes_Played:Number(minutes.toFixed(1)),Goals:t.goal,Assists:t.assist,Pass_Involvements:t.passes,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,Current_Rating:Number(p.rating)||0,Current_Tier:p.tier||tierFromRating(p.rating)});
       });
       return {Match_No:index+1,Match_ID:shortId,Started_At:m.created_at?new Date(m.created_at).toLocaleString():'',Ended_At:m.ended_at?new Date(m.ended_at).toLocaleString():'',Team_1_Score:scoreA,Team_2_Score:scoreB,Players:mps.length,MVP:mvpName||'—',MVP_Points:Number.isFinite(mvpPts)?mvpPts:0};
     });
@@ -2470,13 +2476,13 @@ async function exportAttendanceExcel(){
         ['Late Players',latePlayers.length,'Names',latePlayers.join(', ')||'None'],
         [],
         ['PLAYER PERFORMANCE & ATTENDANCE'],
-        ['Player','Team','Gender','Position','Status at match end','Attendance','Minutes Played','Goals','Assists','Drops','Blocks','Match Points','Current Rating','Tier']
+        ['Player','Team','Gender','Position','Status at match end','Attendance','Minutes Played','Goals','Assists','Pass Involvements','Drops','Blocks','Match Points','Current Rating','Tier']
       ];
       matchPlayersForMatch.forEach(x=>{
         const p=pMap.get(x.player_id)||{},t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0},attendance=getAttendance(x.player_id);
         const attendanceStatus=attendance?.assignment==='Late'?'Late':attendance?.present?'Present':attendance?'Absent':'No record';
         const minutes=playedMinutesForAppearance({...m,...x},timelineForMatch.filter(event=>event.event_type==='substitution'));
-        matchRows.push([p.name||x.player_id,x.team==='A'?'Team 1':'Team 2',p.gender||'',p.position||'',x.on_field?'On field at end':'Substitute at end',attendanceStatus,Number.isFinite(minutes)?Number(minutes.toFixed(1)):'Unavailable',t.goal,t.assist,t.drop,t.block,performancePoints(t),Number(p.rating)||0,p.tier||tierFromRating(p.rating)]);
+        matchRows.push([p.name||x.player_id,x.team==='A'?'Team 1':'Team 2',p.gender||'',p.position||'',x.on_field?'On field at end':'Substitute at end',attendanceStatus,Number.isFinite(minutes)?Number(minutes.toFixed(1)):'Unavailable',t.goal,t.assist,t.passes,t.drop,t.block,performancePoints(t,minutes),Number(p.rating)||0,p.tier||tierFromRating(p.rating)]);
       });
       matchRows.push([],['TIMELINE EVENTS'],['Time','Team','Event','Player','Related Player']);
       timelineForMatch.forEach(event=>{
@@ -2766,6 +2772,8 @@ function showScrimmageView(view){const prep=view==='prepView';document.getElemen
 
 /* ===== SCRIMMAGE LIVE MATCH ===== */
 let activeScrimmageId=null;
+let activeScrimmageMatchStartedAt=null;
+let activeScrimmageMatchStartedAt=null;
 let activeScrimmagePlayers=[];
 let activeScrimmageEvents=[];
 let activeScrimmageTimelineEvents=[];
@@ -2802,7 +2810,10 @@ function updateQuickPassControls(){
  if(button){button.disabled=!activeScrimmageId;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'QUICK PASS · ON':'QUICK PASS · OFF';}
  if(status){if(!activeScrimmageId)status.textContent='Activate a match to enable Quick Pass.';else if(!quickPassActive)status.textContent='Quick Pass is off. Only substitutions are available; turn it on to record match events.';else if(quickPassAwaitingTeam)status.textContent=`${scrimmageTeamName(quickPassAwaitingTeam)} attacks. Tap the avatar of the player holding the disc.`;else if(!quickPassHolderId)status.textContent='Tap the avatar of the player holding the disc to start the possession.';else{const p=players.find(item=>item.id===quickPassHolderId);status.textContent=`${scrimmageTeamName(activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team||'A')} attacks · ${p?.name||'Player'} has the disc. Tap the receiver after each pass.`;}}
  document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);row.classList.toggle('quick-pass-holder',quickPassActive&&holder);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap to set this player as the new disc holder':quickPassHolderId?'Tap the receiver after the completed pass':'Tap to set the current disc holder';}const [goalButton,dropButton,blockButton]=row.querySelectorAll('.stat-btn');const holderTeam=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team;if(goalButton)goalButton.disabled=!quickPassActive||!quickPassHolderId||!player;if(dropButton)dropButton.disabled=!quickPassActive||!holder||!player;if(blockButton)blockButton.disabled=!quickPassActive||!quickPassHolderId||!player||player.team===holderTeam;});
+ updateLivePerformancePoints();
 }
+function updateLivePerformancePoints(){document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);if(!player)return;const pts=performancePoints(statTotalsForPlayer(player.player_id),minutesPlayedInActiveMatch(player)),delta=Math.max(-5,Math.min(5,pts*.5)),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});}
+setInterval(updateLivePerformancePoints,30000);
 function toggleQuickPass(){
  if(!activeScrimmageId){return;}
  if(quickPassActive){quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();updateQuickPassControls();return;}
@@ -2828,8 +2839,9 @@ function handleQuickPassPlayerTap(playerId){
 }
 
 function tierFromRating(r){r=Number(r)||0;return r>=90?'S':r>=80?'A':r>=70?'B':'C';}
-function statTotalsForPlayer(playerId){const out={goal:0,assist:0,drop:0,block:0};activeScrimmageEvents.filter(e=>e.player_id===playerId).forEach(e=>{if(out[e.stat_type]!==undefined)out[e.stat_type]+=Number(e.delta||0)});return out;}
-function performancePoints(t){return t.goal*4+t.assist*2+t.block*3-t.drop*3;}
+function statTotalsForPlayer(playerId){const out={goal:0,assist:0,drop:0,block:0,passes:0};activeScrimmageEvents.filter(e=>e.player_id===playerId).forEach(e=>{if(out[e.stat_type]!==undefined)out[e.stat_type]+=Number(e.delta||0)});out.passes=activeScrimmageTimelineEvents.filter(event=>event.event_type==='pass'&&(event.player_id===playerId||event.related_player_id===playerId)).length;return out;}
+function performancePoints(t,minutes=75){const raw=Number(t.goal||0)*4+Number(t.assist||0)*2+Number(t.passes||0)*.5+Number(t.block||0)*3-Number(t.drop||0)*3;return raw*Math.max(0,Number(minutes)||0)/75;}
+function minutesPlayedInActiveMatch(player){if(!activeScrimmageMatchStartedAt)return 0;return playedMinutesForAppearance({player_id:player.player_id,created_at:activeScrimmageMatchStartedAt,ended_at:new Date().toISOString(),on_field:player.on_field},activeScrimmageTimelineEvents.filter(event=>event.event_type==='substitution'));}
 
 function persistLiveActionQueue(){
   try{localStorage.setItem(LIVE_ACTION_QUEUE_KEY,JSON.stringify(liveActionQueue));return true;}
@@ -3064,14 +3076,14 @@ function renderPerformance(){
   const rosterKey=onField.map(x=>`${x.team}:${x.slot??''}:${x.player_id}`).join('|');
   const existingRows=[...list.querySelectorAll('.performance-row[data-player-id]')];
   if(list.dataset.rosterKey===rosterKey&&existingRows.length===onField.length){
-    onField.forEach(x=>{const row=existingRows.find(item=>item.dataset.playerId===x.player_id);if(!row)return;const pts=performancePoints(statTotalsForPlayer(x.player_id)),delta=Math.max(-5,Math.min(5,pts*0.5)),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts;if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});
+    onField.forEach(x=>{const row=existingRows.find(item=>item.dataset.playerId===x.player_id);if(!row)return;const pts=performancePoints(statTotalsForPlayer(x.player_id),minutesPlayedInActiveMatch(x)),delta=Math.max(-5,Math.min(5,pts*0.5)),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});
     return;
   }
   const header='<div class="performance-row performance-columns-head"><div>PLAYER</div><div>GOAL</div><div>DROP</div><div>BLOCK</div><div>PTS</div><div>OVR</div></div>';
   const teamSections=['A','B'].map(team=>{
     const teamPlayers=onField.filter(x=>x.team===team);if(!teamPlayers.length)return '';
     const teamName=scrimmageTeamName(team);
-    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5)),label=scrimmageTeamName(team);const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${esc(label)}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
+    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t,minutesPlayedInActiveMatch(x)),delta=Math.max(-5,Math.min(5,pts*0.5)),label=scrimmageTeamName(team);const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${esc(label)}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts.toFixed(1)}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
     return `<section class="live-stat-team live-stat-team-${team.toLowerCase()}"><div class="live-stat-team-banner"><span data-team-name-label="${team}">${esc(teamName)}</span><small>${teamPlayers.length} ON FIELD</small></div>${header}${rows}</section>`;
   }).join('');
   list.innerHTML=teamSections;
@@ -3148,6 +3160,7 @@ async function loadActiveScrimmage(){
   if(!m){
     const {error:timelineError}=await supabaseClient.from('scrimmage_timeline_events').select('id').limit(1);
     activeScrimmageId=null;
+    activeScrimmageMatchStartedAt=null;
     activeScrimmagePlayers=[];
     activeScrimmageEvents=[];
     activeScrimmageTimelineEvents=[];
@@ -3169,6 +3182,7 @@ async function loadActiveScrimmage(){
     return;
   }
   activeScrimmageId=m.id;
+  activeScrimmageMatchStartedAt=m.created_at;
   restoreQuickPassState(m.id,m.quick_pass_state);
   const [{data:mp,error:pe},{data:ev,error:ee},{data:timeline,error:te}]=await Promise.all([
     supabaseClient.from('scrimmage_players').select('*').eq('match_id',m.id),
@@ -3225,7 +3239,7 @@ async function endMatch(){
       const p = pMap.get(x.player_id);
       if(!p) return;
       const t = statTotalsForPlayer(p.id);
-      const pts = performancePoints(t);
+      const pts = performancePoints(t,minutesPlayedInActiveMatch(x));
       if(pts > maxPts) { maxPts = pts; mvp = { p, t, pts, team: x.team }; }
   });
 
@@ -3241,8 +3255,8 @@ async function endMatch(){
       document.getElementById('mvpTier').style.borderColor = tierColors[mvp.p.tier] || '#1e3a8a';
       document.getElementById('mvpTier').style.color = tierColors[mvp.p.tier] || '#1e3a8a';
       document.getElementById('mvpTeam').textContent = scrimmageTeamName(mvp.team);
-      document.getElementById('mvpPts').textContent = mvp.pts + ' PTS';
-      document.getElementById('mvpStatsText').textContent = `${mvp.t.goal} GOAL · ${mvp.t.assist} AST · ${mvp.t.drop} DROP · ${mvp.t.block} BLK`;
+      document.getElementById('mvpPts').textContent = mvp.pts.toFixed(1) + ' PTS';
+      document.getElementById('mvpStatsText').textContent = `${mvp.t.goal} GOAL · ${mvp.t.assist} AST · ${mvp.t.passes} PASS · ${mvp.t.drop} DROP · ${mvp.t.block} BLK`;
   }
   
   document.getElementById('matchSummaryPanel').style.display = 'block';
@@ -3274,6 +3288,7 @@ async function endMatch(){
   await loadPlayers();
   
   activeScrimmageId=null;
+  activeScrimmageMatchStartedAt=null;
   quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();
   activeScrimmagePlayers=[];
   activeScrimmageEvents=[];
