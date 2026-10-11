@@ -2943,7 +2943,7 @@ function renderScrimmageTimeline(){
         ?`<span class="timeline-event-goal">GOAL</span> ${esc(playerName)}${relatedName?` <span class="timeline-event-assist">(Assist: ${esc(relatedName)})</span>`:''}${event.legacy?'':''}`
         :event.event_type==='drop'
           ?`<span class="timeline-event-drop">DROP</span> ${esc(playerName)} dropped the disc`
-          :`<span class="timeline-event-block">BLOCK</span> ${esc(playerName)} blocked ${esc(relatedName||'an opponent')}'s pass <span class="timeline-event-drop">OPPONENT DROP · −3 PTS</span>`;
+          :`<span class="timeline-event-block">BLOCK</span> ${esc(playerName)} blocked ${esc(relatedName||'an opponent')}'s pass`;
     return `<tr><td>${esc(time)}</td><td><span class="timeline-team-tag${teamClass}">${teamName}</span></td><td>${details}</td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
