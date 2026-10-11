@@ -2583,8 +2583,6 @@ function prepMiniCard(p){return `
     <div class="prep-mini-card">
       <div class="live-card ${p.gender==='Female'?'gender-female':'gender-male'} tier-${esc(p.tier)}-card" style="width:100%;height:auto;aspect-ratio:1.08/1;border-radius:8px;margin:0 auto;position:relative;">
           ${p.image?`<img src="${esc(p.image)}" alt="">`:`<div class="card-initials">${esc(initials(p.name))}</div>`}
-          <div class="card-rating">${Number(p.rating)||0}</div>
-          <div class="card-tier">${esc(p.tier)}</div>
       </div>
       <div class="prep-mini-name">${esc(p.name)}</div>
       <div class="prep-mini-meta">${esc(p.position||'')}</div>
