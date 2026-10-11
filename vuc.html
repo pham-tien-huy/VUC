@@ -1531,6 +1531,44 @@ select option{color:#e5edf9;background:#0b1424}
 #postMatchView .post-match-player .prep-mini-name,#postMatchView .post-match-sub-card .prep-mini-name{text-shadow:0 0 8px #38bdf888}
 #postMatchView .team-b .post-match-player .prep-mini-name,#postMatchView .team-b .post-match-sub-card .prep-mini-name{text-shadow:0 0 8px #d946f099}
 @media(max-width:600px){#postMatchView .post-match-field{min-height:480px;margin:8px}#postMatchView .post-match-player{width:clamp(54px,17vw,68px)}#postMatchView .post-match-player .prep-mini-card .live-card{border-radius:8px}#postMatchView .post-match-player .prep-mini-name{font-size:9px}#postMatchView .post-match-player-score{font-size:8px;padding:2px 4px}#postMatchView .post-match-sub-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}#postMatchView .post-match-sub-card{padding:6px}#postMatchView .post-match-sub-card .prep-mini-card{max-width:100%}}
+/* Match Team Preparation's compact phone layout for Post Match. */
+@media(max-width:560px){
+  #postMatchView{width:100%;min-width:0}
+  #postMatchView .post-match-board{gap:12px}
+  #postMatchView .post-match-heading{min-width:0;padding:0 2px}
+  #postMatchView .post-match-title{font-size:20px;line-height:1.15}
+  #postMatchView .post-match-meta{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+  #postMatchView .post-match-hero{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px;padding:12px 8px;border-radius:16px}
+  #postMatchView .post-match-side{min-width:0}
+  #postMatchView .post-match-side small{font-size:8px;letter-spacing:.06em;overflow-wrap:anywhere}
+  #postMatchView .post-match-side strong{font-size:clamp(34px,12vw,48px)}
+  #postMatchView .post-match-divider{font-size:8px;letter-spacing:.1em}
+  #postMatchView .post-match-mvp{gap:10px;padding:10px;border-radius:14px}
+  #postMatchView .post-match-mvp img,#postMatchView .post-match-mvp-avatar{width:48px;height:48px}
+  #postMatchView .post-match-mvp-name{font-size:15px;overflow-wrap:anywhere}
+  #postMatchView .post-match-mvp-meta{font-size:10px;line-height:1.35}
+  #postMatchView .post-match-teams{display:flex;flex-direction:column;gap:12px;min-width:0;width:100%}
+  #postMatchView .post-match-team{box-sizing:border-box;width:100%;min-width:0;padding:10px;border-radius:16px}
+  #postMatchView .post-match-team-head{gap:6px;flex-wrap:wrap;margin:0 0 9px;padding:0;background:transparent}
+  #postMatchView .post-match-team-head h3{font-size:15px}
+  #postMatchView .post-match-team-head span{font-size:10px}
+  #postMatchView .post-match-field{box-sizing:border-box;width:100%;min-width:0;min-height:0;height:auto;aspect-ratio:.86/1;margin:0;border-radius:13px}
+  #postMatchView .post-match-player{width:clamp(54px,17vw,68px);min-height:0}
+  #postMatchView .post-match-player .prep-mini-card{max-width:68px}
+  #postMatchView .post-match-player .prep-mini-card .live-card{border-radius:6px}
+  #postMatchView .post-match-player .prep-mini-name{font-size:clamp(7px,2.2vw,9px);line-height:1.05}
+  #postMatchView .post-match-player .prep-mini-meta{font-size:7px;margin-top:2px}
+  #postMatchView .post-match-player-score{max-width:100%;margin-top:2px;padding:0;border:0;border-radius:0;background:transparent;font-size:7px;line-height:1.05;white-space:normal}
+  #postMatchView .post-match-subs{margin-top:9px;padding:8px;border:1px solid #475985;border-radius:12px;background:#0b1428}
+  #postMatchView .post-match-subs h4{margin-bottom:7px;font-size:10px}
+  #postMatchView .post-match-sub-list{display:flex;flex-wrap:wrap;align-items:flex-start;gap:5px}
+  #postMatchView .post-match-sub-card{width:clamp(68px,20vw,82px);min-width:0;padding:3px;border-radius:9px}
+  #postMatchView .post-match-sub-card .prep-mini-card{max-width:74px}
+  #postMatchView .post-match-sub-card .prep-mini-card .live-card{border-radius:6px}
+  #postMatchView .post-match-sub-card .prep-mini-name{font-size:clamp(7px,2.2vw,9px);line-height:1.05}
+  #postMatchView .post-match-sub-card .prep-mini-meta{font-size:7px;margin-top:2px}
+  #postMatchView .post-match-sub-score{width:auto;max-width:100%;margin-top:2px;padding:0;border:0;border-radius:0;background:transparent;font-size:7px;line-height:1.05;white-space:normal}
+}
 </style>
 </head>
 <body>
