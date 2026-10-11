@@ -66,6 +66,12 @@ button{cursor:pointer}
 .tab:hover { background: rgba(255,255,255,0.1); color: #fff; }
 .tab.active{background: var(--vinuni-red);color:#fff; box-shadow: 0 4px 12px rgba(200, 16, 46, 0.4); text-shadow: none;}
 
+.author-card{display:flex;flex:none;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:152px;padding:7px 10px;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(6,21,45,.72);color:#fff;text-align:center;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.author-card-label{font-size:10px;font-weight:950;letter-spacing:.14em;text-transform:uppercase;color:#fca5a5}
+.author-card-avatar{width:36px;height:36px;border:2px solid #fff;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(251,113,133,.28)}
+.author-card-link{max-width:100%;overflow:hidden;color:#dbeafe;font-size:10px;font-weight:750;text-overflow:ellipsis;white-space:nowrap}
+.author-card:hover .author-card-link,.author-card:focus-visible .author-card-link{text-decoration:underline;color:#fff}
+.author-card:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}
 .user-pill{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--vinuni-blue); font-weight: 700; background: rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 99px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
 .sync-dot{width:10px;height:10px;border-radius:50%;background:#f59e0b;box-shadow:0 0 0 3px rgba(245, 158, 11,.15)}.sync-dot.live{background:#10b981;box-shadow:0 0 0 3px rgba(16, 185, 129,.15)}
 
@@ -1306,6 +1312,11 @@ select option{color:#e5edf9;background:#0b1424}
       <button class="tab" data-page="attendance">Attendance</button>
       <button class="tab" data-page="logistic">Logistic List</button>
     </div>
+    <a class="author-card" href="https://www.facebook.com/huy.tien.71404976" target="_blank" rel="noopener noreferrer" aria-label="Facebook profile of the web author">
+      <span class="author-card-label">Author</span>
+      <img class="author-card-avatar" src="https://scontent.fhan5-6.fna.fbcdn.net/v/t39.30808-6/723330848_2087946402117938_6221968770760413278_n.jpg?stp=dst-jpg_tt6&amp;cstp=mx1080x1080&amp;ctp=s1080x1080&amp;_nc_cat=104&amp;_nc_map=urlgen_bucketless&amp;ccb=1-7&amp;_nc_sid=6ee11a&amp;_nc_eui2=AeGCHGKGRP30uIZatnrb1k43fOy505z_g1x87LnTnP-DXNVsEw8EtdAwe1a-nBIJXl7EBMIBzUk57nGnlQd2KEkD&amp;_nc_ohc=hs_hduYBPlEQ7kNvwHeVpH7&amp;_nc_oc=Adob8ENbvCgy3AnNnC9hSehBb5QXsaXnqGYTqVNfwF8zhefcRb5n27MweVPj1CXX9D3eBt21eKYQSoeXVy8PTCIK&amp;_nc_zt=23&amp;_nc_ht=scontent.fhan5-6.fna&amp;_nc_gid=A_kOsDJwnAt0iGlfhJxMgg&amp;_nc_ss=7b2a8&amp;oh=00_AQMnILiWZBpgAmAzBsBry1dHfMJRAWhpZhXp9G97PToZ7A&amp;oe=6AD0FD06" alt="Web author profile picture">
+      <span class="author-card-link">facebook.com/huy.tien.71404976</span>
+    </a>
     <div class="user-pill"><span id="syncDot" class="sync-dot"></span><span id="syncText">Connecting...</span></div>
   </div>
 </header>
