@@ -247,7 +247,29 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 .bobo-actions .btn:hover{transform:translateY(-1px);box-shadow:0 4px 9px #0f172a25}
 .bobo-actions .btn-secondary{background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff}
 .bobo-actions .btn-danger{background:linear-gradient(135deg,#ef4444,#b91c1c)}
-@media(max-width:480px){.player-grid{gap:16px}.player-card-db{border-width:3px;border-radius:16px}.card-header-image{height:230px}.pbody{min-height:122px;padding:10px 12px 48px}.profile-slogan{font-size:10px}.profile-kicker{font-size:8px}.bobo-tier{width:32px;height:32px;font-size:17px}.bobo-actions{right:8px;bottom:8px}.bobo-actions .btn{padding:6px 8px;font-size:8px}.bobo-name{left:12px;right:12px;bottom:13px}}
+@media(max-width:480px){
+  #players{width:100%;min-width:0;overflow-x:clip}
+  #players .player-grid{grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}
+  #players .player-card-db{min-width:0;border-width:3px;border-radius:16px}
+  #players .card-header-image{height:210px}
+  #players .card-tier-ornament .tier-flourish{right:70px;bottom:-8px;width:120px;height:120px;transform-origin:100% 100%;opacity:.4}
+  #players .pbody{min-height:122px;padding:10px 12px 48px}
+  #players .profile-slogan{font-size:10px}
+  #players .profile-kicker{font-size:8px}
+  #players .bobo-tier{width:32px;height:32px;font-size:17px}
+  #players .bobo-actions{right:8px;bottom:8px}
+  #players .bobo-actions .btn{padding:6px 8px;font-size:8px}
+  #players .bobo-name{left:12px;right:12px;bottom:13px}
+  #players .grid-4{gap:10px}
+  #players .grid-4 .stat{aspect-ratio:auto}
+  #players .tier-distribution{margin:16px 0 18px;padding:14px}
+  #players .tier-distribution-label{font-size:12px}
+  #players #searchPanel{margin-top:18px!important}
+  #players #searchPanel>.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;min-width:0}
+  #players #searchPanel>.controls>#search{grid-column:1/-1;width:100%;min-width:0;min-height:46px}
+  #players #searchPanel>.controls>select{width:100%;min-width:0;min-height:46px}
+  #players #searchPanel>.controls>#clubFilter{grid-column:1/-1}
+}
 
 /* ===== THẺ CẦU THỦ TRÊN SÂN & MVP ===== */
 .card-art, .live-card { position:relative;width:64px;height:86px;margin:auto;border-radius:8px;overflow:hidden; border:3px solid transparent; background-clip: padding-box; box-shadow: 0 6px 15px rgba(0,0,0,0.4); transition: transform 0.2s; }
@@ -1142,7 +1164,7 @@ select option{color:#e5edf9;background:#0b1424}
   .tier-distribution h2{font-size:17px}
   .club-brand-logo{width:36px;height:36px}
   .grid-4{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .grid-4 .stat{min-height:112px;aspect-ratio:1.2/1;padding:13px 11px 13px 15px;border-radius:16px;display:flex;flex-direction:column;justify-content:center}
+  .grid-4 .stat{min-height:112px;aspect-ratio:auto;padding:13px 11px 13px 15px;border-radius:16px;display:flex;flex-direction:column;justify-content:center}
   .grid-4 .stat::after{width:4px}
   .grid-4 .stat .num{font-size:28px}
   .grid-4 .stat .label{font-size:10px;line-height:1.2;letter-spacing:.02em;margin-top:6px}
