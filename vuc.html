@@ -2852,7 +2852,6 @@ async function flushLiveActionQueue(){
   try{
     while(liveActionQueue.length&&navigator.onLine){
       const action=liveActionQueue[0];
-      rememberLocalLiveAction(action);
       try{await syncLiveAction(action);}
       catch(error){
         console.error('Live Scrimmage action sync failed; it remains queued:',error);
@@ -2867,19 +2866,9 @@ async function flushLiveActionQueue(){
     }
     if(!liveActionQueue.length){
       if(liveActionRetryTimer){clearTimeout(liveActionRetryTimer);liveActionRetryTimer=null;}
+      if(activeScrimmageId)await loadActiveScrimmage();
     }
   }finally{liveActionFlushInProgress=false;}
-}
-const locallySyncedLiveIds=new Map();
-function rememberLocalLiveAction(action){
-  const ids=[action.id,action.goalStatId,action.assistStatId,action.playerId,action.sourceId,action.targetId].filter(Boolean);
-  const expiresAt=Date.now()+8000;
-  ids.forEach(id=>locallySyncedLiveIds.set(id,expiresAt));
-  setTimeout(()=>{const now=Date.now();for(const [id,expiry] of locallySyncedLiveIds)if(expiry<=now)locallySyncedLiveIds.delete(id);},8100);
-}
-function isLocalLiveRealtime(payload){
-  const row=payload?.new||payload?.old||{};
-  return [row.id,row.player_id,row.related_player_id].some(id=>id&&locallySyncedLiveIds.get(id)>Date.now());
 }
 function enqueueLiveAction(action){
   liveActionQueue.push(action);
@@ -2976,14 +2965,21 @@ function renderPerformance(){
   const list=document.getElementById('performanceList');const map=new Map(players.map(p=>[p.id,p]));
   const onField=activeScrimmagePlayers.filter(x=>x.on_field).sort((a,b)=>a.team.localeCompare(b.team)||(a.slot??99)-(b.slot??99));
   if(!onField.length){list.innerHTML='<div class="empty">No players currently on the field.</div>';return;}
+  const rosterKey=onField.map(x=>`${x.team}:${x.slot??''}:${x.player_id}`).join('|');
+  const existingRows=[...list.querySelectorAll('.performance-row[data-player-id]')];
+  if(list.dataset.rosterKey===rosterKey&&existingRows.length===onField.length){
+    onField.forEach(x=>{const row=existingRows.find(item=>item.dataset.playerId===x.player_id);if(!row)return;const pts=performancePoints(statTotalsForPlayer(x.player_id)),delta=Math.max(-5,Math.min(5,pts*0.5)),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts;if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});
+    return;
+  }
   const header='<div class="performance-row performance-columns-head"><div>PLAYER</div><div>GOAL</div><div>DROP</div><div>BLOCK</div><div>PTS</div><div>OVR</div></div>';
   const teamSections=['A','B'].map(team=>{
     const teamPlayers=onField.filter(x=>x.team===team);if(!teamPlayers.length)return '';
     const teamName=team==='A'?'TEAM 1':'TEAM 2';
-    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5)),label=team==='A'?'Team 1':'Team 2';const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${label}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
+    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5)),label=team==='A'?'Team 1':'Team 2';const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${label}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
     return `<section class="live-stat-team live-stat-team-${team.toLowerCase()}"><div class="live-stat-team-banner"><span>${teamName}</span><small>${teamPlayers.length} ON FIELD</small></div>${header}${rows}</section>`;
   }).join('');
   list.innerHTML=teamSections;
+  list.dataset.rosterKey=rosterKey;
   list.querySelectorAll('.swap-player-avatar').forEach(button=>button.addEventListener('click',()=>showLiveSubstitutes(button.dataset.playerId,button)));
 }
 async function showLiveSubstitutes(playerId,anchor){
@@ -3260,9 +3256,9 @@ async function subscribeRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"attendance_sessions"},async()=>{try{await loadAttendanceHistory();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"attendance_records"},async()=>{try{const d=document.getElementById("attendanceDate").value;if(d)await loadAttendance(d);}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_matches"},async()=>{try{await loadActiveScrimmage();await loadCompletedMatchHistory();}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_players"},async(payload)=>{try{if(!isLocalLiveRealtime(payload))await loadActiveScrimmage();}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async(payload)=>{try{if(activeScrimmageId&&!isLocalLiveRealtime(payload))await loadActiveScrimmage();}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_timeline_events"},async(payload)=>{try{if(activeScrimmageId&&!isLocalLiveRealtime(payload))await loadActiveScrimmage();}catch(e){console.error('Live Scrimmage timeline realtime:',e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_players"},async()=>{try{await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_timeline_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error('Live Scrimmage timeline realtime:',e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_preparation"},async(payload)=>{try{const updated=payload?.new?.updated_at;if(updated&&updated!==lastPrepUpdatedAt&&!prepSaveInProgress)await loadPreparationFromDB();}catch(e){console.error('Preparation realtime:',e);}})
     .subscribe((status)=>{if(status==="SUBSCRIBED")setSync(activeScrimmageId?"Live scrimmage":"Live sync",true);else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setSync("Sync error",false);});
 }
@@ -3308,7 +3304,7 @@ document.getElementById("refreshMatchHistoryBtn")?.addEventListener("click",load
 
 // On phones/tablets, hide the navigation taskbar while scrolling down and reveal it while scrolling up.
 let lastScrollY=window.scrollY||0,scrollTicking=false;
-window.addEventListener('scroll',()=>{if(scrollTicking)return;scrollTicking=true;requestAnimationFrame(()=>{const y=window.scrollY||0;const mobile=window.matchMedia('(max-width: 768px)').matches;const bar=document.querySelector('.topbar');const teamToolsOpen=document.getElementById('generator')?.classList.contains('active');if(bar&&mobile&&!teamToolsOpen){if(y>lastScrollY+5&&y>100)bar.classList.add('taskbar-hidden');else if(y<lastScrollY-4||y<40)bar.classList.remove('taskbar-hidden');}else if(bar)bar.classList.remove('taskbar-hidden');lastScrollY=y;scrollTicking=false;});},{passive:true});
+window.addEventListener('scroll',()=>{if(scrollTicking)return;scrollTicking=true;requestAnimationFrame(()=>{const y=window.scrollY||0;const mobile=window.matchMedia('(max-width: 768px)').matches;const bar=document.querySelector('.topbar');if(bar&&mobile){if(y>lastScrollY+5&&y>100)bar.classList.add('taskbar-hidden');else if(y<lastScrollY-4||y<40)bar.classList.remove('taskbar-hidden');}else if(bar)bar.classList.remove('taskbar-hidden');lastScrollY=y;scrollTicking=false;});},{passive:true});
 async function bootstrapApp(){
   setSync("Loading...",false);
   try{
