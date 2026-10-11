@@ -1575,7 +1575,11 @@ select option{color:#e5edf9;background:#0b1424}
 #liveView .performance-row.quick-pass-row-tappable .stat-value,
 #liveView .performance-row.quick-pass-row-tappable .rating-delta{cursor:pointer}
 #liveView .performance-row.quick-pass-row-tappable .stat-btn{cursor:pointer;touch-action:manipulation}
-@media(max-width:600px){#liveView .live-stat-team .performance-row:not(.performance-columns-head){column-gap:6px;row-gap:8px;padding:8px}#liveView .live-stat-team .stat-btn{min-height:40px;height:40px;border-radius:9px}}
+#liveView .performance-row.quick-pass-row-tappable,#liveView .performance-row.quick-pass-row-tappable *{transition:none!important;animation:none!important}
+#liveView .performance-row.quick-pass-holder{outline:none;box-shadow:inset 0 0 0 2px #34d399,inset 0 0 18px #10b9811f}
+#liveView .performance-row.quick-pass-row-tappable .stat-btn:hover{transform:none;filter:none}
+#liveView .timeline-scroll{max-height:min(42vh,420px);overflow:auto;overflow-anchor:none;overscroll-behavior:contain}
+@media(max-width:600px){#liveView .live-stat-team .performance-row:not(.performance-columns-head){column-gap:6px;row-gap:8px;padding:8px}#liveView .live-stat-team .stat-btn{min-height:40px;height:40px;border-radius:9px}#liveView .timeline-scroll{max-height:38vh}}
 </style>
 </head>
 <body>
@@ -1760,30 +1764,6 @@ select option{color:#e5edf9;background:#0b1424}
       </div>
       <div id="scrimmageTimeline" aria-live="polite"></div>
     </section>
-  </div>
-  <!-- BẢNG TỔNG KẾT MATCH SUMMARY & MVP -->
-  <div id="matchSummaryPanel" class="panel scrimmage-live-panel" style="margin-top:28px;display:none; text-align: center; border-color: #f59e0b;">
-    <h2 style="color: #b45309; font-size: 28px; margin-bottom: 20px;">🏆 MATCH SUMMARY</h2>
-    <div class="scoreboard" style="justify-content: center; margin-bottom: 30px; display: inline-flex;">
-      <div><span style="color:var(--blue-700)" data-team-name-label="A">Pikachu</span><strong id="summaryScoreA">0</strong></div>
-      <b style="margin: 0 20px;">-</b>
-      <div><span style="color:var(--muted)" data-team-name-label="B">Charizard</span><strong id="summaryScoreB">0</strong></div>
-    </div>
-    
-    <h3 style="margin: 0 0 16px; color: #1e3a8a; font-size: 22px;">🌟 MVP OF THE MATCH 🌟</h3>
-    <div style="display: flex; justify-content: center; align-items: center; gap: 20px; background: #fffbf1; padding: 20px 30px; border-radius: 20px; border: 2px dashed #fcd34d; max-width: 550px; margin: 0 auto; box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
-      <div style="position: relative; width: 140px; height: 140px; display: flex; align-items: center; justify-content: center; flex: none;">
-        <img src="https://oxewgrdepojulpmeksbn.supabase.co/storage/v1/object/public/player-images/site-assets/vinuni-ultimate-club-logo.png" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1;">
-        <img id="mvpAvatar" src="" style="position: relative; width: 72px; height: 72px; border-radius: 50%; object-fit: cover; z-index: 2; margin-top: -12px;">
-      </div>
-      <div style="text-align: left;">
-        <div id="mvpTier" class="bobo-tier" style="position: static; display: inline-flex; width: 32px; height: 32px; font-size: 16px; margin-bottom: 8px;">S</div>
-        <h3 id="mvpName" style="margin: 0 0 4px; font-size: 22px; color: #b45309; font-weight: 900; text-transform: uppercase;">Name</h3>
-        <div id="mvpTeam" data-team-name-label="A" style="font-size: 13px; font-weight: 800; color: #64748b; margin-bottom: 8px;">Pikachu</div>
-        <div id="mvpPts" style="font-size: 20px; font-weight: 900; color: #15803d; background: #dcfce7; padding: 4px 10px; border-radius: 6px; display: inline-block;">0 PTS</div>
-        <div id="mvpStatsText" style="font-size: 14px; font-weight: 800; color: #475569; margin-top: 8px;">0 G · 0 A · 0 D · 0 B</div>
-      </div>
-    </div>
   </div>
   </div><!-- /liveView -->
   <div id="postMatchView" style="display:none">
@@ -2422,7 +2402,6 @@ async function generateTeams(){
   selectedPrepPlayerId=null;
   renderTeams();
   await savePreparationToDB();
-  document.getElementById('matchSummaryPanel').style.display='none';
 
   const livePanel=document.getElementById("scrimmageMatchPanel");
   if(livePanel&&!activeScrimmageId)livePanel.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -3328,12 +3307,10 @@ async function loadActiveScrimmage(){
   applyPendingLiveActions(m.id);
   document.getElementById('activateMatchBtn').style.display='none';
   document.getElementById('endMatchBtn').style.display='inline-flex';
-  document.getElementById('matchSummaryPanel').style.display = 'none';
   renderLiveMatch();
   setSync(scrimmageTimelineReady?'Live scrimmage':'Timeline setup required',scrimmageTimelineReady);
 }
 async function activateMatch(){if(activeScrimmageId){alert('A scrimmage is already active. End it before starting another.');return;}if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}if(generatedTeamA.filter(Boolean).length!==7||generatedTeamB.filter(Boolean).length!==7){alert('Team Preparation must contain 7 starters in both teams before activation.');return;}await savePreparationToDB({immediate:true});const {data:m,error}=await supabaseClient.from('scrimmage_matches').insert({status:'active'}).select().single();if(error){alert('Could not activate match: '+error.message);return;}const rows=[...generatedTeamA.map((p,i)=>({match_id:m.id,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:m.id,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.filter(Boolean).map(p=>({match_id:m.id,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.filter(Boolean).map(p=>({match_id:m.id,player_id:p.id,team:'B',on_field:false,slot:null}))];const {error:pe}=await supabaseClient.from('scrimmage_players').insert(rows);if(pe){await supabaseClient.from('scrimmage_matches').delete().eq('id',m.id);alert('Could not save lineups: '+pe.message);return;}
-  document.getElementById('matchSummaryPanel').style.display = 'none';
   await loadActiveScrimmage();
 }
 
@@ -3351,39 +3328,6 @@ async function endMatch(){
   const guestIdSet=new Set(guestIds);
   const guestGoalsA=activeScrimmageEvents.filter(e=>guestIdSet.has(e.player_id)&&e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   const guestGoalsB=activeScrimmageEvents.filter(e=>guestIdSet.has(e.player_id)&&e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
-  const goalsA = activeScrimmageEvents.filter(e=>e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
-  const goalsB = activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
-  
-  let mvp = null; 
-  let maxPts = -Infinity;
-  const pMap = new Map(players.map(p=>[p.id,p]));
-  activeScrimmagePlayers.forEach(x => {
-      const p = pMap.get(x.player_id);
-      if(!p) return;
-      const t = statTotalsForPlayer(p.id);
-      const pts = performancePoints(t,minutesPlayedInActiveMatch(x),p.position);
-      if(pts > maxPts) { maxPts = pts; mvp = { p, t, pts, team: x.team }; }
-  });
-
-  document.getElementById('summaryScoreA').textContent = goalsA;
-  document.getElementById('summaryScoreB').textContent = goalsB;
-  
-  if(mvp) {
-      const mvpImgSrc = mvp.p.image ? esc(mvp.p.image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(mvp.p.name)}&background=e2e8f0&color=1e3a8a&size=150&bold=true`;
-      document.getElementById('mvpAvatar').src = mvpImgSrc;
-      document.getElementById('mvpName').textContent = mvp.p.name;
-      document.getElementById('mvpTier').textContent = mvp.p.tier;
-      const tierColors = { 'S': '#f59e0b', 'A': '#94a3b8', 'B': '#d97706', 'C': '#475569' };
-      document.getElementById('mvpTier').style.borderColor = tierColors[mvp.p.tier] || '#1e3a8a';
-      document.getElementById('mvpTier').style.color = tierColors[mvp.p.tier] || '#1e3a8a';
-      document.getElementById('mvpTeam').textContent = scrimmageTeamName(mvp.team);
-      document.getElementById('mvpPts').textContent = mvp.pts.toFixed(1) + ' PTS';
-      document.getElementById('mvpStatsText').textContent = `${mvp.t.goal} GOAL · ${mvp.t.assist} AST · ${mvp.t.passes} PASS · ${mvp.t.drop} DROP · ${mvp.t.block} BLK`;
-  }
-  
-  document.getElementById('matchSummaryPanel').style.display = 'block';
-  document.getElementById('matchSummaryPanel').scrollIntoView({behavior: "smooth", block: "nearest"});
-
   let guestEvents=[];
   if(guestIds.length){
     const {data,error:eventLoadError}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).in('player_id',guestIds);
@@ -3552,7 +3496,7 @@ document.getElementById("generateBtn").addEventListener("click",generateTeams);
 document.getElementById("activateMatchBtn").addEventListener("click",activateMatch);
 document.getElementById("endMatchBtn").addEventListener("click",endMatch);
 document.getElementById("swapBtn").addEventListener("click",async()=>{if(!generatedTeamA.length)return;[generatedTeamA,generatedTeamB]=[generatedTeamB,generatedTeamA];[generatedSubsA,generatedSubsB]=[generatedSubsB,generatedSubsA];renderTeams();await savePreparationToDB();});
-document.getElementById("clearTeamsBtn").addEventListener("click",async()=>{if(!confirm('Clear the saved team preparation?'))return;generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];generatedUnassigned=[];selectedPrepPlayerId=null;renderTeams();document.getElementById('matchSummaryPanel').style.display='none';await savePreparationToDB();});
+document.getElementById("clearTeamsBtn").addEventListener("click",async()=>{if(!confirm('Clear the saved team preparation?'))return;generatedTeamA=[];generatedTeamB=[];generatedSubsA=[];generatedSubsB=[];generatedUnassigned=[];selectedPrepPlayerId=null;renderTeams();await savePreparationToDB();});
 document.querySelectorAll('.scrim-subtab').forEach(btn=>btn.addEventListener('click',()=>showScrimmageView(btn.dataset.scrimView)));
 document.getElementById('quickPassToggle').addEventListener('click',toggleQuickPass);
 document.getElementById('syncPrepToLiveBtn').addEventListener('click',syncLiveFromPreparation);
