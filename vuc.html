@@ -2814,6 +2814,7 @@ function applyPendingLiveActions(matchId){
     }else if(['stat','drop','block'].includes(action.type)){
       const statType=action.type==='stat'?action.statType:action.type;
       if(!activeScrimmageEvents.some(event=>event.id===action.id))activeScrimmageEvents.push({id:action.id,match_id:action.matchId,player_id:action.playerId,team:action.team,stat_type:statType,delta:1,created_at:action.createdAt});
+      if(action.type==='block'&&action.relatedPlayerId){const dropId=action.blockedDropStatId||`${action.id}-opponent-drop`;if(!activeScrimmageEvents.some(event=>event.id===dropId))activeScrimmageEvents.push({id:dropId,match_id:action.matchId,player_id:action.relatedPlayerId,team:action.team==='A'?'B':'A',stat_type:'drop',delta:1,created_at:action.createdAt});}
       if(['drop','block'].includes(action.type)&&!activeScrimmageTimelineEvents.some(event=>event.id===action.id))activeScrimmageTimelineEvents.push({id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,stat_event_id:action.id,created_at:action.createdAt});
     }
   }
@@ -2852,6 +2853,7 @@ async function syncLiveAction(action){
     {onConflict:'id',ignoreDuplicates:true}
   );
   if(error)throw error;
+  if(action.type==='block'&&action.relatedPlayerId){const blockedDropStatId=action.blockedDropStatId||`${action.id}-opponent-drop`;const {error:dropError}=await supabaseClient.from('scrimmage_stat_events').upsert({id:blockedDropStatId,match_id:action.matchId,player_id:action.relatedPlayerId,team:action.team==='A'?'B':'A',stat_type:'drop',delta:1,created_at:action.createdAt},{onConflict:'id',ignoreDuplicates:true});if(dropError)throw dropError;}
   if(['drop','block'].includes(action.type)){
     const {error:timelineError}=await supabaseClient.from('scrimmage_timeline_events').upsert(
       {id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,stat_event_id:action.id,created_at:action.createdAt},
@@ -2941,7 +2943,7 @@ function renderScrimmageTimeline(){
         ?`<span class="timeline-event-goal">GOAL</span> ${esc(playerName)}${relatedName?` <span class="timeline-event-assist">(Assist: ${esc(relatedName)})</span>`:''}${event.legacy?'':''}`
         :event.event_type==='drop'
           ?`<span class="timeline-event-drop">DROP</span> ${esc(playerName)} dropped the disc`
-          :`<span class="timeline-event-block">BLOCK</span> ${esc(playerName)} blocked ${esc(relatedName||'an opponent')}'s pass`;
+          :`<span class="timeline-event-block">BLOCK</span> ${esc(playerName)} blocked ${esc(relatedName||'an opponent')}'s pass <span class="timeline-event-drop">OPPONENT DROP · −3 PTS</span>`;
     return `<tr><td>${esc(time)}</td><td><span class="timeline-team-tag${teamClass}">${teamName}</span></td><td>${details}</td></tr>`;
   }).join('')}</tbody></table></div>`;
 }
@@ -3034,7 +3036,7 @@ window.recordMatchStat=async function(playerId,statType){
     const validTeam=statType==='block'?x=>x.team!==row.team:x=>x.team===row.team;
     if(relatedPlayerId&&!activeScrimmagePlayers.some(x=>x.player_id===relatedPlayerId&&validTeam(x)&&x.on_field)){alert('That player is no longer on the field. Please record the event again.');return;}
   }
-  const action={id:uid(),type:statType,matchId:activeScrimmageId,playerId,team:row.team,statType,assistantPlayerId:statType==='goal'?(relatedPlayerId||null):null,relatedPlayerId:statType==='block'?(relatedPlayerId||null):null,assistStatId:statType==='goal'&&relatedPlayerId?uid():null,createdAt:new Date().toISOString()};
+  const action={id:uid(),type:statType,matchId:activeScrimmageId,playerId,team:row.team,statType,assistantPlayerId:statType==='goal'?(relatedPlayerId||null):null,relatedPlayerId:statType==='block'?(relatedPlayerId||null):null,assistStatId:statType==='goal'&&relatedPlayerId?uid():null,blockedDropStatId:statType==='block'&&relatedPlayerId?uid():null,createdAt:new Date().toISOString()};
   if(!enqueueLiveAction(action))return;applyPendingLiveActions(activeScrimmageId);renderLiveMatch();
 };
 
