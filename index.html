@@ -654,6 +654,10 @@ input:focus,select:focus{border-color:var(--vinuni-blue);background:#fff;box-sha
 }
 .prep-match-team{display:flex;flex-direction:column;gap:5px;font-size:clamp(12px,2vw,16px);font-weight:1000;letter-spacing:.12em}
 .prep-match-team span{color:#91a5cb;font-size:10px;letter-spacing:.08em}
+.prep-match-team input{width:min(100%,220px);min-width:0;padding:8px 10px;border:1px solid #67e8f977;border-radius:9px;outline:none;color:#fff;text-align:center;font:inherit;font-size:clamp(15px,2.5vw,21px);letter-spacing:.04em;background:#081329cc}
+.prep-match-team.white input{border-color:#e879f977}
+.prep-match-team input:focus{border-color:#fff;box-shadow:0 0 0 3px #38bdf833}
+.prep-match-team small{color:#91a5cb;font-size:10px;letter-spacing:.08em}
 .prep-match-team.blue{color:#67e8f9;text-shadow:0 0 14px #22d3eeaa}
 .prep-match-team.white{color:#f0abfc;text-shadow:0 0 14px #d946efaa}
 .prep-match-vs{
@@ -1629,9 +1633,9 @@ select option{color:#e5edf9;background:#0b1424}
         <div id="scrimmageMatchMeta" class="match-meta">All connected devices share this match.</div>
       </div>
       <div class="scoreboard">
-        <div><span>TEAM BLUE</span><strong id="scoreA">0</strong></div>
+        <div><span data-team-name-label="A">Pikachu</span><strong id="scoreA">0</strong></div>
         <b>:</b>
-        <div><span>TEAM WHITE</span><strong id="scoreB">0</strong></div>
+        <div><span data-team-name-label="B">Charizard</span><strong id="scoreB">0</strong></div>
       </div>
     </div>
     <div class="match-actions" style="display:flex;gap:12px;justify-content:flex-end;">
@@ -1675,9 +1679,9 @@ select option{color:#e5edf9;background:#0b1424}
   <div id="matchSummaryPanel" class="panel scrimmage-live-panel" style="margin-top:28px;display:none; text-align: center; border-color: #f59e0b;">
     <h2 style="color: #b45309; font-size: 28px; margin-bottom: 20px;">🏆 MATCH SUMMARY</h2>
     <div class="scoreboard" style="justify-content: center; margin-bottom: 30px; display: inline-flex;">
-      <div><span style="color:var(--blue-700)">TEAM BLUE</span><strong id="summaryScoreA">0</strong></div>
+      <div><span style="color:var(--blue-700)" data-team-name-label="A">Pikachu</span><strong id="summaryScoreA">0</strong></div>
       <b style="margin: 0 20px;">-</b>
-      <div><span style="color:var(--muted)">TEAM WHITE</span><strong id="summaryScoreB">0</strong></div>
+      <div><span style="color:var(--muted)" data-team-name-label="B">Charizard</span><strong id="summaryScoreB">0</strong></div>
     </div>
     
     <h3 style="margin: 0 0 16px; color: #1e3a8a; font-size: 22px;">🌟 MVP OF THE MATCH 🌟</h3>
@@ -1689,7 +1693,7 @@ select option{color:#e5edf9;background:#0b1424}
       <div style="text-align: left;">
         <div id="mvpTier" class="bobo-tier" style="position: static; display: inline-flex; width: 32px; height: 32px; font-size: 16px; margin-bottom: 8px;">S</div>
         <h3 id="mvpName" style="margin: 0 0 4px; font-size: 22px; color: #b45309; font-weight: 900; text-transform: uppercase;">Name</h3>
-        <div id="mvpTeam" style="font-size: 13px; font-weight: 800; color: #64748b; margin-bottom: 8px;">TEAM BLUE</div>
+        <div id="mvpTeam" data-team-name-label="A" style="font-size: 13px; font-weight: 800; color: #64748b; margin-bottom: 8px;">Pikachu</div>
         <div id="mvpPts" style="font-size: 20px; font-weight: 900; color: #15803d; background: #dcfce7; padding: 4px 10px; border-radius: 6px; display: inline-block;">0 PTS</div>
         <div id="mvpStatsText" style="font-size: 14px; font-weight: 800; color: #475569; margin-top: 8px;">0 G · 0 A · 0 D · 0 B</div>
       </div>
@@ -1721,7 +1725,7 @@ select option{color:#e5edf9;background:#0b1424}
       <div><h2 style="margin:0">Completed Match Results</h2><div style="font-size:13px;color:var(--muted);margin-top:6px;font-weight:500;">All completed matches are kept in Supabase and listed here. New matches are added to this history; they do not replace older matches.</div></div>
       <button class="btn btn-secondary" id="refreshMatchHistoryBtn" type="button">↻ Refresh match history</button>
     </div>
-    <div class="table-wrap" style="margin-top:16px"><table class="table"><thead><tr><th>#</th><th>Date</th><th>Team Blue</th><th>Team White</th><th>Players</th><th>MVP</th><th>MVP Points</th></tr></thead><tbody id="completedMatchHistoryBody"><tr><td colspan="7" class="empty">Loading completed matches…</td></tr></tbody></table></div>
+    <div class="table-wrap" style="margin-top:16px"><table class="table"><thead><tr><th>#</th><th>Date</th><th data-team-name-label="A">Pikachu</th><th data-team-name-label="B">Charizard</th><th>Players</th><th>MVP</th><th>MVP Points</th></tr></thead><tbody id="completedMatchHistoryBody"><tr><td colspan="7" class="empty">Loading completed matches…</td></tr></tbody></table></div>
   </div>
 </section>
 
@@ -1864,6 +1868,13 @@ let prepSaveRetryTimer=null;
 let prepSaveDebounceTimer=null;
 let prepSaveWaiters=[];
 const PREPARATION_SYNC_DEBOUNCE_MS=500;
+const TEAM_NAMES_CACHE_KEY='vuc_scrimmage_team_names_v1';
+const DEFAULT_SCRIMMAGE_TEAM_NAMES={A:'Pikachu',B:'Charizard'};
+let scrimmageTeamNames={...DEFAULT_SCRIMMAGE_TEAM_NAMES};
+try{const savedTeamNames=JSON.parse(localStorage.getItem(TEAM_NAMES_CACHE_KEY)||'null');if(savedTeamNames&&typeof savedTeamNames==='object'){for(const team of ['A','B'])if(typeof savedTeamNames[team]==='string'&&savedTeamNames[team].trim())scrimmageTeamNames[team]=savedTeamNames[team].trim().slice(0,24);}}catch(error){console.warn('Saved team names could not be loaded:',error);}
+function scrimmageTeamName(team){return scrimmageTeamNames[team]||DEFAULT_SCRIMMAGE_TEAM_NAMES[team];}
+function updateScrimmageTeamNameLabels(){document.querySelectorAll('[data-team-name-label]').forEach(el=>{el.textContent=scrimmageTeamName(el.dataset.teamNameLabel);});}
+function setScrimmageTeamName(team,value){if(!['A','B'].includes(team))return;const name=String(value||'').trim().slice(0,24)||DEFAULT_SCRIMMAGE_TEAM_NAMES[team];scrimmageTeamNames[team]=name;try{localStorage.setItem(TEAM_NAMES_CACHE_KEY,JSON.stringify(scrimmageTeamNames));}catch(error){console.warn('Team names could not be saved on this device:',error);}updateScrimmageTeamNameLabels();renderTeams();}
 try{
   const storedPreparation=localStorage.getItem(PREPARATION_CACHE_KEY);
   if(storedPreparation){
@@ -2419,11 +2430,11 @@ async function exportAttendanceExcel(){
       let mvpName='',mvpPts=-Infinity;
       mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0};const pts=performancePoints(t);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||x.player_id;}
         const delta=Math.max(-5,Math.min(5,pts*0.5));
-        matchPerformance.push({Match_No:index+1,Match_ID:shortId,Match_Date:m.created_at?new Date(m.created_at).toLocaleString():'',Player:p.name||x.player_id,Team:x.team==='A'?'Team 1':'Team 2',Gender:p.gender||'',Position:p.position||'',Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,Current_Rating:Number(p.rating)||0,Current_Tier:p.tier||tierFromRating(p.rating)});
+        matchPerformance.push({Match_No:index+1,Match_ID:shortId,Match_Date:m.created_at?new Date(m.created_at).toLocaleString():'',Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,Current_Rating:Number(p.rating)||0,Current_Tier:p.tier||tierFromRating(p.rating)});
       });
       return {Match_No:index+1,Match_ID:shortId,Started_At:m.created_at?new Date(m.created_at).toLocaleString():'',Ended_At:m.ended_at?new Date(m.ended_at).toLocaleString():'',Team_1_Score:scoreA,Team_2_Score:scoreB,Players:mps.length,MVP:mvpName||'—',MVP_Points:Number.isFinite(mvpPts)?mvpPts:0};
     });
-    const matchEvents=events.map(e=>({Match_ID:e.match_id.slice(0,8),Time:e.created_at?new Date(e.created_at).toLocaleString():'',Player:(pMap.get(e.player_id)||{}).name||e.player_id,Team:e.team==='A'?'Team 1':'Team 2',Stat:e.stat_type,Delta:e.delta}));
+    const matchEvents=events.map(e=>({Match_ID:e.match_id.slice(0,8),Time:e.created_at?new Date(e.created_at).toLocaleString():'',Player:(pMap.get(e.player_id)||{}).name||e.player_id,Team:scrimmageTeamName(e.team),Stat:e.stat_type,Delta:e.delta}));
     const wb=XLSX.utils.book_new();
     const matchDateKey=value=>{const d=new Date(value||'');if(!Number.isFinite(d.getTime()))return 'Unknown date';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
     const usedMatchSheetNames=new Set();
@@ -2489,8 +2500,9 @@ function prepMiniCard(p){return `
 function prepPlayerChip(p){return `<div class="prep-pool-card ${selectedPrepPlayerId===p.id?'selected':''}" draggable="true" data-prep-player="${esc(p.id)}" role="button" tabindex="0">${p.image?`<img src="${esc(p.image)}" alt="">`:`<div class="prep-pool-avatar">${esc(initials(p.name))}</div>`}<div class="prep-pool-name">${esc(p.name)}</div></div>`;}
 function prepSlot(team,index){const arr=team==='A'?generatedTeamA:generatedTeamB;const p=arr[index];const pos=formation[index]||formation[0];return `<button type="button" class="prep-slot ${p?'filled':'empty'} ${selectedPrepPlayerId===p?.id?'selected':''}" ${p?`draggable="true" data-prep-player="${esc(p.id)}"`:''} data-prep-zone="field" data-prep-team="${team}" data-prep-slot="${index}" style="left:${pos.x}%;top:${pos.y}%" aria-label="${team==='A'?'Blue':'White'} starter slot ${index+1}${p?`: ${esc(p.name)}, drag to swap or move to substitutes`:''}" title="${p?'Drag to another field position to swap, or into the substitute area':''}">${p?prepMiniCard(p):`+<br>STARTER ${index+1}`}</button>`;}
 function prepSubSlot(team,index){const arr=team==='A'?generatedSubsA:generatedSubsB;const p=arr[index];return `<button type="button" class="prep-sub-slot filled ${selectedPrepPlayerId===p?.id?'selected':''}" draggable="true" data-prep-player="${esc(p.id)}" data-prep-zone="sub" data-prep-team="${team}" data-prep-slot="${index}" aria-label="${team==='A'?'Blue':'White'} substitute: ${esc(p.name)}" title="Drag onto a starter to substitute, or move between teams">${prepMiniCard(p)}</button>`;}
-function renderPrepTeam(team){const isA=team==='A',arr=isA?generatedTeamA:generatedTeamB,subs=(isA?generatedSubsA:generatedSubsB).filter(Boolean);const name=isA?'TEAM BLUE':'TEAM WHITE';const filled=arr.filter(Boolean);return `<article class="prep-team ${isA?'blue':'white'}"><div class="prep-team-head"><h3>${name}</h3><span class="prep-total">${sumRating(filled)} OVR · AVG ${avgRating(filled)}</span></div><div class="prep-field">${Array.from({length:7},(_,i)=>prepSlot(team,i)).join('')}</div><div class="prep-subs"><div class="prep-subs-title">Substitution · ${subs.length} player(s)</div><div class="prep-sub-grid">${subs.map((_,i)=>prepSubSlot(team,i)).join('')}</div><div class="prep-sub-dropzone" data-prep-sub-drop="${team}">Drop a player here to add them as a substitute · no limit</div></div></article>`;}
+function renderPrepTeam(team){const isA=team==='A',arr=isA?generatedTeamA:generatedTeamB,subs=(isA?generatedSubsA:generatedSubsB).filter(Boolean);const name=scrimmageTeamName(team);const filled=arr.filter(Boolean);return `<article class="prep-team ${isA?'blue':'white'}"><div class="prep-team-head"><h3 data-team-name-label="${team}">${esc(name)}</h3><span class="prep-total">${sumRating(filled)} OVR · AVG ${avgRating(filled)}</span></div><div class="prep-field">${Array.from({length:7},(_,i)=>prepSlot(team,i)).join('')}</div><div class="prep-subs"><div class="prep-subs-title">Substitution · ${subs.length} player(s)</div><div class="prep-sub-grid">${subs.map((_,i)=>prepSubSlot(team,i)).join('')}</div><div class="prep-sub-dropzone" data-prep-sub-drop="${team}">Drop a player here to add them as a substitute · no limit</div></div></article>`;}
 function renderTeams(){
+ updateScrimmageTeamNameLabels();
  const container=document.getElementById('teamsContainer');
  // The field is always visible, even before players have been assigned.
  const assigned=new Set([...generatedTeamA,...generatedTeamB,...generatedSubsA,...generatedSubsB].filter(Boolean).map(p=>p.id));
@@ -2498,10 +2510,11 @@ function renderTeams(){
  // Keep every unassigned member available; random generation still uses saved attendance only.
  generatedUnassigned=availablePlayers.slice();
  const filledA=generatedTeamA.filter(Boolean).length,filledB=generatedTeamB.filter(Boolean).length;
- container.innerHTML=`<div class="prep-summary"><div><strong>${filledA+filledB}/14 starters filled</strong><div style="font-size:12px;color:var(--muted);margin-top:4px">${prepAttendanceDate?`Attendance date: ${formatDate(prepAttendanceDate)}`:(document.getElementById('attendanceDate')?.value?`Attendance date: ${formatDate(document.getElementById('attendanceDate').value)}`:'Select a date and save attendance')} · Drag players between field slots to swap positions. Drag a substitute onto a starter to make a substitution, or drop any player into the substitute area. On touch screens, tap a player then a slot.</div></div><button type="button" class="btn btn-secondary" id="savePrepBtn">✓ Save Preparation</button></div><div class="prep-match-banner" aria-label="Team matchup"><div class="prep-match-team blue">TEAM BLUE<span>${filledA}/7 STARTERS · AVG ${avgRating(generatedTeamA.filter(Boolean))} OVR</span></div><div class="prep-match-vs">VS</div><div class="prep-match-team white">TEAM WHITE<span>${filledB}/7 STARTERS · AVG ${avgRating(generatedTeamB.filter(Boolean))} OVR</span></div></div><div class="prep-teams">${renderPrepTeam('A')}${renderPrepTeam('B')}</div><section class="prep-pool" data-prep-pool="true"><div class="prep-pool-toolbar"><strong>AVAILABLE PLAYERS | <span id="prepAvailableCount">0</span></strong><input id="prepPoolSearch" type="search" value="${esc(prepPoolSearch)}" placeholder="Find a member..." aria-label="Search available players"><select id="prepPoolSort" aria-label="Sort available players"><option value="name" ${prepPoolSort==='name'?'selected':''}>Name A-Z</option><option value="attendance" ${prepPoolSort==='attendance'?'selected':''}>Present first</option><option value="rating" ${prepPoolSort==='rating'?'selected':''}>Rating high-low</option></select></div><div class="prep-pool-grid" id="prepPoolGrid"></div><div class="prep-unassign" data-prep-pool="true">Drop here to return a player to the available list</div><div class="prep-pool-search-bottom"><input id="prepPoolSearchBottom" type="search" value="${esc(prepPoolSearch)}" placeholder="Search player name..." aria-label="Search available players by name"></div></section>`;
+ container.innerHTML=`<div class="prep-summary"><div><strong>${filledA+filledB}/14 starters filled</strong><div style="font-size:12px;color:var(--muted);margin-top:4px">${prepAttendanceDate?`Attendance date: ${formatDate(prepAttendanceDate)}`:(document.getElementById('attendanceDate')?.value?`Attendance date: ${formatDate(document.getElementById('attendanceDate').value)}`:'Select a date and save attendance')} · Drag players between field slots to swap positions. Drag a substitute onto a starter to make a substitution, or drop any player into the substitute area. On touch screens, tap a player then a slot.</div></div><button type="button" class="btn btn-secondary" id="savePrepBtn">✓ Save Preparation</button></div><div class="prep-match-banner" aria-label="Team matchup"><label class="prep-match-team blue"><span>TEAM 1 NAME</span><input type="text" maxlength="24" value="${esc(scrimmageTeamName('A'))}" aria-label="Team 1 name" data-team-name-input="A"><small>${filledA}/7 STARTERS · AVG ${avgRating(generatedTeamA.filter(Boolean))} OVR</small></label><div class="prep-match-vs">VS</div><label class="prep-match-team white"><span>TEAM 2 NAME</span><input type="text" maxlength="24" value="${esc(scrimmageTeamName('B'))}" aria-label="Team 2 name" data-team-name-input="B"><small>${filledB}/7 STARTERS · AVG ${avgRating(generatedTeamB.filter(Boolean))} OVR</small></label></div><div class="prep-teams">${renderPrepTeam('A')}${renderPrepTeam('B')}</div><section class="prep-pool" data-prep-pool="true"><div class="prep-pool-toolbar"><strong>AVAILABLE PLAYERS | <span id="prepAvailableCount">0</span></strong><input id="prepPoolSearch" type="search" value="${esc(prepPoolSearch)}" placeholder="Find a member..." aria-label="Search available players"><select id="prepPoolSort" aria-label="Sort available players"><option value="name" ${prepPoolSort==='name'?'selected':''}>Name A-Z</option><option value="attendance" ${prepPoolSort==='attendance'?'selected':''}>Present first</option><option value="rating" ${prepPoolSort==='rating'?'selected':''}>Rating high-low</option></select></div><div class="prep-pool-grid" id="prepPoolGrid"></div><div class="prep-unassign" data-prep-pool="true">Drop here to return a player to the available list</div><div class="prep-pool-search-bottom"><input id="prepPoolSearchBottom" type="search" value="${esc(prepPoolSearch)}" placeholder="Search player name..." aria-label="Search available players by name"></div></section>`;
  refreshPreparationPool();
  container.insertAdjacentHTML('beforeend','<div class="prep-selection-bar" id="prepSelectionBar" role="status" aria-live="polite"><span></span><button type="button" id="cancelPrepSelection">Cancel</button></div>');
  bindPreparationDnD();
+ container.querySelectorAll('[data-team-name-input]').forEach(input=>input.addEventListener('change',()=>setScrimmageTeamName(input.dataset.teamNameInput,input.value)));
  const panel=document.getElementById('scrimmageMatchPanel');
  if(panel&&!activeScrimmageId){panel.style.display='block';document.getElementById('activateMatchBtn').style.display=(filledA===7&&filledB===7)?'inline-flex':'none';document.getElementById('endMatchBtn').style.display='none';document.getElementById('liveTeamsContainer').innerHTML='<div class="generator-summary"><strong>Preparation ready.</strong> Switch to Live Scrimmage when the lineup is ready.</div>';document.getElementById('performanceList').innerHTML='<div class="empty">Activate the match to start recording live player performance.</div>';}
 }
@@ -2916,7 +2929,7 @@ function renderScrimmageTimeline(){
     const playerName=playerMap.get(event.player_id)?.name||'Unknown player';
     const relatedName=event.related_player_id?(playerMap.get(event.related_player_id)?.name||'Unknown player'):'';
     const time=event.created_at?new Date(event.created_at).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}):'—';
-    const teamName=event.event_type==='team_change'?'MATCH':event.team==='A'?'TEAM BLUE':'TEAM WHITE';
+    const teamName=event.event_type==='team_change'?'MATCH':esc(scrimmageTeamName(event.team));
     const teamClass=event.event_type==='team_change'?'':event.team==='B'?' team-b':'';
     const details=event.event_type==='substitution'
       ?`<span class="timeline-event-sub">SUB OUT</span> ${esc(playerName)} <span aria-hidden="true">→</span> <span class="timeline-event-sub">SUB IN</span> ${esc(relatedName)}`
@@ -2932,6 +2945,7 @@ function renderScrimmageTimeline(){
 }
 
 function renderLiveMatch(){
+  updateScrimmageTeamNameLabels();
   const panel=document.getElementById('scrimmageMatchPanel');
   if(!activeScrimmageId){panel.style.display='block';document.getElementById('activateMatchBtn').style.display=(generatedTeamA.filter(Boolean).length===7&&generatedTeamB.filter(Boolean).length===7)?'inline-flex':'none';document.getElementById('endMatchBtn').style.display='none';document.getElementById('performanceList').innerHTML='<div class="empty">Player statistics will appear here after a match is activated.</div>';renderScrimmageTimeline();return;}
   panel.style.display='block';
@@ -2974,9 +2988,9 @@ function renderPerformance(){
   const header='<div class="performance-row performance-columns-head"><div>PLAYER</div><div>GOAL</div><div>DROP</div><div>BLOCK</div><div>PTS</div><div>OVR</div></div>';
   const teamSections=['A','B'].map(team=>{
     const teamPlayers=onField.filter(x=>x.team===team);if(!teamPlayers.length)return '';
-    const teamName=team==='A'?'TEAM 1':'TEAM 2';
-    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5)),label=team==='A'?'Team 1':'Team 2';const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${label}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
-    return `<section class="live-stat-team live-stat-team-${team.toLowerCase()}"><div class="live-stat-team-banner"><span>${teamName}</span><small>${teamPlayers.length} ON FIELD</small></div>${header}${rows}</section>`;
+    const teamName=scrimmageTeamName(team);
+    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5)),label=scrimmageTeamName(team);const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${esc(label)}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
+    return `<section class="live-stat-team live-stat-team-${team.toLowerCase()}"><div class="live-stat-team-banner"><span data-team-name-label="${team}">${esc(teamName)}</span><small>${teamPlayers.length} ON FIELD</small></div>${header}${rows}</section>`;
   }).join('');
   list.innerHTML=teamSections;
   list.dataset.rosterKey=rosterKey;
@@ -2988,7 +3002,7 @@ async function showLiveSubstitutes(playerId,anchor){
   if(!subs.length){alert('There are no substitutes available for this team.');return;}
   const dialog=document.getElementById('liveSubstituteDialog'),select=document.getElementById('liveSubstitutePlayer');
   if(dialog.open)return;
-  document.getElementById('liveSubstituteDescription').textContent=`Replace ${map.get(playerId)?.name||'this player'} with a substitute from ${row.team==='A'?'Team 1':'Team 2'}.`;
+  document.getElementById('liveSubstituteDescription').textContent=`Replace ${map.get(playerId)?.name||'this player'} with a substitute from ${scrimmageTeamName(row.team)}.`;
   select.innerHTML='<option value="">Choose substitute...</option>'+subs.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} | ${esc(p.position||'')} | ${Number(p.rating||0)} OVR</option>`).join('');
   const substituteId=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='confirm'?select.value:null),{once:true});dialog.showModal();select.focus();});
   if(substituteId)await substitutePlayer(substituteId,playerId);
@@ -3119,7 +3133,7 @@ async function endMatch(){
       const tierColors = { 'S': '#f59e0b', 'A': '#94a3b8', 'B': '#d97706', 'C': '#475569' };
       document.getElementById('mvpTier').style.borderColor = tierColors[mvp.p.tier] || '#1e3a8a';
       document.getElementById('mvpTier').style.color = tierColors[mvp.p.tier] || '#1e3a8a';
-      document.getElementById('mvpTeam').textContent = mvp.team === 'A' ? 'TEAM BLUE' : 'TEAM WHITE';
+      document.getElementById('mvpTeam').textContent = scrimmageTeamName(mvp.team);
       document.getElementById('mvpPts').textContent = mvp.pts + ' PTS';
       document.getElementById('mvpStatsText').textContent = `${mvp.t.goal} GOAL · ${mvp.t.assist} AST · ${mvp.t.drop} DROP · ${mvp.t.block} BLK`;
   }
@@ -3164,7 +3178,7 @@ async function endMatch(){
   alert('Match ended and saved to Supabase. All completed matches will be included when you export the Attendance Excel file.');
 }
 
-async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const permanentMp=(mp||[]).filter(x=>!isGuest(map.get(x.player_id)||{}));const permanentEvents=(ev||[]).filter(e=>!isGuest(map.get(e.player_id)||{}));const rows=permanentMp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};permanentEvents.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:x.team==='A'?'Team 1':'Team 2',Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(permanentEvents.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:e.team==='A'?'Team 1':'Team 2',Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
+async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const permanentMp=(mp||[]).filter(x=>!isGuest(map.get(x.player_id)||{}));const permanentEvents=(ev||[]).filter(e=>!isGuest(map.get(e.player_id)||{}));const rows=permanentMp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};permanentEvents.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(permanentEvents.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:scrimmageTeamName(e.team),Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
 
 /* ===== LOGISTICS: ALL CRUD OPERATIONS USE SUPABASE ===== */
 function renderMemberPool(){
