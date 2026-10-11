@@ -2852,6 +2852,7 @@ async function flushLiveActionQueue(){
   try{
     while(liveActionQueue.length&&navigator.onLine){
       const action=liveActionQueue[0];
+      rememberLocalLiveAction(action);
       try{await syncLiveAction(action);}
       catch(error){
         console.error('Live Scrimmage action sync failed; it remains queued:',error);
@@ -2866,9 +2867,19 @@ async function flushLiveActionQueue(){
     }
     if(!liveActionQueue.length){
       if(liveActionRetryTimer){clearTimeout(liveActionRetryTimer);liveActionRetryTimer=null;}
-      if(activeScrimmageId)await loadActiveScrimmage();
     }
   }finally{liveActionFlushInProgress=false;}
+}
+const locallySyncedLiveIds=new Map();
+function rememberLocalLiveAction(action){
+  const ids=[action.id,action.goalStatId,action.assistStatId,action.playerId,action.sourceId,action.targetId].filter(Boolean);
+  const expiresAt=Date.now()+8000;
+  ids.forEach(id=>locallySyncedLiveIds.set(id,expiresAt));
+  setTimeout(()=>{const now=Date.now();for(const [id,expiry] of locallySyncedLiveIds)if(expiry<=now)locallySyncedLiveIds.delete(id);},8100);
+}
+function isLocalLiveRealtime(payload){
+  const row=payload?.new||payload?.old||{};
+  return [row.id,row.player_id,row.related_player_id].some(id=>id&&locallySyncedLiveIds.get(id)>Date.now());
 }
 function enqueueLiveAction(action){
   liveActionQueue.push(action);
@@ -3249,9 +3260,9 @@ async function subscribeRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"attendance_sessions"},async()=>{try{await loadAttendanceHistory();}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"attendance_records"},async()=>{try{const d=document.getElementById("attendanceDate").value;if(d)await loadAttendance(d);}catch(e){console.error(e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_matches"},async()=>{try{await loadActiveScrimmage();await loadCompletedMatchHistory();}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_players"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();else await loadActiveScrimmage();}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error(e);}})
-    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_timeline_events"},async()=>{try{if(activeScrimmageId)await loadActiveScrimmage();}catch(e){console.error('Live Scrimmage timeline realtime:',e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_players"},async(payload)=>{try{if(!isLocalLiveRealtime(payload))await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_stat_events"},async(payload)=>{try{if(activeScrimmageId&&!isLocalLiveRealtime(payload))await loadActiveScrimmage();}catch(e){console.error(e);}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_timeline_events"},async(payload)=>{try{if(activeScrimmageId&&!isLocalLiveRealtime(payload))await loadActiveScrimmage();}catch(e){console.error('Live Scrimmage timeline realtime:',e);}})
     .on("postgres_changes",{event:"*",schema:"public",table:"scrimmage_preparation"},async(payload)=>{try{const updated=payload?.new?.updated_at;if(updated&&updated!==lastPrepUpdatedAt&&!prepSaveInProgress)await loadPreparationFromDB();}catch(e){console.error('Preparation realtime:',e);}})
     .subscribe((status)=>{if(status==="SUBSCRIBED")setSync(activeScrimmageId?"Live scrimmage":"Live sync",true);else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")setSync("Sync error",false);});
 }
@@ -3297,7 +3308,7 @@ document.getElementById("refreshMatchHistoryBtn")?.addEventListener("click",load
 
 // On phones/tablets, hide the navigation taskbar while scrolling down and reveal it while scrolling up.
 let lastScrollY=window.scrollY||0,scrollTicking=false;
-window.addEventListener('scroll',()=>{if(scrollTicking)return;scrollTicking=true;requestAnimationFrame(()=>{const y=window.scrollY||0;const mobile=window.matchMedia('(max-width: 768px)').matches;const bar=document.querySelector('.topbar');if(bar&&mobile){if(y>lastScrollY+5&&y>100)bar.classList.add('taskbar-hidden');else if(y<lastScrollY-4||y<40)bar.classList.remove('taskbar-hidden');}else if(bar)bar.classList.remove('taskbar-hidden');lastScrollY=y;scrollTicking=false;});},{passive:true});
+window.addEventListener('scroll',()=>{if(scrollTicking)return;scrollTicking=true;requestAnimationFrame(()=>{const y=window.scrollY||0;const mobile=window.matchMedia('(max-width: 768px)').matches;const bar=document.querySelector('.topbar');const teamToolsOpen=document.getElementById('generator')?.classList.contains('active');if(bar&&mobile&&!teamToolsOpen){if(y>lastScrollY+5&&y>100)bar.classList.add('taskbar-hidden');else if(y<lastScrollY-4||y<40)bar.classList.remove('taskbar-hidden');}else if(bar)bar.classList.remove('taskbar-hidden');lastScrollY=y;scrollTicking=false;});},{passive:true});
 async function bootstrapApp(){
   setSync("Loading...",false);
   try{
