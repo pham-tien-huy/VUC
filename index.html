@@ -2020,7 +2020,7 @@ function esc(v){return String(v ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"
 function initials(name){return String(name).trim().split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase()||"?";}
 function uid(){return crypto.randomUUID();}
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function sumRating(team){return team.reduce((s,p)=>s+Number(p.rating||0),0)}
+function sumRating(team){return Number(team.reduce((s,p)=>s+Number(p.rating||0),0).toFixed(1))}
 function sumTier(team){return team.reduce((s,p)=>s+(tierWeight[p.tier]||1),0)}
 function avgRating(team){return team.length?(sumRating(team)/team.length).toFixed(1):"0.0"}
 function positionCounts(team){const out={};team.forEach(p=>out[p.position]=(out[p.position]||0)+1);return out;}
