@@ -2188,7 +2188,7 @@ function playerSlogan(position,name){
 /* RENDERING PLAYER CARDS */
 function playerCardOrnament(tier,cocaCola=false){
   const ornamentTier=["S","A","B"].includes(tier)?tier.toLowerCase():"c";
-  return `<div class="card-tier-ornament tier-${esc(tier)}" aria-hidden="true"><span class="ornament-corners"></span>${cocaCola?'<span class="cola-crest"><img src="https://logowik.com/content/uploads/images/coca-cola-bottle-in-red-circle2032.logowik.com.webp" alt=""></span>':ornamentTier!=="c"?`<img class="tier-emblem" src="assets/tier-emblem-${ornamentTier}.png" alt=""><img class="tier-laurel" src="assets/tier-laurel-${ornamentTier}.png" alt=""><img class="tier-flourish" src="assets/tier-flourish-${ornamentTier}.png" alt="">`:""}</div>`;
+  return `<div class="card-tier-ornament tier-${esc(tier)}" aria-hidden="true"><span class="ornament-corners"></span>${cocaCola?'<span class="cola-crest"><img src="https://logowik.com/content/uploads/images/coca-cola-bottle-in-red-circle2032.logowik.com.webp?v=20261012" alt=""></span>':ornamentTier!=="c"?`<img class="tier-emblem" src="assets/tier-emblem-${ornamentTier}.png" alt=""><img class="tier-laurel" src="assets/tier-laurel-${ornamentTier}.png" alt=""><img class="tier-flourish" src="assets/tier-flourish-${ornamentTier}.png" alt="">`:""}</div>`;
 }
 function isCocaCola67(player){return Math.round(Number(player?.rating)||0)===67;}
 
