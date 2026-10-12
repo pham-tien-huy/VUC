@@ -2250,7 +2250,7 @@ function renderPlayerProfile(player,appearances,events){
     const matchTotals=eventByMatch.get(event.match_id);
     if(matchTotals[event.stat_type]!==undefined)matchTotals[event.stat_type]+=Number(event.delta||0);
   });
-  const matchCount=appearances.length,minutes=appearances.reduce((sum,match)=>sum+Number(match.minutes_played||0),0),per60=key=>minutes?totals[key]*60/minutes:0,matchPoints=appearances.reduce((sum,match)=>sum+performancePoints(eventByMatch.get(match.match_id)||{},match.minutes_played,player.position),0);
+  const matchCount=appearances.length,minutes=appearances.reduce((sum,match)=>sum+Number(match.minutes_played||0),0),per60=key=>minutes?totals[key]*60/minutes:0,matchPoints=appearances.reduce((sum,match)=>sum+performancePoints(eventByMatch.get(match.match_id)||{},match.minutes_played,player.position,matchDurationMinutes(match)),0);
   const teamOneAppearances=appearances.filter(match=>match.team==="A").length,teamTwoAppearances=appearances.length-teamOneAppearances;
   const lastMatches=[...appearances].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,4);
   const perGame=[{key:"goal",label:"Goals",short:"G"},{key:"assist",label:"Assists",short:"A"},{key:"passes",label:"Pass involvements",short:"P"},{key:"block",label:"Blocks",short:"B"},{key:"drop",label:"Drops",short:"D"}];
@@ -2466,7 +2466,7 @@ async function loadCompletedMatchHistory(){
       const matchTimeline=(timeline||[]).filter(event=>event.match_id===m.id);
       matchTimeline.filter(event=>event.event_type==='pass').forEach(event=>[event.player_id,event.related_player_id].forEach(playerId=>{if(!playerId)return;if(!totals.has(playerId))totals.set(playerId,{goal:0,assist:0,drop:0,block:0,passes:0});const t=totals.get(playerId);t.passes=(t.passes||0)+1;}));
       let mvpName='—',mvpPts=-Infinity;
-      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=totals.get(x.player_id)||{goal:0,assist:0,drop:0,block:0,passes:0};const minutes=playedMinutesForAppearance({...m,...x},matchTimeline.filter(event=>event.event_type==='substitution'));const pts=performancePoints(t,minutes,p.position);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||'Unknown';}});
+      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=totals.get(x.player_id)||{goal:0,assist:0,drop:0,block:0,passes:0};const minutes=playedMinutesForAppearance({...m,...x},matchTimeline.filter(event=>event.event_type==='substitution'));const pts=performancePoints(t,minutes,p.position,matchDurationMinutes(m));if(pts>mvpPts){mvpPts=pts;mvpName=p.name||'Unknown';}});
       const when=m.ended_at||m.created_at;
       const date=when?new Date(when).toLocaleString():'—';
       return '<tr><td>'+(matches.length-index)+'</td><td>'+esc(date)+'</td><td><strong>'+scoreA+'</strong></td><td><strong>'+scoreB+'</strong></td><td>'+mps.length+'</td><td>'+esc(mvpName)+'</td><td>'+(Number.isFinite(mvpPts)?mvpPts:0)+'</td></tr>';
@@ -2515,7 +2515,7 @@ async function exportAttendanceExcel(){
       const scoreB=matchEventsForMatch.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((sum,e)=>sum+Number(e.delta||0),0)+Number(m.guest_goals_b||0);
       let mvpName='',mvpPts=-Infinity;
       const matchTimeline=timelineEvents.filter(event=>event.match_id===m.id);
-      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0,passes:0};const minutes=playedMinutesForAppearance({...m,...x},matchTimeline.filter(event=>event.event_type==='substitution'));const pts=performancePoints(t,minutes,p.position);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||x.player_id;}
+      mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0,passes:0};const minutes=playedMinutesForAppearance({...m,...x},matchTimeline.filter(event=>event.event_type==='substitution'));const pts=performancePoints(t,minutes,p.position,matchDurationMinutes(m));if(pts>mvpPts){mvpPts=pts;mvpName=p.name||x.player_id;}
         const delta=performanceRatingDelta(pts);
         matchPerformance.push({Match_No:index+1,Match_ID:shortId,Match_Date:m.created_at?new Date(m.created_at).toLocaleString():'',Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Minutes_Played:Number(minutes.toFixed(1)),Goals:t.goal,Assists:t.assist,Pass_Involvements:t.passes,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,Current_Rating:Number(p.rating)||0,Current_Tier:p.tier||tierFromRating(p.rating)});
       });
@@ -2552,7 +2552,7 @@ async function exportAttendanceExcel(){
         const p=pMap.get(x.player_id)||{},t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0},attendance=getAttendance(x.player_id);
         const attendanceStatus=attendance?.assignment==='Late'?'Late':attendance?.present?'Present':attendance?'Absent':'No record';
         const minutes=playedMinutesForAppearance({...m,...x},timelineForMatch.filter(event=>event.event_type==='substitution'));
-        matchRows.push([p.name||x.player_id,x.team==='A'?'Team 1':'Team 2',p.gender||'',p.position||'',x.on_field?'On field at end':'Substitute at end',attendanceStatus,Number.isFinite(minutes)?Number(minutes.toFixed(1)):'Unavailable',t.goal,t.assist,t.passes,t.drop,t.block,performancePoints(t,minutes,p.position),Number(p.rating)||0,p.tier||tierFromRating(p.rating)]);
+        matchRows.push([p.name||x.player_id,x.team==='A'?'Team 1':'Team 2',p.gender||'',p.position||'',x.on_field?'On field at end':'Substitute at end',attendanceStatus,Number.isFinite(minutes)?Number(minutes.toFixed(1)):'Unavailable',t.goal,t.assist,t.passes,t.drop,t.block,performancePoints(t,minutes,p.position,matchDurationMinutes(m)),Number(p.rating)||0,p.tier||tierFromRating(p.rating)]);
       });
       matchRows.push([],['TIMELINE EVENTS'],['Time','Team','Event','Player','Related Player']);
       timelineForMatch.forEach(event=>{
@@ -2881,7 +2881,7 @@ function updateQuickPassControls(){
 function performanceGrade(points){return Math.max(0,Math.min(9.9,(Number(points)||0)*.5));}
 function performanceRatingDelta(points){const grade=performanceGrade(points);return grade>6?grade-6:grade<4?grade-4:0;}
 function livePerformanceRatingDelta(points){const grade=performanceGrade(points);return grade>6?grade-6:0;}
-function updateLivePerformancePoints(){document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);if(!player)return;const profile=players.find(item=>item.id===player.player_id),totals=statTotalsForPlayer(player.player_id),pts=performancePoints(totals,minutesPlayedInActiveMatch(player),profile?.position),delta=livePerformanceRatingDelta(pts,totals),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});}
+function updateLivePerformancePoints(){document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);if(!player)return;const profile=players.find(item=>item.id===player.player_id),totals=statTotalsForPlayer(player.player_id),pts=performancePoints(totals,minutesPlayedInActiveMatch(player),profile?.position,activeMatchDurationMinutes()),delta=livePerformanceRatingDelta(pts,totals),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});}
 setInterval(updateLivePerformancePoints,30000);
 function toggleQuickPass(){
  if(!activeScrimmageId){return;}
@@ -2909,7 +2909,9 @@ function handleQuickPassPlayerTap(playerId){
 
 function tierFromRating(r){r=Number(r)||0;return r>=90?'S':r>=80?'A':r>=70?'B':'C';}
 function statTotalsForPlayer(playerId){const out={goal:0,assist:0,drop:0,block:0,passes:0};activeScrimmageEvents.filter(e=>e.player_id===playerId).forEach(e=>{if(out[e.stat_type]!==undefined)out[e.stat_type]+=Number(e.delta||0)});out.passes=activeScrimmageTimelineEvents.filter(event=>event.event_type==='pass'&&(event.player_id===playerId||event.related_player_id===playerId)).length;return out;}
-function performancePoints(t,minutes=75,position=''){const passWeight=String(position).toLowerCase().includes('handler')?1.5:1,raw=Number(t.goal||0)*4+Number(t.assist||0)*2+Number(t.passes||0)*passWeight+Number(t.block||0)*3-Number(t.drop||0)*3,played=Math.max(0,Number(minutes)||0),timeMultiplier=played>60?1:played/75;return raw*timeMultiplier;}
+function matchDurationMinutes(match,endOverride=null){const start=Date.parse(match?.created_at||''),end=Date.parse(endOverride||match?.ended_at||'');return Number.isFinite(start)&&Number.isFinite(end)&&end>start?(end-start)/60000:0;}
+function activeMatchDurationMinutes(){return activeScrimmageMatchStartedAt?Math.max(0,(Date.now()-Date.parse(activeScrimmageMatchStartedAt))/60000):0;}
+function performancePoints(t,minutes=0,position='',totalMatchMinutes=0){const passWeight=String(position).toLowerCase().includes('handler')?1.5:1,raw=Number(t.goal||0)*4+Number(t.assist||0)*2+Number(t.passes||0)*passWeight+Number(t.block||0)*3-Number(t.drop||0)*3,played=Math.max(0,Number(minutes)||0),duration=Math.max(0,Number(totalMatchMinutes)||0),timeRatio=duration>0?Math.min(1,played/duration):0;return raw*timeRatio;}
 function minutesPlayedInActiveMatch(player){if(!activeScrimmageMatchStartedAt)return 0;return playedMinutesForAppearance({player_id:player.player_id,created_at:activeScrimmageMatchStartedAt,ended_at:new Date().toISOString(),on_field:player.on_field},activeScrimmageTimelineEvents.filter(event=>event.event_type==='substitution'));}
 
 function persistLiveActionQueue(){
@@ -3068,13 +3070,13 @@ async function loadPostMatch(matchId=null){
    const totals={goal:0,assist:0,drop:0,block:0,passes:0};
    events.filter(event=>event.player_id===row.player_id).forEach(event=>{if(totals[event.stat_type]!==undefined)totals[event.stat_type]+=Number(event.delta||0);});
    totals.passes=eventsTimeline.filter(event=>event.event_type==='pass'&&(event.player_id===row.player_id||event.related_player_id===row.player_id)).length;
-   const minutes=playedMinutesForAppearance({...match,...row},substitutions),points=performancePoints(totals,minutes,player.position);
+   const minutes=playedMinutesForAppearance({...match,...row},substitutions),points=performancePoints(totals,minutes,player.position,matchDurationMinutes(match));
    return {...row,player,totals,minutes,points,grade:performanceGrade(points)};
   });
   const goalsA=events.filter(event=>event.team==='A'&&event.stat_type==='goal').reduce((sum,event)=>sum+Number(event.delta||0),0)+Number(match.guest_goals_a||0);
   const goalsB=events.filter(event=>event.team==='B'&&event.stat_type==='goal').reduce((sum,event)=>sum+Number(event.delta||0),0)+Number(match.guest_goals_b||0);
   const minutes=match.created_at&&match.ended_at?Math.max(0,(Date.parse(match.ended_at)-Date.parse(match.created_at))/60000):0;
-  document.getElementById('postMatchMeta').textContent=`${match.ended_at?new Date(match.ended_at).toLocaleString():'Completed match'} · ${minutes.toFixed(1)} min · Individual points use actual minutes on field.`;
+  document.getElementById('postMatchMeta').textContent=`${match.ended_at?new Date(match.ended_at).toLocaleString():'Completed match'} · ${minutes.toFixed(1)} min · Points scale by time on field / total match time.`;
   scorePanel.innerHTML=`<div class="post-match-side"><small>${esc(scrimmageTeamName('A'))}</small><strong>${goalsA}</strong></div><span class="post-match-divider">FINAL</span><div class="post-match-side team-b"><small>${esc(scrimmageTeamName('B'))}</small><strong>${goalsB}</strong></div>`;
   const mvp=[...rows].sort((a,b)=>b.points-a.points)[0];
   mvpPanel.innerHTML=mvp?`<div class="post-match-mvp">${mvp.player.image?`<img src="${esc(mvp.player.image)}" alt="">`:`<span class="post-match-mvp-avatar">${esc(initials(mvp.player.name))}</span>`}<div><div class="post-match-mvp-label">MATCH MVP · ${esc(scrimmageTeamName(mvp.team))}</div><div class="post-match-mvp-name">${esc(mvp.player.name)}</div><div class="post-match-mvp-meta">${mvp.points.toFixed(1)} PTS · ${mvp.grade.toFixed(1)} / 10 · ${mvp.minutes.toFixed(1)} min on field</div></div></div>`:'<div class="post-match-empty">No player stats recorded for this match.</div>';
@@ -3227,14 +3229,14 @@ function renderPerformance(){
   const rosterKey=onField.map(x=>`${x.team}:${x.slot??''}:${x.player_id}`).join('|');
   const existingRows=[...list.querySelectorAll('.performance-row[data-player-id]')];
   if(list.dataset.rosterKey===rosterKey&&existingRows.length===onField.length){
-    onField.forEach(x=>{const row=existingRows.find(item=>item.dataset.playerId===x.player_id);if(!row)return;const totals=statTotalsForPlayer(x.player_id),pts=performancePoints(totals,minutesPlayedInActiveMatch(x),map.get(x.player_id)?.position),delta=livePerformanceRatingDelta(pts,totals),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});
+    onField.forEach(x=>{const row=existingRows.find(item=>item.dataset.playerId===x.player_id);if(!row)return;const totals=statTotalsForPlayer(x.player_id),pts=performancePoints(totals,minutesPlayedInActiveMatch(x),map.get(x.player_id)?.position,activeMatchDurationMinutes()),delta=livePerformanceRatingDelta(pts,totals),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});
     return;
   }
   const header='<div class="performance-row performance-columns-head"><div>PLAYER</div><div>GOAL</div><div>DROP</div><div>BLOCK</div><div>PTS</div><div>OVR</div></div>';
   const teamSections=['A','B'].map(team=>{
     const teamPlayers=onField.filter(x=>x.team===team);if(!teamPlayers.length)return '';
     const teamName=scrimmageTeamName(team);
-    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t,minutesPlayedInActiveMatch(x),p.position),delta=livePerformanceRatingDelta(pts,t),label=scrimmageTeamName(team);const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${esc(label)}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts.toFixed(1)}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
+    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t,minutesPlayedInActiveMatch(x),p.position,activeMatchDurationMinutes()),delta=livePerformanceRatingDelta(pts,t),label=scrimmageTeamName(team);const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${esc(label)}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts.toFixed(1)}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
     return `<section class="live-stat-team live-stat-team-${team.toLowerCase()}"><div class="live-stat-team-banner"><span data-team-name-label="${team}">${esc(teamName)}</span><small>${teamPlayers.length} ON FIELD</small></div>${header}${rows}</section>`;
   }).join('');
   list.innerHTML=teamSections;
@@ -3391,12 +3393,13 @@ async function endMatch(){
     if(deleteError){const {error:rollbackError}=await supabaseClient.from('scrimmage_matches').update({guest_goals_a:0,guest_goals_b:0}).eq('id',matchId);const rollbackNotice=rollbackError?'\nCould not roll back the temporary guest score: '+rollbackError.message:'';alert('Could not remove temporary guest statistics: '+deleteError.message+rollbackNotice);return;}
   }
 
+  const matchDuration=activeMatchDurationMinutes();
   const ratingTargets=activeScrimmagePlayers.flatMap(appearance=>{
     const profile=players.find(player=>player.id===appearance.player_id);
     if(!profile||isGuest(profile))return [];
     const minutes=minutesPlayedInActiveMatch(appearance);
     if(minutes<=0)return [];
-    const matchPoints=performancePoints(statTotalsForPlayer(appearance.player_id),minutes,profile.position),change=performanceRatingDelta(matchPoints),rating=Math.max(0,Math.min(100,Number(profile.rating||0)+change));
+    const matchPoints=performancePoints(statTotalsForPlayer(appearance.player_id),minutes,profile.position,matchDuration),change=performanceRatingDelta(matchPoints),rating=Math.max(0,Math.min(100,Number(profile.rating||0)+change));
     return [{id:profile.id,rating:Number(rating.toFixed(1)),total_points:Number((Number(profile.total_points||0)+change).toFixed(1)),tier:tierFromRating(rating)}];
   });
   const {error} = await supabaseClient.rpc('end_scrimmage_match',{p_match_id:matchId});
@@ -3432,7 +3435,19 @@ async function endMatch(){
   alert('Match ended and saved to Supabase. All completed matches will be included when you export the Attendance Excel file.');
 }
 
-async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const permanentMp=(mp||[]).filter(x=>!isGuest(map.get(x.player_id)||{}));const permanentEvents=(ev||[]).filter(e=>!isGuest(map.get(e.player_id)||{}));const rows=permanentMp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};permanentEvents.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=performanceRatingDelta(pts);const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(permanentEvents.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:scrimmageTeamName(e.team),Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
+async function exportScrimmageExcel(matchId){
+ if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}
+ const [{data:ev,error:ee},{data:mp,error:me},{data:match,error:matchError},{data:timeline,error:timelineError}]=await Promise.all([
+  supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true}),
+  supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId),
+  supabaseClient.from('scrimmage_matches').select('created_at,ended_at').eq('id',matchId).single(),
+  supabaseClient.from('scrimmage_timeline_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true})
+ ]);
+ if(ee)throw ee;if(me)throw me;if(matchError)throw matchError;if(timelineError)throw timelineError;
+ const map=new Map(players.map(p=>[p.id,p])),permanentMp=(mp||[]).filter(x=>!isGuest(map.get(x.player_id)||{})),permanentEvents=(ev||[]).filter(e=>!isGuest(map.get(e.player_id)||{})),substitutions=(timeline||[]).filter(event=>event.event_type==='substitution');
+ const rows=permanentMp.map(x=>{const p=map.get(x.player_id)||{},t={goal:0,assist:0,drop:0,block:0,passes:0};permanentEvents.filter(e=>e.player_id===x.player_id).forEach(e=>{if(t[e.stat_type]!==undefined)t[e.stat_type]+=Number(e.delta||0);});(timeline||[]).filter(event=>event.event_type==='pass').forEach(event=>{if(event.player_id===x.player_id||event.related_player_id===x.player_id)t.passes++;});const minutes=playedMinutesForAppearance({...match,...x},substitutions),pts=performancePoints(t,minutes,p.position,matchDurationMinutes(match)),delta=performanceRatingDelta(pts),after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Minutes_Played:Number((minutes||0).toFixed(1)),Before_Rating:before,Goals:t.goal,Assists:t.assist,Pass_Involvements:t.passes,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(permanentEvents.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:scrimmageTeamName(e.team),Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);
+}
 
 /* ===== LOGISTICS: ALL CRUD OPERATIONS USE SUPABASE ===== */
 function renderMemberPool(){
