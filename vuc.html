@@ -1585,19 +1585,18 @@ select option{color:#e5edf9;background:#0b1424}
 #players .coca-cola-collab .card-header-image{background:radial-gradient(ellipse at 52% 42%,#fb4252 0%,#c8102e 47%,#690d1b 100%)}
 #players .coca-cola-collab .card-header-image:after{inset:42% 0 0;background:linear-gradient(180deg,transparent 0%,#21050b18 50%,#21050b9c 100%)}
 #players .coca-cola-collab .card-tier-ornament{color:#ffe2d5}
-#players .cola-crest{position:absolute;left:50%;top:-24px;display:flex;width:72px;height:46px;transform:translateX(-50%);flex-direction:column;align-items:center;justify-content:center;border:2px solid #ffe1d4;border-radius:13px;background:linear-gradient(145deg,#ec3343,#9d0d20);color:#fff6ed;box-shadow:0 3px 12px #39040b99}
-#players .cola-crest small{font-size:7px;font-weight:900;letter-spacing:.2em}
-#players .cola-crest strong{font:italic 900 14px/1 Georgia,serif;letter-spacing:-.06em;text-shadow:0 1px 2px #5a0712}
+#players .cola-crest{position:absolute;left:50%;top:-34px;display:grid;width:66px;height:66px;transform:translateX(-50%);place-items:center;border:2px solid #ffe1d4;border-radius:50%;background:#870a1a;box-shadow:0 3px 12px #39040b99}
+#players .cola-crest img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover}
 #players .coca-cola-collab .bobo-tier{background:#8c1021;color:#fff1e8;border-color:#ffd3be;box-shadow:0 0 15px #ffdad088}
 #players .coca-cola-collab .bobo-stats .stat-ovr{background:linear-gradient(135deg,#f8d7c8,#c8102e);border-color:#ffe5d7;color:#fff}
 #players .coca-cola-collab .pbody{border-top-color:#ffd6c4;background:linear-gradient(145deg,#710d1c,#3c0711 65%,#18070c);box-shadow:inset 0 0 30px #fa24351c}
 #players .coca-cola-collab .profile-kicker{color:#ffd8cb;letter-spacing:.1em}
 #players .coca-cola-collab .profile-kicker:before{background:#fff0e7}
 #players .coca-cola-collab .pbody{padding-bottom:58px}
-#players .cola-member-footer{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;margin-top:2px;padding:7px 9px;border:1px solid #ffd8c866;border-radius:10px;background:linear-gradient(100deg,#8b1020aa,#310811aa);box-shadow:inset 0 1px #ffffff16}
-#players .cola-member-footer .cola-footer-the,#players .cola-member-footer .cola-footer-card{color:#ffd9cb;font:italic 700 11px/1 Georgia,serif}
-#players .cola-member-footer strong{color:#fff7f0;font:italic 900 17px/1 Georgia,'Times New Roman',serif;letter-spacing:-.045em;text-shadow:0 2px 4px #29040a}
-#players .cola-member-footer small{flex-basis:100%;color:#ffc7b7;font-size:7px;font-weight:900;letter-spacing:.18em}
+#players .cola-member-footer{display:grid;grid-template-columns:auto auto auto;align-items:baseline;justify-content:start;gap:4px;margin-top:3px;padding:8px 10px 7px;border:1px solid #ffd8c877;border-radius:10px;background:linear-gradient(110deg,#6f0b19,#310811 72%);box-shadow:inset 0 1px #ffffff1c,0 4px 10px #21040a33}
+#players .cola-member-footer .cola-footer-the,#players .cola-member-footer .cola-footer-card{color:#f4c6b8;font:italic 700 12px/1 Georgia,serif}
+#players .cola-member-footer strong{color:#fff8f4;font:italic 900 clamp(15px,2vw,19px)/1 Georgia,'Times New Roman',serif;letter-spacing:-.045em;text-shadow:0 2px 4px #29040a}
+#players .cola-member-footer small{grid-column:1/-1;margin-top:3px;color:#e9a99a;font-size:7px;font-weight:950;letter-spacing:.19em}
 #postMatchView .post-match-player-score,#postMatchView .post-match-sub-score{display:inline-flex;align-items:baseline;gap:2px;width:max-content;max-width:100%;margin:7px auto 0;padding:4px 9px;border:1px solid #fbbf2480;border-radius:999px;background:linear-gradient(135deg,#171b2beF,#302512eF);color:#fde68a;font-size:13px;font-weight:1000;line-height:1;letter-spacing:.02em;box-shadow:0 3px 12px #02061799,inset 0 1px #ffffff16;backdrop-filter:blur(8px)}
 #postMatchView .post-match-player-score:before,#postMatchView .post-match-sub-score:before{content:'★';margin-right:2px;color:#fbbf24;font-size:10px}
 #postMatchView .post-match-player-score small,#postMatchView .post-match-sub-score small{color:#cbd5e1;font-size:.72em;font-weight:800}
@@ -2189,7 +2188,7 @@ function playerSlogan(position,name){
 /* RENDERING PLAYER CARDS */
 function playerCardOrnament(tier,cocaCola=false){
   const ornamentTier=["S","A","B"].includes(tier)?tier.toLowerCase():"c";
-  return `<div class="card-tier-ornament tier-${esc(tier)}" aria-hidden="true"><span class="ornament-corners"></span>${cocaCola?'<span class="cola-crest"><small>VINUNI</small><strong>Coca-Cola</strong></span>':ornamentTier!=="c"?`<img class="tier-emblem" src="assets/tier-emblem-${ornamentTier}.png" alt=""><img class="tier-laurel" src="assets/tier-laurel-${ornamentTier}.png" alt=""><img class="tier-flourish" src="assets/tier-flourish-${ornamentTier}.png" alt="">`:""}</div>`;
+  return `<div class="card-tier-ornament tier-${esc(tier)}" aria-hidden="true"><span class="ornament-corners"></span>${cocaCola?'<span class="cola-crest"><img src="assets/coca-cola-round.svg" alt=""></span>':ornamentTier!=="c"?`<img class="tier-emblem" src="assets/tier-emblem-${ornamentTier}.png" alt=""><img class="tier-laurel" src="assets/tier-laurel-${ornamentTier}.png" alt=""><img class="tier-flourish" src="assets/tier-flourish-${ornamentTier}.png" alt="">`:""}</div>`;
 }
 function isCocaCola67(player){return Math.round(Number(player?.rating)||0)===67;}
 
