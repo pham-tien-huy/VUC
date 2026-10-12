@@ -1619,6 +1619,49 @@ select option{color:#e5edf9;background:#0b1424}
   .author-card-avatar{width:28px;height:28px}
   .user-pill{grid-column:3;grid-row:1;gap:7px;padding:7px 10px;font-size:11px;white-space:nowrap}
 }
+
+/* Desktop Team Preparation: keep both named rosters and their subs in view. */
+@media (min-width:1101px){
+  .live-scrimmage-photo-banner{display:none}
+  #generator{padding:10px 18px;border-radius:16px}
+  .scrim-subtabs{position:relative;top:auto;margin:0 0 7px;padding:5px;border-radius:12px}
+  .scrim-subtab{padding:7px 12px}
+  #generator>.panel{padding:9px 12px;border-radius:14px}
+  #prepView .generator-toolbar{gap:8px;padding:8px 10px;border-radius:12px}
+  #prepView .generator-toolbar>.btn{padding:8px 12px;font-size:12px}
+  #prepView .mode-wrap select{padding:8px 10px}
+  #prepView .prep-summary{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;margin:6px 0;padding:8px 12px;border-radius:12px}
+  #prepView .prep-summary>div>div{margin-top:2px!important;font-size:10px!important;line-height:1.3}
+  #prepView #savePrepBtn{min-height:38px;padding:7px 12px;font-size:14px}
+  #prepView .prep-match-banner{gap:12px;margin:7px 0;padding:7px 20px;border-radius:13px}
+  #prepView .prep-match-team{gap:2px;font-size:12px}
+  #prepView .prep-match-team span{font-size:8px}
+  #prepView .prep-match-team input{padding:4px 8px;font-size:17px}
+  #prepView .prep-match-team small{font-size:8px}
+  #prepView .prep-match-vs{padding:5px 9px;font-size:10px}
+  #prepView .prep-teams{gap:10px}
+  #prepView .prep-team{padding:7px 9px;border-radius:14px}
+  #prepView .prep-team-head{gap:6px;margin-bottom:5px}
+  #prepView .prep-team-head h3{font-size:15px}
+  #prepView .prep-total{padding:4px 7px;font-size:10px}
+  #prepView .prep-field{height:clamp(280px,32vh,320px);min-height:0;aspect-ratio:auto;border-radius:12px;transform:none}
+  #prepView .prep-slot{width:76px;min-height:0;height:auto}
+  #prepView .prep-slot[style*="top:15%"]{top:18%!important}
+  #prepView .prep-slot[style*="top:85%"]{top:82%!important}
+  #prepView .prep-mini-card{max-width:74px}
+  #prepView .prep-mini-card .live-card{border-radius:6px}
+  #prepView .prep-mini-name{margin-top:4px;font-size:9px;line-height:1.03}
+  #prepView .prep-mini-meta{margin-top:2px;font-size:8px;line-height:1}
+  #prepView .prep-subs{min-height:0;margin-top:6px;padding:6px 7px;border-radius:10px}
+  #prepView .prep-subs-title{margin-bottom:4px;font-size:9px}
+  #prepView .prep-sub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:3px;align-items:start}
+  #prepView .prep-sub-slot{width:auto;min-width:0;min-height:0;padding:2px;border-radius:8px}
+  #prepView .prep-sub-slot.filled{padding:2px}
+  #prepView .prep-sub-slot .prep-mini-card{max-width:68px}
+  #prepView .prep-sub-slot .prep-mini-name{font-size:8px;line-height:1.02}
+  #prepView .prep-sub-slot .prep-mini-meta{font-size:7px}
+  #prepView .prep-sub-dropzone{min-height:28px;margin-top:4px;padding:3px;font-size:9px}
+}
 </style>
 </head>
 <body>
