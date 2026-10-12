@@ -2513,7 +2513,7 @@ async function exportAttendanceExcel(){
       let mvpName='',mvpPts=-Infinity;
       const matchTimeline=timelineEvents.filter(event=>event.match_id===m.id);
       mps.forEach(x=>{const p=pMap.get(x.player_id)||{};if(isGuest(p))return;const t=eventsByMatchPlayer.get(`${m.id}|${x.player_id}`)||{goal:0,assist:0,drop:0,block:0,passes:0};const minutes=playedMinutesForAppearance({...m,...x},matchTimeline.filter(event=>event.event_type==='substitution'));const pts=performancePoints(t,minutes,p.position);if(pts>mvpPts){mvpPts=pts;mvpName=p.name||x.player_id;}
-        const delta=Math.max(-5,Math.min(5,pts*0.5));
+        const delta=performanceRatingDelta(pts);
         matchPerformance.push({Match_No:index+1,Match_ID:shortId,Match_Date:m.created_at?new Date(m.created_at).toLocaleString():'',Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Minutes_Played:Number(minutes.toFixed(1)),Goals:t.goal,Assists:t.assist,Pass_Involvements:t.passes,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,Current_Rating:Number(p.rating)||0,Current_Tier:p.tier||tierFromRating(p.rating)});
       });
       return {Match_No:index+1,Match_ID:shortId,Started_At:m.created_at?new Date(m.created_at).toLocaleString():'',Ended_At:m.ended_at?new Date(m.ended_at).toLocaleString():'',Team_1_Score:scoreA,Team_2_Score:scoreB,Players:mps.length,MVP:mvpName||'—',MVP_Points:Number.isFinite(mvpPts)?mvpPts:0};
@@ -2875,7 +2875,9 @@ function updateQuickPassControls(){
  document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);row.classList.toggle('quick-pass-holder',quickPassActive&&holder);row.classList.toggle('quick-pass-row-tappable',quickPassActive);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap anywhere on this row to set this player as the new disc holder':quickPassHolderId?'Tap anywhere on this row to record a pass to this player':'Tap anywhere on this row to set the current disc holder';}const [goalButton,dropButton,blockButton]=row.querySelectorAll('.stat-btn');const holderTeam=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team;const noHolder=quickPassActive&&!quickPassHolderId;if(goalButton){goalButton.disabled=!quickPassActive||!quickPassHolderId||!player||!holder;goalButton.style.visibility=noHolder?'hidden':'';goalButton.title=noHolder?'Set the disc holder first':goalButton.disabled?'Only the player holding the disc can score a goal':'Record a goal for the disc holder';}if(dropButton)dropButton.disabled=!quickPassActive||!holder||!player;if(blockButton)blockButton.disabled=!quickPassActive||!quickPassHolderId||!player||player.team===holderTeam;});
  updateLivePerformancePoints();
 }
-function updateLivePerformancePoints(){document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);if(!player)return;const profile=players.find(item=>item.id===player.player_id),pts=performancePoints(statTotalsForPlayer(player.player_id),minutesPlayedInActiveMatch(player),profile?.position),delta=Math.max(-5,Math.min(5,pts*.5)),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});}
+function performanceGrade(points){return Math.max(0,Math.min(9.9,(Number(points)||0)*.5));}
+function performanceRatingDelta(points){const grade=performanceGrade(points);return grade>6?grade-6:grade<4?grade-4:0;}
+function updateLivePerformancePoints(){document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);if(!player)return;const profile=players.find(item=>item.id===player.player_id),pts=performancePoints(statTotalsForPlayer(player.player_id),minutesPlayedInActiveMatch(player),profile?.position),delta=performanceRatingDelta(pts),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});}
 setInterval(updateLivePerformancePoints,30000);
 function toggleQuickPass(){
  if(!activeScrimmageId){return;}
@@ -3063,7 +3065,7 @@ async function loadPostMatch(matchId=null){
    events.filter(event=>event.player_id===row.player_id).forEach(event=>{if(totals[event.stat_type]!==undefined)totals[event.stat_type]+=Number(event.delta||0);});
    totals.passes=eventsTimeline.filter(event=>event.event_type==='pass'&&(event.player_id===row.player_id||event.related_player_id===row.player_id)).length;
    const minutes=playedMinutesForAppearance({...match,...row},substitutions),points=performancePoints(totals,minutes,player.position);
-   return {...row,player,totals,minutes,points,grade:Math.min(9.9,Math.max(0,points*10/20))};
+   return {...row,player,totals,minutes,points,grade:performanceGrade(points)};
   });
   const goalsA=events.filter(event=>event.team==='A'&&event.stat_type==='goal').reduce((sum,event)=>sum+Number(event.delta||0),0)+Number(match.guest_goals_a||0);
   const goalsB=events.filter(event=>event.team==='B'&&event.stat_type==='goal').reduce((sum,event)=>sum+Number(event.delta||0),0)+Number(match.guest_goals_b||0);
@@ -3221,14 +3223,14 @@ function renderPerformance(){
   const rosterKey=onField.map(x=>`${x.team}:${x.slot??''}:${x.player_id}`).join('|');
   const existingRows=[...list.querySelectorAll('.performance-row[data-player-id]')];
   if(list.dataset.rosterKey===rosterKey&&existingRows.length===onField.length){
-    onField.forEach(x=>{const row=existingRows.find(item=>item.dataset.playerId===x.player_id);if(!row)return;const pts=performancePoints(statTotalsForPlayer(x.player_id),minutesPlayedInActiveMatch(x),map.get(x.player_id)?.position),delta=Math.max(-5,Math.min(5,pts*0.5)),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});
+    onField.forEach(x=>{const row=existingRows.find(item=>item.dataset.playerId===x.player_id);if(!row)return;const pts=performancePoints(statTotalsForPlayer(x.player_id),minutesPlayedInActiveMatch(x),map.get(x.player_id)?.position),delta=performanceRatingDelta(pts),score=row.querySelector('.stat-value'),rating=row.querySelector('.rating-delta');if(score)score.textContent=pts.toFixed(1);if(rating){rating.textContent=`${delta>=0?'+':''}${delta.toFixed(1)}`;rating.classList.toggle('pos',delta>=0);rating.classList.toggle('neg',delta<0);}});
     return;
   }
   const header='<div class="performance-row performance-columns-head"><div>PLAYER</div><div>GOAL</div><div>DROP</div><div>BLOCK</div><div>PTS</div><div>OVR</div></div>';
   const teamSections=['A','B'].map(team=>{
     const teamPlayers=onField.filter(x=>x.team===team);if(!teamPlayers.length)return '';
     const teamName=scrimmageTeamName(team);
-    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t,minutesPlayedInActiveMatch(x),p.position),delta=Math.max(-5,Math.min(5,pts*0.5)),label=scrimmageTeamName(team);const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${esc(label)}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts.toFixed(1)}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
+    const rows=teamPlayers.map(x=>{const p=map.get(x.player_id);if(!p)return '';const t=statTotalsForPlayer(p.id),pts=performancePoints(t,minutesPlayedInActiveMatch(x),p.position),delta=performanceRatingDelta(pts),label=scrimmageTeamName(team);const avatar=p.image?`<img class="performance-avatar" src="${esc(p.image)}" alt="">`:`<span class="performance-avatar">${esc(initials(p.name))}</span>`;return `<div class="performance-row" data-player-id="${esc(p.id)}"><div class="performance-player"><button type="button" class="swap-player-avatar" data-player-id="${esc(p.id)}" aria-label="Replace ${esc(p.name)} with a substitute from ${esc(label)}" title="Tap the player photo to choose a substitute">${avatar}</button><span class="live-player-label" title="${esc(p.name)}">${esc(p.name)}</span></div><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','goal')">+1 G</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','drop')">+1 D</button><button class="stat-btn" onclick="recordMatchStat('${esc(p.id)}','block')">+1 B</button><div class="stat-value">${pts.toFixed(1)}</div><div class="rating-delta ${delta>=0?'pos':'neg'}">${delta>=0?'+':''}${delta.toFixed(1)}</div></div>`}).join('');
     return `<section class="live-stat-team live-stat-team-${team.toLowerCase()}"><div class="live-stat-team-banner"><span data-team-name-label="${team}">${esc(teamName)}</span><small>${teamPlayers.length} ON FIELD</small></div>${header}${rows}</section>`;
   }).join('');
   list.innerHTML=teamSections;
@@ -3385,6 +3387,14 @@ async function endMatch(){
     if(deleteError){const {error:rollbackError}=await supabaseClient.from('scrimmage_matches').update({guest_goals_a:0,guest_goals_b:0}).eq('id',matchId);const rollbackNotice=rollbackError?'\nCould not roll back the temporary guest score: '+rollbackError.message:'';alert('Could not remove temporary guest statistics: '+deleteError.message+rollbackNotice);return;}
   }
 
+  const ratingTargets=activeScrimmagePlayers.flatMap(appearance=>{
+    const profile=players.find(player=>player.id===appearance.player_id);
+    if(!profile||isGuest(profile))return [];
+    const minutes=minutesPlayedInActiveMatch(appearance);
+    if(minutes<=0)return [];
+    const matchPoints=performancePoints(statTotalsForPlayer(appearance.player_id),minutes,profile.position),change=performanceRatingDelta(matchPoints),rating=Math.max(0,Math.min(100,Number(profile.rating||0)+change));
+    return [{id:profile.id,rating:Number(rating.toFixed(1)),total_points:Number((Number(profile.total_points||0)+change).toFixed(1)),tier:tierFromRating(rating)}];
+  });
   const {error} = await supabaseClient.rpc('end_scrimmage_match',{p_match_id:matchId});
   if(error){
     let restoreMessage='';
@@ -3396,6 +3406,9 @@ async function endMatch(){
     alert('Could not end match: '+error.message+'\n\nRun vinuni_scrimmage_setup.sql in Supabase first.'+restoreMessage);
     return;
   }
+  const ratingResults=await Promise.all(ratingTargets.map(target=>supabaseClient.from('players').update({rating:target.rating,total_points:target.total_points,tier:target.tier}).eq('id',target.id)));
+  const ratingError=ratingResults.find(result=>result.error)?.error;
+  if(ratingError){console.error('Could not apply the match grade threshold to player ratings:',ratingError);alert('The match ended, but some player ratings could not be updated: '+ratingError.message);}
   
   await loadPlayers();
   await loadPostMatch(matchId);
@@ -3415,7 +3428,7 @@ async function endMatch(){
   alert('Match ended and saved to Supabase. All completed matches will be included when you export the Attendance Excel file.');
 }
 
-async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const permanentMp=(mp||[]).filter(x=>!isGuest(map.get(x.player_id)||{}));const permanentEvents=(ev||[]).filter(e=>!isGuest(map.get(e.player_id)||{}));const rows=permanentMp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};permanentEvents.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=Math.max(-5,Math.min(5,pts*0.5));const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(permanentEvents.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:scrimmageTeamName(e.team),Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
+async function exportScrimmageExcel(matchId){if(typeof XLSX==='undefined'){alert('Excel library did not load.');return;}const {data:ev,error:ee}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).order('created_at',{ascending:true});if(ee)throw ee;const {data:mp,error:me}=await supabaseClient.from('scrimmage_players').select('*').eq('match_id',matchId);if(me)throw me;const map=new Map(players.map(p=>[p.id,p]));const permanentMp=(mp||[]).filter(x=>!isGuest(map.get(x.player_id)||{}));const permanentEvents=(ev||[]).filter(e=>!isGuest(map.get(e.player_id)||{}));const rows=permanentMp.map(x=>{const p=map.get(x.player_id)||{};const t={goal:0,assist:0,drop:0,block:0};permanentEvents.filter(e=>e.player_id===x.player_id).forEach(e=>t[e.stat_type]+=Number(e.delta||0));const pts=performancePoints(t),delta=performanceRatingDelta(pts);const after=Number(p.rating||0),before=Math.max(0,Math.min(100,after-delta));return {Player:p.name||x.player_id,Team:scrimmageTeamName(x.team),Gender:p.gender||'',Position:p.position||'',Before_Rating:before,Goals:t.goal,Assists:t.assist,Drops:t.drop,Blocks:t.block,Match_Points:pts,Rating_Change:delta,After_Rating:after,Tier:p.tier||tierFromRating(after),Accumulated_Points:Number(p.total_points||0)};});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Performance');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(permanentEvents.map(e=>({Time:e.created_at,Player:(map.get(e.player_id)||{}).name||e.player_id,Team:scrimmageTeamName(e.team),Stat:e.stat_type,Delta:e.delta}))),'Event Log');XLSX.writeFile(wb,`VinUni_Scrimmage_${dateFileSafe(todayISO())}_${matchId.slice(0,8)}.xlsx`);}
 
 /* ===== LOGISTICS: ALL CRUD OPERATIONS USE SUPABASE ===== */
 function renderMemberPool(){
