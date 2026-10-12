@@ -1680,7 +1680,7 @@ select option{color:#e5edf9;background:#0b1424}
 @media (min-width:1101px){
   #prepView .prep-teams{gap:14px}
   #prepView .prep-team{grid-template-columns:minmax(0,1fr) minmax(205px,24%);column-gap:12px;padding:10px}
-  #prepView .prep-field{height:clamp(450px,52vh,560px);min-height:450px;border-radius:16px}
+  #prepView .prep-field{height:auto;min-height:510px;aspect-ratio:.82/1;border-radius:16px;transform:perspective(1100px) rotateX(3deg);transform-origin:center bottom}
   #prepView .prep-slot{width:clamp(82px,5.2vw,100px)}
   #prepView .prep-mini-card{max-width:96px}
   #prepView .prep-mini-name{font-size:10px;line-height:1.08}
@@ -1692,6 +1692,9 @@ select option{color:#e5edf9;background:#0b1424}
   #prepView .prep-sub-slot .prep-mini-name{font-size:9px;line-height:1.08}
   #prepView .prep-sub-slot .prep-mini-meta{font-size:8px}
   #prepView .prep-sub-dropzone{min-height:34px;font-size:10px}
+  #prepView .prep-team.blue{grid-template-columns:minmax(205px,24%) minmax(0,1fr)}
+  #prepView .prep-team.blue .prep-field{grid-column:2;grid-row:2}
+  #prepView .prep-team.blue .prep-subs{grid-column:1;grid-row:2}
 }
 </style>
 </head>
