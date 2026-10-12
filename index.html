@@ -1578,6 +1578,9 @@ select option{color:#e5edf9;background:#0b1424}
 #liveView .performance-row.quick-pass-row-tappable .stat-btn:hover{transform:none;filter:none}
 #liveView .timeline-scroll{max-height:min(42vh,420px);overflow:auto;overflow-anchor:none;overscroll-behavior:contain}
 @media(max-width:600px){#liveView .live-stat-team .performance-row:not(.performance-columns-head){column-gap:6px;row-gap:8px;padding:8px}#liveView .live-stat-team .stat-btn{min-height:40px;height:40px;border-radius:9px}#liveView .timeline-scroll{max-height:38vh}}
+#postMatchView .post-match-timeline{margin-top:4px}
+#postMatchView .post-match-timeline .timeline-scroll{max-height:min(55vh,620px);overflow:auto;overflow-anchor:none;overscroll-behavior:contain}
+@media(max-width:480px){#postMatchView .post-match-timeline{padding:13px}#postMatchView .post-match-timeline .match-timeline-head{align-items:center}#postMatchView .post-match-timeline .match-timeline-head h3{font-size:16px}#postMatchView .post-match-timeline .match-timeline-head p{font-size:11px;line-height:1.4}#postMatchView .post-match-timeline .timeline-table,#postMatchView .post-match-timeline .timeline-table tbody{display:block;width:100%;min-width:0}#postMatchView .post-match-timeline .timeline-table thead{display:none}#postMatchView .post-match-timeline .timeline-table tr{display:grid;grid-template-columns:auto 1fr;gap:7px 10px;padding:10px;border-bottom:1px solid #ffffff14}#postMatchView .post-match-timeline .timeline-table tbody tr:last-child{border-bottom:0}#postMatchView .post-match-timeline .timeline-table td{padding:0;border:0;font-size:11px}#postMatchView .post-match-timeline .timeline-table td:first-child{grid-row:1;align-self:center}#postMatchView .post-match-timeline .timeline-table td:nth-child(2){grid-row:1;justify-self:end}#postMatchView .post-match-timeline .timeline-table td:nth-child(3){grid-column:1/-1;line-height:1.5;overflow-wrap:anywhere}#postMatchView .post-match-timeline .match-timeline-count{padding:5px 7px;font-size:9px}}
 </style>
 </head>
 <body>
@@ -1770,6 +1773,10 @@ select option{color:#e5edf9;background:#0b1424}
       <div id="postMatchScore" class="post-match-hero" aria-label="Final score"></div>
       <div id="postMatchMvp"></div>
       <div id="postMatchTeams" class="post-match-teams"><div class="post-match-empty" style="grid-column:1/-1">No completed match is available yet.</div></div>
+      <section class="match-timeline post-match-timeline" aria-labelledby="postMatchTimelineTitle">
+        <div class="match-timeline-head"><div><h3 id="postMatchTimelineTitle">Match Timeline</h3><p>Recorded passes, possessions, scores and substitutions from this match.</p></div><span id="postMatchTimelineCount" class="match-timeline-count">0 EVENTS</span></div>
+        <div id="postMatchTimeline"></div>
+      </section>
     </div>
   </div>
 </section>
@@ -3042,7 +3049,7 @@ async function loadPostMatch(matchId=null){
   const {data:matchData,error:matchError}=matchId?await query.single():await query.maybeSingle();
   if(matchError)throw matchError;
   const match=Array.isArray(matchData)?matchData[0]:matchData;
-  if(!match){document.getElementById('postMatchMeta').textContent='No completed match is available yet.';scorePanel.innerHTML='';mvpPanel.innerHTML='';teams.innerHTML='<div class="post-match-empty" style="grid-column:1/-1">Finish a match to see its field, scores and player ratings here.</div>';return;}
+  if(!match){document.getElementById('postMatchMeta').textContent='No completed match is available yet.';scorePanel.innerHTML='';mvpPanel.innerHTML='';teams.innerHTML='<div class="post-match-empty" style="grid-column:1/-1">Finish a match to see its field, scores and player ratings here.</div>';document.getElementById('postMatchTimeline').innerHTML='<div class="timeline-empty">No completed match timeline is available yet.</div>';document.getElementById('postMatchTimelineCount').textContent='0 EVENTS';return;}
   const [{data:roster,error:rosterError},{data:statEvents,error:statsError},{data:timeline,error:timelineError}]=await Promise.all([
    supabaseClient.from('scrimmage_players').select('*').eq('match_id',match.id),
    supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',match.id),
@@ -3071,6 +3078,42 @@ async function loadPostMatch(matchId=null){
    const subs=subRows.map(row=>`<div class="post-match-sub-card">${prepMiniCard(row.player)}<span class="post-match-sub-score">${row.grade.toFixed(1)} / 10 · ${row.points.toFixed(1)} PTS</span></div>`).join('');
    return `<article class="post-match-team ${team==='B'?'team-b':''}"><header class="post-match-team-head"><h3>${esc(scrimmageTeamName(team))}</h3><span>${fieldRows.length} ON FIELD</span></header><div class="prep-field post-match-field">${field||'<div class="post-match-empty">No players on the field</div>'}</div><section class="post-match-subs"><h4>Substitutes · ${subRows.length}</h4><div class="post-match-sub-list">${subs||'<span class="post-match-meta">No substitutes</span>'}</div></section></article>`;
   }).join('');
+  const timelineContainer=document.getElementById('postMatchTimeline'),timelineCount=document.getElementById('postMatchTimelineCount');
+  if(timelineContainer&&timelineCount){
+   const linkedGoalStats=new Set(eventsTimeline.filter(event=>event.event_type==='goal'&&event.stat_event_id).map(event=>event.stat_event_id));
+   const legacyGoals=events.filter(event=>event.stat_type==='goal'&&!linkedGoalStats.has(event.id)).map(event=>({id:`legacy-${event.id}`,event_type:'goal',team:event.team,player_id:event.player_id,related_player_id:null,created_at:event.created_at,legacy:true}));
+   const chronological=[...eventsTimeline.map(event=>({...event})),...legacyGoals].sort((a,b)=>Date.parse(a.created_at||'')-Date.parse(b.created_at||''));
+   const grouped=[];let passChain=null;
+   const flushPassChain=()=>{if(passChain){grouped.push(passChain);passChain=null;}};
+   chronological.forEach(event=>{
+    if(event.event_type==='pass'){
+     if(passChain&&passChain.team===event.team&&passChain.passPlayerIds[passChain.passPlayerIds.length-1]===event.player_id){passChain.passPlayerIds.push(event.related_player_id);passChain.created_at=event.created_at;passChain.id=`${passChain.id}-${event.id}`;}
+     else{flushPassChain();passChain={...event,event_type:'pass_chain',passPlayerIds:[event.player_id,event.related_player_id]};}
+    }else if(event.event_type==='goal'){
+     const onePassToScorer=passChain&&passChain.team===event.team&&passChain.passPlayerIds.length===2&&passChain.passPlayerIds[1]===event.player_id;
+     if(onePassToScorer){event.related_player_id=passChain.passPlayerIds[0];passChain=null;const openingPossession=grouped[grouped.length-1];if(openingPossession?.event_type==='possession'&&openingPossession.team===event.team&&openingPossession.player_id===event.related_player_id)grouped.pop();}
+     else{flushPassChain();const directPossession=grouped[grouped.length-1];if(directPossession?.event_type==='possession'&&directPossession.team===event.team&&directPossession.player_id===event.player_id)grouped.pop();}
+     grouped.push(event);
+    }else{flushPassChain();grouped.push(event);}
+   });
+   flushPassChain();
+   const timelineRows=grouped.sort((a,b)=>Date.parse(b.created_at||'')-Date.parse(a.created_at||''));
+   timelineCount.textContent=`${timelineRows.length} EVENT${timelineRows.length===1?'':'S'}`;
+   if(!timelineRows.length)timelineContainer.innerHTML='<div class="timeline-empty">No timeline events were recorded for this match.</div>';
+   else timelineContainer.innerHTML=`<div class="timeline-scroll"><table class="timeline-table"><thead><tr><th>TIME</th><th>TEAM</th><th>EVENT</th></tr></thead><tbody>${timelineRows.map(event=>{
+    const playerName=playerMap.get(event.player_id)?.name||'Unknown player',relatedName=event.related_player_id?(playerMap.get(event.related_player_id)?.name||'Unknown player'):'';
+    const time=event.created_at?new Date(event.created_at).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}):'—';
+    const teamName=event.event_type==='team_change'?'MATCH':esc(scrimmageTeamName(event.team)),teamClass=event.event_type==='team_change'?'':event.team==='B'?' team-b':'';
+    const details=event.event_type==='substitution'?`<span class="timeline-event-sub">SUB OUT</span> ${esc(playerName)} <span aria-hidden="true">→</span> <span class="timeline-event-sub">SUB IN</span> ${esc(relatedName)}`
+     :event.event_type==='team_change'?'<span class="timeline-event-team">TEAMS CHANGED</span> Team Preparation synced · score unchanged'
+     :event.event_type==='pass_chain'?`<span class="timeline-event-sub">PASS</span> ${event.passPlayerIds.map(id=>esc(playerMap.get(id)?.name||'Unknown player')).join(' <span aria-hidden="true">→</span> ')}`
+     :event.event_type==='possession'?`<span class="timeline-event-team">POSSESSION</span> ${esc(playerName)} has the disc · ${esc(scrimmageTeamName(event.team))} attack`
+     :event.event_type==='goal'?`<span class="timeline-event-goal">GOAL</span> ${esc(playerName)}${relatedName?` <span class="timeline-event-assist">(Assist: ${esc(relatedName)})</span>`:''}`
+     :event.event_type==='drop'?`<span class="timeline-event-drop">DROP</span> ${esc(playerName)} dropped the disc`
+     :`<span class="timeline-event-block">BLOCK</span> ${esc(playerName)} blocked ${esc(relatedName||'an opponent')}'s pass`;
+    return `<tr><td>${esc(time)}</td><td><span class="timeline-team-tag${teamClass}">${teamName}</span></td><td>${details}</td></tr>`;
+   }).join('')}</tbody></table></div>`;
+  }
  }catch(error){console.error('Post Match could not load:',error);teams.innerHTML=`<div class="post-match-empty" style="grid-column:1/-1">Could not load the latest match: ${esc(error.message||String(error))}</div>`;}
 }
 function renderScrimmageTimeline(){
