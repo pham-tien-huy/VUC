@@ -1664,6 +1664,8 @@ select option{color:#e5edf9;background:#0b1424}
 }
 
 @media (min-width:1101px){
+  body:has(#generator.active) main{max-width:none;padding:8px 12px}
+  #generator{padding:6px 8px;border-radius:16px}
   #prepView .prep-team{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,28%);grid-template-rows:auto minmax(0,1fr);column-gap:10px;row-gap:5px}
   #prepView .prep-team-head{grid-column:1/-1;grid-row:1}
   #prepView .prep-field{grid-column:1;grid-row:2;height:auto;min-height:360px;max-height:none;aspect-ratio:auto;align-self:stretch}
@@ -1674,6 +1676,22 @@ select option{color:#e5edf9;background:#0b1424}
   #prepView .prep-sub-slot .prep-mini-name{font-size:8px;line-height:1.04}
   #prepView .prep-sub-slot .prep-mini-meta{font-size:7px}
   #prepView .prep-sub-dropzone{min-height:30px;margin-top:auto;padding:4px;font-size:9px}
+}
+@media (min-width:1101px){
+  #prepView .prep-teams{gap:14px}
+  #prepView .prep-team{grid-template-columns:minmax(0,1fr) minmax(205px,24%);column-gap:12px;padding:10px}
+  #prepView .prep-field{height:clamp(450px,52vh,560px);min-height:450px;border-radius:16px}
+  #prepView .prep-slot{width:clamp(82px,5.2vw,100px)}
+  #prepView .prep-mini-card{max-width:96px}
+  #prepView .prep-mini-name{font-size:10px;line-height:1.08}
+  #prepView .prep-mini-meta{font-size:9px}
+  #prepView .prep-subs{padding:9px}
+  #prepView .prep-subs-title{font-size:10px;margin-bottom:7px}
+  #prepView .prep-sub-grid{gap:6px}
+  #prepView .prep-sub-slot .prep-mini-card{max-width:90px}
+  #prepView .prep-sub-slot .prep-mini-name{font-size:9px;line-height:1.08}
+  #prepView .prep-sub-slot .prep-mini-meta{font-size:8px}
+  #prepView .prep-sub-dropzone{min-height:34px;font-size:10px}
 }
 </style>
 </head>
