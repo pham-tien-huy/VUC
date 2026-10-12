@@ -2882,6 +2882,11 @@ async function loadPreparationFromDB(){
 window.addEventListener('online',()=>{updatePreparationOfflineNotice();void flushPendingPreparation();});
 window.addEventListener('offline',()=>updatePreparationOfflineNotice());
 function showScrimmageView(view){const prep=view==='prepView',live=view==='liveView';document.getElementById('prepView').style.display=prep?'block':'none';document.getElementById('liveView').style.display=live?'block':'none';document.getElementById('postMatchView').style.display=view==='postMatchView'?'block':'none';document.querySelectorAll('.scrim-subtab').forEach(b=>b.classList.toggle('active',b.dataset.scrimView===view));if(live&&activeScrimmageId)renderLiveMatch();if(view==='postMatchView')void loadPostMatch();}
+function navigateToActiveScrimmage(){
+  document.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.page==='generator'));
+  document.querySelectorAll('.page').forEach(page=>page.classList.toggle('active',page.id==='generator'));
+  showScrimmageView('liveView');
+}
 
 /* ===== SCRIMMAGE LIVE MATCH ===== */
 let activeScrimmageId=null;
@@ -3649,7 +3654,7 @@ async function bootstrapApp(){
     await loadCompletedMatchHistory();
     await loadPostMatch();
     await loadActiveScrimmage();
-    if(activeScrimmageId)showScrimmageView('liveView');
+    if(activeScrimmageId)navigateToActiveScrimmage();
     await subscribeRealtime();
   }catch(err){
     console.error(err);
