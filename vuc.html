@@ -2116,7 +2116,7 @@ async function loadPlayers(){
   if(error){console.error(error);throw error;}
   players=(data||[]).map(row=>{const fixedRating=isQuynhCocaColaMember(row);return {...row,rating:fixedRating?67:Number(row.rating)||0,tier:fixedRating?tierFromRating(67):row.tier,member_type:row.member_type||"permanent",gender:row.gender||"Male",image:row.image_url||""};});
   const profilesToFix=(data||[]).filter(row=>isQuynhCocaColaMember(row)&&(Number(row.rating)!==67||row.tier!==tierFromRating(67)));
-  if(profilesToFix.length){const results=await Promise.all(profilesToFix.map(row=>supabaseClient.from("players").update({rating:67,tier:tierFromRating(67)}).eq("id",row.id)));const error=results.find(result=>result.error)?.error;if(error)console.error("Could not persist the fixed Coca-Cola member rating:",error);}
+  if(profilesToFix.length)void Promise.all(profilesToFix.map(row=>supabaseClient.from("players").update({rating:67,tier:tierFromRating(67)}).eq("id",row.id))).then(results=>{const error=results.find(result=>result.error)?.error;if(error)console.error("Could not persist the fixed Coca-Cola member rating:",error);});
   const playerIds=new Set(players.map(player=>player.id));
   attendancePresentIds=new Set([...attendancePresentIds].filter(id=>playerIds.has(id)));
   const attendanceDate=document.getElementById("attendanceDate").value;
@@ -3648,11 +3648,7 @@ async function bootstrapApp(){
     refreshAll();
     const d=todayISO();
     document.getElementById("attendanceDate").value=d;
-    await loadAttendance(d);
-    await loadPreparationFromDB();
-    await loadAttendanceHistory();
-    await loadCompletedMatchHistory();
-    await loadPostMatch();
+    await Promise.all([loadAttendance(d),loadPreparationFromDB()]);
     await loadActiveScrimmage();
     if(activeScrimmageId)navigateToActiveScrimmage();
     await subscribeRealtime();
