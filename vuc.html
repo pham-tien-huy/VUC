@@ -2882,10 +2882,18 @@ async function loadPreparationFromDB(){
 window.addEventListener('online',()=>{updatePreparationOfflineNotice();void flushPendingPreparation();});
 window.addEventListener('offline',()=>updatePreparationOfflineNotice());
 function showScrimmageView(view){const prep=view==='prepView',live=view==='liveView';document.getElementById('prepView').style.display=prep?'block':'none';document.getElementById('liveView').style.display=live?'block':'none';document.getElementById('postMatchView').style.display=view==='postMatchView'?'block':'none';document.querySelectorAll('.scrim-subtab').forEach(b=>b.classList.toggle('active',b.dataset.scrimView===view));if(live&&activeScrimmageId)renderLiveMatch();if(view==='postMatchView')void loadPostMatch();}
-function navigateToActiveScrimmage(){
+function navigateToActiveScrimmage(loading=false){
   document.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.page==='generator'));
   document.querySelectorAll('.page').forEach(page=>page.classList.toggle('active',page.id==='generator'));
   showScrimmageView('liveView');
+  if(loading){
+    const panel=document.getElementById('scrimmageMatchPanel');
+    panel.style.display='block';
+    document.getElementById('scrimmageMatchTitle').textContent='Loading active match…';
+    document.getElementById('scrimmageMatchMeta').textContent='Loading the live score, players and timeline.';
+    document.getElementById('performanceList').innerHTML='<div class="empty">Loading live player data…</div>';
+    document.getElementById('scrimmageTimeline').innerHTML='<div class="timeline-empty">Loading live timeline…</div>';
+  }
 }
 
 /* ===== SCRIMMAGE LIVE MATCH ===== */
@@ -3359,9 +3367,9 @@ window.recordMatchStat=async function(playerId,statType){
   if(!enqueueLiveAction(action))return;applyPendingLiveActions(activeScrimmageId);renderLiveMatch();
 };
 
-async function loadActiveScrimmage(){
-  const {data:m,error}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();
-  if(error)throw error;
+async function loadActiveScrimmage(preloadedMatch=undefined){
+  let m=preloadedMatch;
+  if(preloadedMatch===undefined){const {data,error}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();if(error)throw error;m=data;}
   if(!m){
     const {error:timelineError}=await supabaseClient.from('scrimmage_timeline_events').select('id').limit(1);
     activeScrimmageId=null;
@@ -3642,6 +3650,9 @@ window.addEventListener('scroll',()=>{if(scrollTicking)return;scrollTicking=true
 async function bootstrapApp(){
   setSync("Loading...",false);
   try{
+    const {data:initialActiveMatch,error:activeMatchError}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();
+    if(activeMatchError)throw activeMatchError;
+    if(initialActiveMatch){setSync('Opening Live Scrimmage…',false);navigateToActiveScrimmage(true);}
     await checkRegistrationSchema();
     document.getElementById("savePlayerBtn").disabled=false;
     await loadPlayers();
@@ -3649,7 +3660,7 @@ async function bootstrapApp(){
     const d=todayISO();
     document.getElementById("attendanceDate").value=d;
     await Promise.all([loadAttendance(d),loadPreparationFromDB()]);
-    await loadActiveScrimmage();
+    await loadActiveScrimmage(initialActiveMatch);
     if(activeScrimmageId)navigateToActiveScrimmage();
     await subscribeRealtime();
   }catch(err){
