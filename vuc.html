@@ -2973,7 +2973,7 @@ async function flushPendingPreparation(){
    lastPrepUpdatedAt=payload.updated_at;
    clearPendingPreparation(payload.updated_at);
    if(prepSaveRetryTimer){clearTimeout(prepSaveRetryTimer);prepSaveRetryTimer=null;}
-   try{await syncLateAttendanceForPreparation(payload.attendance_date,payload.team_a,payload.team_b);}catch(lateError){console.error('Late attendance sync failed:',lateError);updatePreparationOfflineNotice(`Team Preparation saved, but late attendance could not be recorded: ${lateError.message||lateError}`);}
+   try{await syncLateAttendanceForPreparation(payload.attendance_date,payload.team_a,payload.team_b);}catch(lateError){console.warn('Late attendance sync failed:',lateError);}
    setSync('Preparation synced',true);
   }
  }catch(error){
