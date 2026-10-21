@@ -1845,7 +1845,7 @@ select option{color:#e5edf9;background:#0b1424}
       <div>
         <div class="live-badge"><span></span> LIVE SCRIMMAGE</div>
         <h2 id="scrimmageMatchTitle">Live Match</h2>
-        <div id="scrimmageMatchMeta" class="match-meta">All connected devices share this match.</div>
+        <div id="scrimmageMatchMeta" class="match-meta">Live actions save on this device first and sync to other devices in the background.</div>
       </div>
       <div class="scoreboard">
         <div><span data-team-name-label="A">Pikachu</span><strong id="scoreA">0</strong></div>
@@ -3044,9 +3044,11 @@ let activeScrimmageTimelineEvents=[];
 let scrimmageTimelineError='';
 let scrimmageTimelineReady=false;
 const LIVE_ACTION_QUEUE_KEY='vuc_live_action_queue_v1';
+const LIVE_MATCH_CACHE_KEY='vuc_live_match_cache_v1';
 let liveActionQueue=[];
 let liveActionFlushInProgress=false;
 let liveActionRetryTimer=null;
+let liveMatchIsLocal=false;
 try{
   const storedLiveActions=localStorage.getItem(LIVE_ACTION_QUEUE_KEY);
   if(storedLiveActions)liveActionQueue=JSON.parse(storedLiveActions);
@@ -3067,11 +3069,12 @@ const QUICK_PASS_STATE_KEY='vuc_quick_pass_state_v1';
 function saveQuickPassState(){
  const state={matchId:activeScrimmageId,active:quickPassActive,holderId:quickPassHolderId,lastPasserId:quickPassLastPasserId,awaitingTeam:quickPassAwaitingTeam,updatedAt:new Date().toISOString()};
  try{localStorage.setItem(QUICK_PASS_STATE_KEY,JSON.stringify(state));}catch(error){console.warn('Quick Pass state could not be saved locally:',error);updateLiveOfflineNotice('Quick Pass state could not be cached on this device. Check browser storage.');}
+ persistLiveMatchSnapshot();
  if(activeScrimmageId)enqueueLiveAction({id:`quick-pass-state-${activeScrimmageId}`,type:'quick_pass_state',matchId:activeScrimmageId,state,createdAt:state.updatedAt});
 }
 function updateQuickPassControls(){
  const button=document.getElementById('quickPassToggle');
- if(button){button.disabled=!activeScrimmageId||quickPassActive;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'GAME ON':'GAME OFF';button.title=quickPassActive?'Game stays on until a goal is recorded':'Start the game';}
+ if(button){button.disabled=!activeScrimmageId;button.classList.toggle('active',quickPassActive);button.textContent=quickPassActive?'GAME ON':'GAME OFF';button.title=quickPassActive?'Tap to turn the game off':'Tap to turn the game on';}
  document.querySelectorAll('#performanceList .performance-row[data-player-id]').forEach(row=>{const holder=row.dataset.playerId===quickPassHolderId;const player=activeScrimmagePlayers.find(item=>item.player_id===row.dataset.playerId);row.classList.toggle('quick-pass-holder',quickPassActive&&holder);row.classList.toggle('quick-pass-row-tappable',quickPassActive);const avatar=row.querySelector('.swap-player-avatar');if(avatar&&quickPassActive){avatar.title=quickPassAwaitingTeam?'Tap anywhere on this row to set this player as the new disc holder':quickPassHolderId?'Tap anywhere on this row to record a pass to this player':'Tap anywhere on this row to set the current disc holder';}const [goalButton,dropButton,blockButton]=row.querySelectorAll('.stat-btn');const holderTeam=activeScrimmagePlayers.find(item=>item.player_id===quickPassHolderId)?.team;const noHolder=quickPassActive&&!quickPassHolderId;if(goalButton){goalButton.disabled=!quickPassActive||!quickPassHolderId||!player||!holder;goalButton.style.visibility=noHolder?'hidden':'';goalButton.title=noHolder?'Set the disc holder first':goalButton.disabled?'Only the player holding the disc can score a goal':'Record a goal for the disc holder';}if(dropButton)dropButton.disabled=!quickPassActive||!holder||!player;if(blockButton)blockButton.disabled=!quickPassActive||!quickPassHolderId||!player||player.team===holderTeam;});
  updateLivePerformancePoints();
 }
@@ -3082,8 +3085,7 @@ function updateLivePerformancePoints(){document.querySelectorAll('#performanceLi
 setInterval(updateLivePerformancePoints,30000);
 function toggleQuickPass(){
  if(!activeScrimmageId){return;}
- if(quickPassActive)return;
- if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}
+ if(quickPassActive){quickPassActive=false;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;saveQuickPassState();updateQuickPassControls();return;}
  quickPassActive=true;quickPassHolderId=null;quickPassLastPasserId=null;quickPassAwaitingTeam=null;selectedSubPlayerId=null;saveQuickPassState();updateQuickPassControls();
 }
 function restoreQuickPassState(matchId,remoteState=null){
@@ -3114,6 +3116,18 @@ function minutesPlayedInActiveMatch(player){if(!activeScrimmageMatchStartedAt)re
 function persistLiveActionQueue(){
   try{localStorage.setItem(LIVE_ACTION_QUEUE_KEY,JSON.stringify(liveActionQueue));return true;}
   catch(error){console.error('Could not save pending Live Scrimmage actions locally:',error);updateLiveOfflineNotice('Could not save pending actions on this device. Keep this page open and check browser storage.');return false;}
+}
+function persistLiveMatchSnapshot(){
+  if(!activeScrimmageId){try{localStorage.removeItem(LIVE_MATCH_CACHE_KEY);}catch(error){console.warn('Could not clear local Live Scrimmage snapshot:',error);}return true;}
+  const snapshot={id:activeScrimmageId,created_at:activeScrimmageMatchStartedAt,status:'active',players:activeScrimmagePlayers,events:activeScrimmageEvents,timeline:activeScrimmageTimelineEvents,quickPassState:{matchId:activeScrimmageId,active:quickPassActive,holderId:quickPassHolderId,lastPasserId:quickPassLastPasserId,awaitingTeam:quickPassAwaitingTeam}};
+  try{localStorage.setItem(LIVE_MATCH_CACHE_KEY,JSON.stringify(snapshot));return true;}
+  catch(error){console.error('Could not cache the active Live Scrimmage:',error);updateLiveOfflineNotice('Live match state could not be saved on this device. Keep this page open and check browser storage.');return false;}
+}
+function restoreLiveMatchSnapshot(snapshot){
+  if(!snapshot||snapshot.status!=='active'||!snapshot.id)return false;
+  activeScrimmageId=snapshot.id;activeScrimmageMatchStartedAt=snapshot.created_at||new Date().toISOString();
+  activeScrimmagePlayers=Array.isArray(snapshot.players)?snapshot.players:[];activeScrimmageEvents=Array.isArray(snapshot.events)?snapshot.events:[];activeScrimmageTimelineEvents=Array.isArray(snapshot.timeline)?snapshot.timeline:[];
+  liveMatchIsLocal=true;restoreQuickPassState(activeScrimmageId,snapshot.quickPassState||null);applyPendingLiveActions(activeScrimmageId);renderLiveMatch();updateLiveOfflineNotice();return true;
 }
 function updateLiveOfflineNotice(message){
   const notice=document.getElementById('liveOfflineNotice');
@@ -3149,8 +3163,38 @@ function applyPendingLiveActions(matchId){
       if(['drop','block'].includes(action.type)&&!activeScrimmageTimelineEvents.some(event=>event.id===action.id)&&!(action.type==='block'&&action.quickPassBlock))activeScrimmageTimelineEvents.push({id:action.id,match_id:action.matchId,event_type:action.type,team:action.team,player_id:action.playerId,related_player_id:action.relatedPlayerId||null,stat_event_id:action.id,created_at:action.createdAt});
     }
   }
+  if(matchId===activeScrimmageId)persistLiveMatchSnapshot();
 }
 async function syncLiveAction(action){
+  if(action.type==='activate_match'){
+    const {error}=await supabaseClient.from('scrimmage_matches').upsert(action.match,{onConflict:'id'});if(error)throw error;
+    const {error:clearError}=await supabaseClient.from('scrimmage_players').delete().eq('match_id',action.matchId);if(clearError)throw clearError;
+    const {error:rosterError}=await supabaseClient.from('scrimmage_players').insert(action.players);if(rosterError)throw rosterError;return;
+  }
+  if(action.type==='roster_sync'){
+    const {error:deleteError}=await supabaseClient.from('scrimmage_players').delete().eq('match_id',action.matchId);if(deleteError)throw deleteError;
+    if(action.players.length){const {error}=await supabaseClient.from('scrimmage_players').insert(action.players);if(error)throw error;}
+    const {error:timelineError}=await supabaseClient.from('scrimmage_timeline_events').upsert(action.timeline,{onConflict:'id',ignoreDuplicates:true});if(timelineError)throw timelineError;return;
+  }
+  if(action.type==='finish_match'){
+    const {guestIds=[],guestGoalsA=0,guestGoalsB=0,ratingTargets=[],guestEvents=[]}=action;
+    let matchEnded=false;
+    try{
+      const {data:matchState,error:matchStateError}=await supabaseClient.from('scrimmage_matches').select('status').eq('id',action.matchId).maybeSingle();if(matchStateError)throw matchStateError;
+      matchEnded=matchState?.status==='ended';
+      if(!matchEnded&&guestIds.length){
+        const {error:scoreError}=await supabaseClient.from('scrimmage_matches').update({guest_goals_a:guestGoalsA,guest_goals_b:guestGoalsB}).eq('id',action.matchId);if(scoreError)throw scoreError;
+        const {error:guestError}=await supabaseClient.from('scrimmage_stat_events').delete().eq('match_id',action.matchId).in('player_id',guestIds);if(guestError)throw guestError;
+      }
+      if(!matchEnded){const {error}=await supabaseClient.rpc('end_scrimmage_match',{p_match_id:action.matchId});if(error)throw error;matchEnded=true;}
+      const results=await Promise.all(ratingTargets.map(target=>supabaseClient.from('players').update({rating:target.rating,total_points:target.total_points,tier:target.tier}).eq('id',target.id)));
+      const ratingError=results.find(result=>result.error)?.error;if(ratingError)throw ratingError;return;
+    }catch(error){
+      if(!matchEnded&&guestEvents.length){const {error:restoreError}=await supabaseClient.from('scrimmage_stat_events').upsert(guestEvents,{onConflict:'id',ignoreDuplicates:true});if(restoreError)console.error('Guest events could not be restored after an incomplete match finish:',restoreError);}
+      if(!matchEnded&&guestIds.length){const {error:rollbackError}=await supabaseClient.from('scrimmage_matches').update({guest_goals_a:0,guest_goals_b:0}).eq('id',action.matchId);if(rollbackError)console.error('Guest score could not be rolled back after an incomplete match finish:',rollbackError);}
+      throw error;
+    }
+  }
   if(action.type==='quick_pass_state'){
     const {error}=await supabaseClient.from('scrimmage_matches').update({quick_pass_state:action.state}).eq('id',action.matchId);
     if(error)throw error;
@@ -3233,6 +3277,7 @@ function enqueueLiveAction(action){
   liveActionQueue.push(action);
   if(!persistLiveActionQueue()){liveActionQueue.pop();return false;}
   updateLiveOfflineNotice();
+  if(action.matchId===activeScrimmageId)persistLiveMatchSnapshot();
   void flushLiveActionQueue();
   return true;
 }
@@ -3289,7 +3334,7 @@ async function loadPostMatch(matchId=null){
    const legacyGoals=events.filter(event=>event.stat_type==='goal'&&!linkedGoalStats.has(event.id)).map(event=>({id:`legacy-${event.id}`,event_type:'goal',team:event.team,player_id:event.player_id,related_player_id:null,created_at:event.created_at,legacy:true}));
    const chronological=[...eventsTimeline.map(event=>({...event})),...legacyGoals].sort((a,b)=>Date.parse(a.created_at||'')-Date.parse(b.created_at||''));
    const grouped=[];let passChain=null;
-   const flushPassChain=()=>{if(passChain){grouped.push(passChain);passChain=null;}};
+   const flushPassChain=()=>{if(passChain){if(passChain.passPlayerIds.length>2)grouped.push(passChain);passChain=null;}};
    chronological.forEach(event=>{
     if(event.event_type==='pass'){
      if(passChain&&passChain.team===event.team&&passChain.passPlayerIds[passChain.passPlayerIds.length-1]===event.player_id){passChain.passPlayerIds.push(event.related_player_id);passChain.created_at=event.created_at;passChain.id=`${passChain.id}-${event.id}`;}
@@ -3344,7 +3389,7 @@ function renderScrimmageTimeline(){
   const legacyGoals=activeScrimmageEvents.filter(event=>event.stat_type==='goal'&&!linkedGoalStats.has(event.id)).map(event=>({id:`legacy-${event.id}`,event_type:'goal',team:event.team,player_id:event.player_id,related_player_id:null,created_at:event.created_at,legacy:true}));
   const chronological=[...activeScrimmageTimelineEvents,...legacyGoals].sort((a,b)=>Date.parse(a.created_at||'')-Date.parse(b.created_at||''));
   const grouped=[];let passChain=null;
-  const flushPassChain=()=>{if(passChain){grouped.push(passChain);passChain=null;}};
+  const flushPassChain=()=>{if(passChain){if(passChain.passPlayerIds.length>2)grouped.push(passChain);passChain=null;}};
   chronological.forEach(event=>{
     if(event.event_type==='pass'){
       if(passChain&&passChain.team===event.team&&passChain.passPlayerIds[passChain.passPlayerIds.length-1]===event.player_id){passChain.passPlayerIds.push(event.related_player_id);passChain.created_at=event.created_at;passChain.id=`${passChain.id}-${event.id}`;}
@@ -3395,7 +3440,7 @@ function renderLiveMatch(){
   const goalsB=activeScrimmageEvents.filter(e=>e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   document.getElementById('scoreA').textContent=goalsA;document.getElementById('scoreB').textContent=goalsB;
   document.getElementById('liveTeamsContainer')?.replaceChildren();
-  renderPerformance();renderScrimmageTimeline();updateQuickPassControls();
+  renderPerformance();renderScrimmageTimeline();updateQuickPassControls();persistLiveMatchSnapshot();
 }
 function bindDragDrop(){
   document.querySelectorAll('.live-player').forEach(el=>{
@@ -3415,7 +3460,7 @@ function bindDragDrop(){
     el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectSub();}});
   });
 }
-async function substitutePlayer(sourceId,targetId){if(!activeScrimmageId)return;if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}const source=activeScrimmagePlayers.find(x=>x.player_id===sourceId),target=activeScrimmagePlayers.find(x=>x.player_id===targetId);if(!source||!target)return;if(source.team!==target.team||source.on_field||!target.on_field){alert('For a substitution, drag a substitute onto a player from the same team.');return;}const action={id:uid(),type:'substitution',matchId:activeScrimmageId,sourceId,targetId,team:source.team,slot:target.slot,createdAt:new Date().toISOString()};if(!enqueueLiveAction(action))return;target.on_field=false;target.slot=null;source.on_field=true;source.slot=action.slot;selectedSubPlayerId=null;dragPlayerId=null;applyPendingLiveActions(activeScrimmageId);renderLiveMatch();const dateStr=prepAttendanceDate||document.getElementById('attendanceDate').value||todayISO();void syncLateAttendanceForPreparation(dateStr,source.team==='A'?[sourceId]:[],source.team==='B'?[sourceId]:[]).catch(error=>{console.error('Late attendance sync failed:',error);updatePreparationOfflineNotice(`Player is on the field, but Late attendance could not be recorded: ${error.message||error}`);});}
+async function substitutePlayer(sourceId,targetId){if(!activeScrimmageId)return;const source=activeScrimmagePlayers.find(x=>x.player_id===sourceId),target=activeScrimmagePlayers.find(x=>x.player_id===targetId);if(!source||!target)return;if(source.team!==target.team||source.on_field||!target.on_field){alert('For a substitution, drag a substitute onto a player from the same team.');return;}const action={id:uid(),type:'substitution',matchId:activeScrimmageId,sourceId,targetId,team:source.team,slot:target.slot,createdAt:new Date().toISOString()};if(!enqueueLiveAction(action))return;target.on_field=false;target.slot=null;source.on_field=true;source.slot=action.slot;selectedSubPlayerId=null;dragPlayerId=null;applyPendingLiveActions(activeScrimmageId);renderLiveMatch();const dateStr=prepAttendanceDate||document.getElementById('attendanceDate').value||todayISO();void syncLateAttendanceForPreparation(dateStr,source.team==='A'?[sourceId]:[],source.team==='B'?[sourceId]:[]).catch(error=>{console.error('Late attendance sync failed:',error);updatePreparationOfflineNotice(`Player is on the field, but Late attendance could not be recorded: ${error.message||error}`);});}
 const normalSubstitutePlayer=substitutePlayer;
 substitutePlayer=async function(sourceId,targetId){if(quickPassActive){updateQuickPassControls();return;}return normalSubstitutePlayer(sourceId,targetId);};
 
@@ -3491,7 +3536,7 @@ function recordQuickPassStat(playerId,statType,row){
 window.recordMatchStat=async function(playerId,statType){
   if(!activeScrimmageId)return;const row=activeScrimmagePlayers.find(x=>x.player_id===playerId);if(!row||!row.on_field){alert('Only players currently on the field can receive match stats.');return;}
   if(!['goal','drop','block'].includes(statType)){alert('Invalid match stat type.');return;}
-  if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}
+
   if(!quickPassActive){updateQuickPassControls();return;}
   if(quickPassActive){recordQuickPassStat(playerId,statType,row);return;}
   let relatedPlayerId=null;
@@ -3507,6 +3552,10 @@ window.recordMatchStat=async function(playerId,statType){
 };
 
 async function loadActiveScrimmage(preloadedMatch=undefined){
+  let localSnapshot=null;try{localSnapshot=JSON.parse(localStorage.getItem(LIVE_MATCH_CACHE_KEY)||'null');}catch(error){console.warn('Local Live Scrimmage snapshot could not be read:',error);}
+  if(localSnapshot?.status==='active'&&(!navigator.onLine||liveActionQueue.some(action=>action.matchId===localSnapshot.id))){
+    scrimmageTimelineReady=true;scrimmageTimelineError='';restoreLiveMatchSnapshot(localSnapshot);setSync(navigator.onLine?'Live match · syncing':'Live match · saved locally',false);return;
+  }
   let m=preloadedMatch;
   if(preloadedMatch===undefined){const {data,error}=await supabaseClient.from('scrimmage_matches').select('*').eq('status','active').maybeSingle();if(error)throw error;m=data;}
   if(!m){
@@ -3561,35 +3610,29 @@ async function loadActiveScrimmage(preloadedMatch=undefined){
   renderLiveMatch();
   setSync(scrimmageTimelineReady?'Live scrimmage':'Timeline setup required',scrimmageTimelineReady);
 }
-async function activateMatch(){if(activeScrimmageId){alert('A scrimmage is already active. End it before starting another.');return;}if(!scrimmageTimelineReady){alert(timelineSetupMessage());return;}if(generatedTeamA.filter(Boolean).length!==7||generatedTeamB.filter(Boolean).length!==7){alert('Team Preparation must contain 7 starters in both teams before activation.');return;}await savePreparationToDB({immediate:true});const {data:m,error}=await supabaseClient.from('scrimmage_matches').insert({status:'active'}).select().single();if(error){alert('Could not activate match: '+error.message);return;}const rows=[...generatedTeamA.map((p,i)=>({match_id:m.id,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:m.id,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.filter(Boolean).map(p=>({match_id:m.id,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.filter(Boolean).map(p=>({match_id:m.id,player_id:p.id,team:'B',on_field:false,slot:null}))];const {error:pe}=await supabaseClient.from('scrimmage_players').insert(rows);if(pe){await supabaseClient.from('scrimmage_matches').delete().eq('id',m.id);alert('Could not save lineups: '+pe.message);return;}
-  await loadActiveScrimmage();
+async function activateMatch(){
+  if(activeScrimmageId){alert('A scrimmage is already active. End it before starting another.');return;}
+  if(generatedTeamA.filter(Boolean).length!==7||generatedTeamB.filter(Boolean).length!==7){alert('Team Preparation must contain 7 starters in both teams before activation.');return;}
+  await savePreparationToDB();
+  const matchId=uid(),startedAt=new Date().toISOString();
+  const rows=[...generatedTeamA.map((p,i)=>({match_id:matchId,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:matchId,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.filter(Boolean).map(p=>({match_id:matchId,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.filter(Boolean).map(p=>({match_id:matchId,player_id:p.id,team:'B',on_field:false,slot:null}))];
+  activeScrimmageId=matchId;activeScrimmageMatchStartedAt=startedAt;activeScrimmagePlayers=rows;activeScrimmageEvents=[];activeScrimmageTimelineEvents=[];scrimmageTimelineReady=true;liveMatchIsLocal=true;
+  if(!persistLiveMatchSnapshot()){activeScrimmageId=null;activeScrimmagePlayers=[];renderLiveMatch();return;}
+  const queued=enqueueLiveAction({id:`activate-${matchId}`,type:'activate_match',matchId,match:{id:matchId,status:'active',created_at:startedAt,quick_pass_state:null},players:rows,createdAt:startedAt});
+  if(!queued){activeScrimmageId=null;activeScrimmagePlayers=[];persistLiveMatchSnapshot();renderLiveMatch();return;}
+  renderLiveMatch();setSync(navigator.onLine?'Match started · syncing':'Match started · saved locally',false);showScrimmageView('liveView');
 }
 
-async function syncLiveFromPreparation(){if(!activeScrimmageId){alert('Activate a match first, then sync from Team Preparation.');return;}if(generatedTeamA.filter(Boolean).length!==7||generatedTeamB.filter(Boolean).length!==7){alert('Team Preparation needs exactly 7 starters on each team.');return;}if(!confirm('Replace the live roster with Team Preparation? Existing match stats and the current score will be preserved.'))return;try{const matchId=activeScrimmageId;const rows=[...generatedTeamA.map((p,i)=>({match_id:matchId,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:matchId,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.filter(Boolean).map(p=>({match_id:matchId,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.filter(Boolean).map(p=>({match_id:matchId,player_id:p.id,team:'B',on_field:false,slot:null}))];const {error:delErr}=await supabaseClient.from('scrimmage_players').delete().eq('match_id',matchId);if(delErr)throw delErr;const {error:insErr}=await supabaseClient.from('scrimmage_players').insert(rows);if(insErr)throw insErr;const {error:messageError}=await supabaseClient.from('scrimmage_timeline_events').insert({id:uid(),match_id:matchId,event_type:'team_change',team:'A',player_id:null,related_player_id:null,created_at:new Date().toISOString()});await loadActiveScrimmage();setSync('Teams changed · score unchanged',true);if(messageError){console.error('Team change timeline message could not be saved:',messageError);alert('Teams synced and the score is preserved, but the timeline message could not be saved. Run vinuni_scrimmage_timeline_setup.sql in Supabase to enable team change messages.');}}catch(e){console.error(e);alert('Could not sync lineup: '+e.message);}}
+async function syncLiveFromPreparation(){if(!activeScrimmageId){alert('Activate a match first, then sync from Team Preparation.');return;}if(generatedTeamA.filter(Boolean).length!==7||generatedTeamB.filter(Boolean).length!==7){alert('Team Preparation needs exactly 7 starters on each team.');return;}if(!confirm('Replace the live roster with Team Preparation? Existing match stats and the current score will be preserved.'))return;const matchId=activeScrimmageId,rows=[...generatedTeamA.map((p,i)=>({match_id:matchId,player_id:p.id,team:'A',on_field:true,slot:i})),...generatedTeamB.map((p,i)=>({match_id:matchId,player_id:p.id,team:'B',on_field:true,slot:i})),...generatedSubsA.filter(Boolean).map(p=>({match_id:matchId,player_id:p.id,team:'A',on_field:false,slot:null})),...generatedSubsB.filter(Boolean).map(p=>({match_id:matchId,player_id:p.id,team:'B',on_field:false,slot:null}))],timeline={id:uid(),match_id:matchId,event_type:'team_change',team:'A',player_id:null,related_player_id:null,created_at:new Date().toISOString()};if(!enqueueLiveAction({id:uid(),type:'roster_sync',matchId,players:rows,timeline,createdAt:timeline.created_at}))return;activeScrimmagePlayers=rows;activeScrimmageTimelineEvents.push(timeline);applyPendingLiveActions(matchId);renderLiveMatch();setSync(navigator.onLine?'Teams updated · syncing':'Teams updated · saved locally',false);}
 
 async function endMatch(){
   if(!activeScrimmageId) return;
   if(!confirm('End this match? Permanent-member ratings will be updated. Guest statistics are temporary and will be removed after the match.')) return;
-  if(liveActionFlushInProgress){alert('Live actions are still syncing. Wait for them to finish, then end the match again.');return;}
-  try{await flushLiveActionQueue();}catch(error){console.error(error);alert('Could not sync pending live actions before ending the match: '+error.message);return;}
-  if(liveActionQueue.some(action=>action.matchId===activeScrimmageId)){alert('Some live actions are still waiting to sync. Resolve the sync issue before ending the match.');return;}
-  
   const matchId = activeScrimmageId;
   const guestIds=players.filter(isGuest).map(player=>player.id);
   const guestIdSet=new Set(guestIds);
   const guestGoalsA=activeScrimmageEvents.filter(e=>guestIdSet.has(e.player_id)&&e.team==='A'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
   const guestGoalsB=activeScrimmageEvents.filter(e=>guestIdSet.has(e.player_id)&&e.team==='B'&&e.stat_type==='goal').reduce((s,e)=>s+Number(e.delta||0),0);
-  let guestEvents=[];
-  if(guestIds.length){
-    const {data,error:eventLoadError}=await supabaseClient.from('scrimmage_stat_events').select('*').eq('match_id',matchId).in('player_id',guestIds);
-    if(eventLoadError){alert('Could not prepare temporary guest statistics for cleanup: '+eventLoadError.message);return;}
-    guestEvents=data||[];
-    const {error:scoreError}=await supabaseClient.from('scrimmage_matches').update({guest_goals_a:guestGoalsA,guest_goals_b:guestGoalsB}).eq('id',matchId);
-    if(scoreError){alert('Could not preserve the team score for guest goals. Run vinuni_registration_guest_setup.sql in Supabase first. '+scoreError.message);return;}
-    const {error:deleteError}=await supabaseClient.from('scrimmage_stat_events').delete().eq('match_id',matchId).in('player_id',guestIds);
-    if(deleteError){const {error:rollbackError}=await supabaseClient.from('scrimmage_matches').update({guest_goals_a:0,guest_goals_b:0}).eq('id',matchId);const rollbackNotice=rollbackError?'\nCould not roll back the temporary guest score: '+rollbackError.message:'';alert('Could not remove temporary guest statistics: '+deleteError.message+rollbackNotice);return;}
-  }
-
   const matchDuration=activeMatchDurationMinutes();
   const ratingTargets=activeScrimmagePlayers.flatMap(appearance=>{
     const profile=players.find(player=>player.id===appearance.player_id);
@@ -3599,23 +3642,9 @@ async function endMatch(){
     const matchPoints=performancePoints(statTotalsForPlayer(appearance.player_id),minutes,profile.position,matchDuration),change=performanceRatingDelta(matchPoints),rating=isQuynhCocaColaMember(profile)?67:Math.max(0,Math.min(100,Number(profile.rating||0)+change));
     return [{id:profile.id,rating:Number(rating.toFixed(1)),total_points:Number((Number(profile.total_points||0)+change).toFixed(1)),tier:tierFromRating(rating)}];
   });
-  const {error} = await supabaseClient.rpc('end_scrimmage_match',{p_match_id:matchId});
-  if(error){
-    let restoreMessage='';
-    if(guestEvents.length){
-      const {error:restoreError}=await supabaseClient.from('scrimmage_stat_events').upsert(guestEvents,{onConflict:'id',ignoreDuplicates:true});
-      if(restoreError)restoreMessage='\nCould not restore temporary guest stats: '+restoreError.message;
-    }
-    if(guestIds.length){const {error:rollbackError}=await supabaseClient.from('scrimmage_matches').update({guest_goals_a:0,guest_goals_b:0}).eq('id',matchId);if(rollbackError)restoreMessage+='\nCould not roll back guest team goals: '+rollbackError.message;}
-    alert('Could not end match: '+error.message+'\n\nRun vinuni_scrimmage_setup.sql in Supabase first.'+restoreMessage);
-    return;
-  }
-  const ratingResults=await Promise.all(ratingTargets.map(target=>supabaseClient.from('players').update({rating:target.rating,total_points:target.total_points,tier:target.tier}).eq('id',target.id)));
-  const ratingError=ratingResults.find(result=>result.error)?.error;
-  if(ratingError){console.error('Could not apply the match grade threshold to player ratings:',ratingError);alert('The match ended, but some player ratings could not be updated: '+ratingError.message);}
-  
-  await loadPlayers();
-  await loadPostMatch(matchId);
+  const guestEvents=activeScrimmageEvents.filter(event=>guestIdSet.has(event.player_id));
+  if(!enqueueLiveAction({id:`finish-${matchId}`,type:'finish_match',matchId,guestIds,guestGoalsA,guestGoalsB,ratingTargets,guestEvents,createdAt:new Date().toISOString()}))return;
+  ratingTargets.forEach(target=>{const player=players.find(item=>item.id===target.id);if(player)Object.assign(player,target);});
   
   activeScrimmageId=null;
   activeScrimmageMatchStartedAt=null;
@@ -3628,8 +3657,8 @@ async function endMatch(){
   refreshAll();
   renderLiveMatch();
   showScrimmageView('postMatchView');
-  setSync('Match ended · ratings updated',true);
-  alert('Match ended and saved to Supabase. All completed matches will be included when you export the Attendance Excel file.');
+  setSync(navigator.onLine?'Match ended · syncing':'Match ended · saved locally',false);
+  alert('Match ended on this device. Match data and ratings will sync to Supabase when the connection is available.');
 }
 
 async function exportScrimmageExcel(matchId){
