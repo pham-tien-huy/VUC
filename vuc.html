@@ -2151,8 +2151,11 @@ body{background-color:#050a12!important;background-image:radial-gradient(circle 
  #liveTeamsContainer .live-field-player:hover,.live-player:hover{transform:rotateX(-26deg) translateY(-11px) scale(1.05)!important}
 }
 
-/* Keep score, Game On/Off, and Start Game on one aligned toolbar row. */
-#liveTeamsContainer .live-match-topline{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+/* Game On/Off sits between the team names; Start/End Game stays with match actions. */
+#liveTeamsContainer .live-match-topline{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important}
+#liveTeamsContainer .quick-pass-toolbar{min-width:112px!important;padding:0 9px!important}
+#liveTeamsContainer .quick-pass-toggle{box-sizing:border-box;width:100%;min-width:96px;min-height:38px;padding:6px 10px;border:1px solid #38bdf877;border-radius:10px;color:#bae6fd;background:linear-gradient(145deg,#10243c,#0a1424);font-size:10px;font-weight:950;letter-spacing:.08em;white-space:nowrap}
+#liveTeamsContainer .quick-pass-toggle.active{border-color:#34d399;color:#a7f3d0;background:#06392f;box-shadow:0 0 15px #34d39955}
 #scrimmageMatchPanel .live-score-controls{align-items:center!important}
 #scrimmageMatchPanel .live-score-stack{flex:1 1 0!important;min-width:0!important}
 #scrimmageMatchPanel .match-actions{display:flex!important;flex:0 0 auto!important;align-items:center!important;align-self:center!important;gap:10px!important;margin:0!important}
@@ -2166,6 +2169,9 @@ body{background-color:#050a12!important;background-image:radial-gradient(circle 
 #liveTeamsContainer .live-tier-badge{position:absolute;z-index:5;top:-11px;right:-10px;width:30px;height:25px;object-fit:contain;pointer-events:none;filter:drop-shadow(0 3px 3px rgba(0,0,0,.85))}
 #liveTeamsContainer .live-tier-badge.tier-A{filter:grayscale(1) brightness(1.45) contrast(.9) drop-shadow(0 3px 3px rgba(0,0,0,.85))}
 @media(max-width:760px){
+ #liveTeamsContainer .live-match-topline{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important}
+ #liveTeamsContainer .quick-pass-toolbar{min-width:84px!important;padding:0 5px!important}
+ #liveTeamsContainer .quick-pass-toggle{min-width:74px;min-height:34px;padding:5px 6px;font-size:8px}
  #scrimmageMatchPanel .live-score-controls{flex-direction:column!important;align-items:stretch!important}
  #scrimmageMatchPanel .match-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-self:stretch!important}
  #scrimmageMatchPanel #quickPassToggle,#scrimmageMatchPanel #matchPrimaryActionBtn{width:100%!important;min-width:0!important}
@@ -2543,11 +2549,7 @@ body{
 #orientationPrompt .rotate-phone:after{position:absolute;right:7px;bottom:7px;width:6px;height:6px;border:1px solid #8be9f8;border-radius:50%;content:""}
 #orientationPrompt .orientation-arrow{position:absolute;top:-17px;right:-22px;color:#facc15;font-size:25px;filter:drop-shadow(0 0 8px #facc1588);animation:arrow-orbit 2.2s ease-in-out infinite}
 #liveTeamsContainer .live-field-player.selected-sub .live-player-photo-frame{border-color:#facc15!important;box-shadow:0 0 0 3px #facc1566,0 0 18px #facc15aa!important}
-#liveTeamsContainer .live-top-game-button{align-self:center;justify-self:center;z-index:3;min-width:104px;min-height:38px;padding:7px 12px;border:1px solid #34d399;border-radius:11px;color:#d1fae5;background:linear-gradient(135deg,#047857,#065f46);box-shadow:0 0 18px #10b98155;font-size:10px;font-weight:1000;letter-spacing:.09em;cursor:pointer;touch-action:manipulation}
-#liveTeamsContainer .live-top-game-button:hover:not(:disabled){filter:brightness(1.15);transform:translateY(-1px)}
-#liveTeamsContainer .live-top-game-button:disabled{opacity:.42;filter:grayscale(.5);cursor:not-allowed;box-shadow:none}
-#liveTeamsContainer .live-top-game-button.is-active{border-color:#fb7185;color:#ffe4e6;background:linear-gradient(135deg,#be123c,#881337);box-shadow:0 0 18px #f43f5e44}
-@media(max-width:760px){#liveTeamsContainer .live-top-game-button{min-width:84px;min-height:34px;padding:6px 8px;font-size:9px}#liveTeamsContainer .live-top-team{gap:4px;padding:7px 5px}#liveTeamsContainer .live-top-team strong{font-size:clamp(9px,2.8vw,13px)}#liveTeamsContainer .live-top-team span{font-size:7px}}
+@media(max-width:760px){#liveTeamsContainer .live-top-team{gap:4px;padding:7px 5px}#liveTeamsContainer .live-top-team strong{font-size:clamp(9px,2.8vw,13px)}#liveTeamsContainer .live-top-team span{font-size:7px}#liveTeamsContainer .quick-pass-toggle{min-width:76px;min-height:34px;padding:5px 6px;font-size:8px}}
 @keyframes phone-rotate-hint{0%,15%{transform:rotate(0) scale(1)}55%,78%{transform:rotate(90deg) scale(1.08)}100%{transform:rotate(90deg) scale(1)}}
 @keyframes arrow-orbit{0%,20%{transform:rotate(0) translateX(0)}70%,100%{transform:rotate(90deg) translateX(5px)}}
 @keyframes orientation-fade-in{from{opacity:0}to{opacity:1}}
@@ -2703,7 +2705,6 @@ body{
           </div>
         </div>
         <div class="match-actions">
-          <button type="button" id="quickPassToggle" class="quick-pass-toggle" disabled>GAME OFF</button>
           <button class="btn btn-primary" id="matchPrimaryActionBtn" type="button" disabled>▶ Start Game</button>
         </div>
       </div>
@@ -4318,7 +4319,7 @@ function renderLiveField(){
   return `<section class="live-subs-team team-${team.toLowerCase()}" data-live-subs-team="${team}"><div class="live-subs-heading"><h4>${esc(scrimmageTeamName(team))}<small>${subs.length} SUB</small></h4>${activeScrimmageId?'':`<button type="button" class="auto-lineup-btn" data-auto-lineup="${team}" title="Place the first seven players from this team roster on the field">AUTO 7</button>`}</div><div class="live-subs-list">${chips||'<small class="no-subs">No substitutes</small>'}</div></section>`;
  }).join('');
  const countA=lineupRows.filter(row=>row.team==='A'&&row.on_field).length,countB=lineupRows.filter(row=>row.team==='B'&&row.on_field).length;
- host.hidden=false;host.style.display='grid';host.innerHTML=`<div class="live-match-layout"><div class="live-fields-grid tactical-pitch-glow"><div class="live-match-topline"><div class="live-top-team team-a"><strong>${esc(scrimmageTeamName('A'))}</strong><span>${countA} ON FIELD</span></div><button type="button" class="live-top-game-button" id="liveTopGameButton">GAME ON</button><div class="live-top-team team-b"><span>${countB} ON FIELD</span><strong>${esc(scrimmageTeamName('B'))}</strong></div></div><div class="endzone left-endzone"><span class="ez-text">${esc(scrimmageTeamName('A'))} ENDZONE</span></div><div class="endzone right-endzone"><span class="ez-text">${esc(scrimmageTeamName('B'))} ENDZONE</span></div><div class="endzone-vertical-line endzone-vertical-line-a" aria-hidden="true"></div><div class="endzone-vertical-line endzone-vertical-line-b" aria-hidden="true"></div>${teams}</div><aside class="live-subs-panel"><h3>SUBSTITUTES</h3>${benches}</aside></div><div class="live-context-menu" id="liveContextMenu" hidden><button data-live-action="goal">Goal</button><button data-live-action="assist">Assist</button><button data-live-action="drop">Drop</button><button data-live-action="block">Block</button></div>`;
+ host.hidden=false;host.style.display='grid';host.innerHTML=`<div class="live-match-layout"><div class="live-fields-grid tactical-pitch-glow"><div class="live-match-topline"><div class="live-top-team team-a"><strong>${esc(scrimmageTeamName('A'))}</strong><span>${countA} ON FIELD</span></div><div class="quick-pass-toolbar"><button type="button" id="quickPassToggle" class="quick-pass-toggle" disabled>GAME OFF</button></div><div class="live-top-team team-b"><span>${countB} ON FIELD</span><strong>${esc(scrimmageTeamName('B'))}</strong></div></div><div class="endzone left-endzone"><span class="ez-text">${esc(scrimmageTeamName('A'))} ENDZONE</span></div><div class="endzone right-endzone"><span class="ez-text">${esc(scrimmageTeamName('B'))} ENDZONE</span></div><div class="endzone-vertical-line endzone-vertical-line-a" aria-hidden="true"></div><div class="endzone-vertical-line endzone-vertical-line-b" aria-hidden="true"></div>${teams}</div><aside class="live-subs-panel"><h3>SUBSTITUTES</h3>${benches}</aside></div><div class="live-context-menu" id="liveContextMenu" hidden><button data-live-action="goal">Goal</button><button data-live-action="assist">Assist</button><button data-live-action="drop">Drop</button><button data-live-action="block">Block</button></div>`;
  updateMatchPrimaryAction();
  host.querySelectorAll('[data-live-field]').forEach(pitch=>{
   pitch.addEventListener('click',event=>{if(event.target.closest('.live-field-player')||quickPassActive)return;toggleQuickPass();});
@@ -4456,18 +4457,16 @@ function renderLiveMatch(){
 }
 function updateMatchPrimaryAction(){
  const button=document.getElementById('matchPrimaryActionBtn');if(!button)return;
- const topButton=document.getElementById('liveTopGameButton');
  const active=!!activeScrimmageId,ready=generatedTeamA.filter(Boolean).length===7&&generatedTeamB.filter(Boolean).length===7;
  document.getElementById('scrimmageMatchPanel')?.setAttribute('data-match-active',String(active));
  button.textContent=active?'■ End Game':'▶ Start Game';
  button.classList.toggle('btn-danger',active);button.classList.toggle('btn-primary',!active);
  button.disabled=active?false:!ready;
  button.title=active?'End and save this match':'Start the game and save the current lineup';
- if(topButton){topButton.textContent=active?'END GAME':'GAME ON';topButton.disabled=active?false:!ready;topButton.classList.toggle('is-active',active);topButton.title=button.title;}
 }
 async function runMatchPrimaryAction(){
  const button=document.getElementById('matchPrimaryActionBtn');if(!button)return;
- button.disabled=true;const topButton=document.getElementById('liveTopGameButton');if(topButton)topButton.disabled=true;
+ button.disabled=true;
  try{
   if(activeScrimmageId){await endMatch();return;}
   if(generatedTeamA.filter(Boolean).length!==7||generatedTeamB.filter(Boolean).length!==7){alert('Choose 7 starters for both teams before starting the game.');return;}
@@ -4872,7 +4871,6 @@ document.getElementById("playerForm").addEventListener("submit",async e=>{e.prev
 document.getElementById("cancelEdit").addEventListener("click",resetForm);
 document.getElementById("generateBtn").addEventListener("click",generateTeams);
 document.getElementById('matchPrimaryActionBtn').addEventListener('click',runMatchPrimaryAction);
-document.addEventListener('click',event=>{if(event.target.closest('#liveTopGameButton'))void runMatchPrimaryAction();});
 document.getElementById('exportLineupPngBtn')?.addEventListener('click',()=>void exportPreparationLineupPng());
 document.getElementById('renameTeamsBtn')?.addEventListener('click',()=>{const dialog=document.getElementById('teamRenameDialog');document.getElementById('renameTeamA').value=scrimmageTeamName('A');document.getElementById('renameTeamB').value=scrimmageTeamName('B');dialog?.showModal();});
 document.getElementById('cancelTeamRename')?.addEventListener('click',()=>document.getElementById('teamRenameDialog')?.close());
