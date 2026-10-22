@@ -2542,6 +2542,7 @@ body{
 #orientationPrompt .rotate-phone:before{position:absolute;top:6px;left:50%;width:14px;height:3px;border-radius:99px;background:#8be9f8;content:"";transform:translateX(-50%)}
 #orientationPrompt .rotate-phone:after{position:absolute;right:7px;bottom:7px;width:6px;height:6px;border:1px solid #8be9f8;border-radius:50%;content:""}
 #orientationPrompt .orientation-arrow{position:absolute;top:-17px;right:-22px;color:#facc15;font-size:25px;filter:drop-shadow(0 0 8px #facc1588);animation:arrow-orbit 2.2s ease-in-out infinite}
+#liveTeamsContainer .live-field-player.selected-sub .live-player-photo-frame{border-color:#facc15!important;box-shadow:0 0 0 3px #facc1566,0 0 18px #facc15aa!important}
 @keyframes phone-rotate-hint{0%,15%{transform:rotate(0) scale(1)}55%,78%{transform:rotate(90deg) scale(1.08)}100%{transform:rotate(90deg) scale(1)}}
 @keyframes arrow-orbit{0%,20%{transform:rotate(0) translateX(0)}70%,100%{transform:rotate(90deg) translateX(5px)}}
 @keyframes orientation-fade-in{from{opacity:0}to{opacity:1}}
@@ -3548,7 +3549,7 @@ async function movePreparationPlayer(playerId,targetZone,targetTeam,targetIndex)
    putAtLocation(targetZone,targetTeam,targetIndex,player);
  }
  generatedSubsA=generatedSubsA.filter(Boolean);generatedSubsB=generatedSubsB.filter(Boolean);generatedUnassigned=generatedUnassigned.filter(Boolean);
- selectedPrepPlayerId=null;renderTeams();await savePreparationToDB();
+ selectedPrepPlayerId=null;selectedSubPlayerId=null;renderTeams();await savePreparationToDB();
 }
 async function movePreparationToSub(playerId,team){
  const source=findPrepLocation(playerId);
@@ -3561,7 +3562,7 @@ async function movePreparationToSub(playerId,team){
  generatedSubsA=generatedSubsA.filter(Boolean);
  generatedSubsB=generatedSubsB.filter(Boolean);
  generatedUnassigned=generatedUnassigned.filter(Boolean);
- selectedPrepPlayerId=null;
+ selectedPrepPlayerId=null;selectedSubPlayerId=null;
  renderTeams();
  await savePreparationToDB();
 }
@@ -3574,11 +3575,23 @@ function updatePrepSelection(){
  bar.querySelector('span').textContent=`${player?.name||'Player'} selected · tap a destination`;
  bar.classList.add('active');
 }
+function bindPrepDoubleTapSelection(el,id){
+ let lastTap=null;
+ const select=()=>{selectedPrepPlayerId=id;updatePrepSelection();};
+ el.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();select();});
+ el.addEventListener('pointerup',event=>{
+  if(event.pointerType!=='touch')return;
+  const now=Date.now(),tap={x:event.clientX,y:event.clientY,time:now};
+  if(lastTap&&now-lastTap.time<450&&Math.hypot(tap.x-lastTap.x,tap.y-lastTap.y)<34){lastTap=null;setTimeout(select,70);}
+  else lastTap=tap;
+ },{passive:true});
+}
 function bindPreparationDnD(){
  document.querySelectorAll('[data-prep-player]').forEach(el=>{
   if(el.closest('#prepPoolGrid'))return;
   const id=el.dataset.prepPlayer;
   if(window.matchMedia('(pointer: coarse)').matches)el.draggable=false;
+  bindPrepDoubleTapSelection(el,id);
   el.addEventListener('contextmenu',event=>{event.preventDefault();event.stopPropagation();openRosterTeamMenu(id,event.clientX,event.clientY,'prep',el);});
   el.addEventListener('dragstart',e=>{
    e.dataTransfer.setData('text/plain',id);
@@ -4169,7 +4182,7 @@ function liveFieldCard(row,map){
  const position=formation[Number(row.slot)]||formation[0];
  const isCocaSpecial=isCocaSpecialPlayer(p);
  const image=p.image?`<img class="player-image" src="${esc(p.image)}" alt="${esc(p.name)}">`:`<span class="live-field-initials fallback-text">${esc(initials(p.name))}</span>`;
- return `<div class="live-player-marker" data-slot="${row.slot??0}" style="left:${position.x}%;top:${position.y}%"><button type="button" class="live-player live-field-player tier-${esc(p.tier)} ${isCocaSpecial?'coca-special':''} ${quickPassHolderId===p.id&&quickPassActive?'has-disc':''}" data-player-id="${esc(p.id)}" data-team="${row.team}" data-slot="${row.slot??0}" aria-label="${esc(p.name)}, ${esc(p.position||'Player')}" title="Tap to select or pass | Double-tap for Goal, Assist, Drop, Block"><span class="live-player-card-visual"><span class="avatar-wrapper"><span class="avatar-clipper live-player-photo-frame tier-${String(p.tier||'C').toLowerCase()}-border">${image}</span>${['S','A','B'].includes(p.tier)?`<img class="tier-icon live-tier-badge tier-${esc(p.tier)}" src="assets/tier-emblem-${String(p.tier).toLowerCase()}.png" alt="Tier ${esc(p.tier)} horse badge" draggable="false">`:''}${isCocaSpecial?'<img class="coca-live-emblem" src="assets/coca-cola-round.svg" alt="Coca-Cola special badge" draggable="false">':''}</span><small class="live-player-card-role">${esc(p.position||'Player')}</small></span></button><span class="live-player-field-label" aria-hidden="true"><strong>${esc(p.name)}</strong></span></div>`;
+ return `<div class="live-player-marker" data-slot="${row.slot??0}" style="left:${position.x}%;top:${position.y}%"><button type="button" class="live-player live-field-player tier-${esc(p.tier)} ${isCocaSpecial?'coca-special':''} ${selectedSubPlayerId===p.id?'selected-sub':''} ${quickPassHolderId===p.id&&quickPassActive?'has-disc':''}" data-player-id="${esc(p.id)}" data-team="${row.team}" data-slot="${row.slot??0}" aria-label="${esc(p.name)}, ${esc(p.position||'Player')}" title="Double-tap to select for substitution while Game OFF; double-tap for match actions while Game ON"><span class="live-player-card-visual"><span class="avatar-wrapper"><span class="avatar-clipper live-player-photo-frame tier-${String(p.tier||'C').toLowerCase()}-border">${image}</span>${['S','A','B'].includes(p.tier)?`<img class="tier-icon live-tier-badge tier-${esc(p.tier)}" src="assets/tier-emblem-${String(p.tier).toLowerCase()}.png" alt="Tier ${esc(p.tier)} horse badge" draggable="false">`:''}${isCocaSpecial?'<img class="coca-live-emblem" src="assets/coca-cola-round.svg" alt="Coca-Cola special badge" draggable="false">':''}</span><small class="live-player-card-role">${esc(p.position||'Player')}</small></span></button><span class="live-player-field-label" aria-hidden="true"><strong>${esc(p.name)}</strong></span></div>`;
 }
 function renderLiveRosterPool(){
  const list=document.getElementById('liveRosterTeams');if(!list)return;
@@ -4311,11 +4324,11 @@ function renderLiveField(){
  host.querySelectorAll('.live-field-player').forEach(card=>{
   let lastTouchTap=null;
   card.addEventListener('pointerup',event=>{
-   if(event.pointerType!=='touch'||card.classList.contains('live-empty-slot')||!activeScrimmageId)return;
+   if(event.pointerType!=='touch'||card.classList.contains('live-empty-slot'))return;
    const now=Date.now(),point={x:event.clientX,y:event.clientY,time:now};
    if(lastTouchTap&&now-lastTouchTap.time<450&&Math.hypot(point.x-lastTouchTap.x,point.y-lastTouchTap.y)<34){
     lastTouchTap=null;card.dataset.touchDoubleTapUntil=String(now+500);
-    setTimeout(()=>openLiveContextMenu(card.dataset.playerId,card),80);
+    setTimeout(()=>{if(activeScrimmageId)openLiveContextMenu(card.dataset.playerId,card);else setLiveSwapSelection(card.dataset.playerId);},80);
    }else lastTouchTap=point;
   },{passive:true});
   card.addEventListener('contextmenu',event=>{
@@ -4341,8 +4354,10 @@ function renderLiveField(){
   if(quickPassActive&&(!quickPassHolderId||holder&&row?.team===holder.team&&playerId!==quickPassHolderId))handleQuickPassPlayerTap(playerId);
   });
   card.addEventListener('dblclick',event=>{
-   if(card.classList.contains('live-empty-slot')||!activeScrimmageId)return;
-   event.preventDefault();event.stopPropagation();openLiveContextMenu(card.dataset.playerId,card);
+   if(card.classList.contains('live-empty-slot'))return;
+   event.preventDefault();event.stopPropagation();
+   if(!activeScrimmageId){setLiveSwapSelection(card.dataset.playerId);return;}
+   openLiveContextMenu(card.dataset.playerId,card);
    const goalButton=host.querySelector('#liveContextMenu [data-live-action="goal"]');if(goalButton&&!goalButton.disabled)goalButton.focus({preventScroll:true});
   });
  });
@@ -4452,6 +4467,10 @@ async function runMatchPrimaryAction(){
   if(activeScrimmageId){if(!quickPassActive)toggleQuickPass();showScrimmageView('liveView');}
  }finally{updateMatchPrimaryAction();}
 }
+function setLiveSwapSelection(playerId){
+ selectedSubPlayerId=playerId||null;
+ document.querySelectorAll('#liveTeamsContainer .substitute-chip,#liveTeamsContainer .live-field-player').forEach(el=>el.classList.toggle('selected-sub',el.dataset.playerId===selectedSubPlayerId));
+}
 function bindDragDrop(){
   document.querySelectorAll('.live-player').forEach(el=>{
     el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over')});
@@ -4464,7 +4483,15 @@ function bindDragDrop(){
   document.querySelectorAll('.substitute-chip').forEach(el=>{
     el.addEventListener('dragstart',e=>{dragPlayerId=el.dataset.playerId;e.dataTransfer.setData('text/plain',dragPlayerId);el.classList.add('dragging')});
     el.addEventListener('dragend',()=>{dragPlayerId=null;el.classList.remove('dragging')});
-    const selectSub=()=>{selectedSubPlayerId=selectedSubPlayerId===el.dataset.playerId?null:el.dataset.playerId;renderLiveMatch();};
+    let lastSubTap=null;
+    const selectSub=()=>setLiveSwapSelection(selectedSubPlayerId===el.dataset.playerId?null:el.dataset.playerId);
+    el.addEventListener('pointerup',event=>{
+      if(event.pointerType!=='touch')return;
+      const now=Date.now(),tap={x:event.clientX,y:event.clientY,time:now};
+      if(lastSubTap&&now-lastSubTap.time<450&&Math.hypot(tap.x-lastSubTap.x,tap.y-lastSubTap.y)<34){lastSubTap=null;setTimeout(()=>setLiveSwapSelection(el.dataset.playerId),70);}
+      else lastSubTap=tap;
+    },{passive:true});
+    el.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();setLiveSwapSelection(el.dataset.playerId);});
     el.addEventListener('click',selectSub);
     el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectSub();}});
   });
