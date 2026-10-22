@@ -4203,6 +4203,12 @@ function renderLiveRosterPool(){
  const other=visible.filter(player=>!clubs.some(([club])=>player.club===club));
  const otherGroup=other.length?`<section class="live-roster-group team-other"><header><h4>Other players</h4><span>${other.length} PLAYERS</span></header><div class="live-roster-grid">${other.map(player=>`<button type="button" class="live-roster-card" draggable="true" data-live-roster-player="${esc(player.id)}" data-default-team="${assigned.get(player.id)?.team||'A'}">${esc(player.name)}</button>`).join('')}</div></section>`:'';
  list.innerHTML=groups+otherGroup;
+ list.querySelectorAll('[data-live-roster-player]').forEach(card=>card.addEventListener('click',event=>{
+  if(event.detail>1)return;
+  event.preventDefault();event.stopPropagation();
+  const rect=card.getBoundingClientRect();
+  openRosterTeamMenu(card.dataset.liveRosterPlayer,rect.left+rect.width/2,rect.top+rect.height/2,activeScrimmageId?'live':'prep',card);
+ }));
  list.querySelectorAll('[data-live-roster-player]').forEach(card=>card.addEventListener('contextmenu',event=>{
   event.preventDefault();event.stopPropagation();
   openRosterTeamMenu(card.dataset.liveRosterPlayer,event.clientX,event.clientY,activeScrimmageId?'live':'prep',card);
@@ -4478,6 +4484,14 @@ function setLiveSwapSelection(playerId){
  selectedSubPlayerId=playerId||null;
  document.querySelectorAll('#liveTeamsContainer .substitute-chip,#liveTeamsContainer .live-field-player').forEach(el=>el.classList.toggle('selected-sub',el.dataset.playerId===selectedSubPlayerId));
 }
+async function moveSubstituteToOtherTeam(playerId){
+ const row=currentScrimmageLineupRows().find(item=>item.player_id===playerId);
+ if(!row||row.on_field)return;
+ const otherTeam=row.team==='A'?'B':'A';
+ setLiveSwapSelection(null);
+ if(activeScrimmageId)await addLiveRosterPlayer(playerId,otherTeam,false);
+ else await movePreparationToSub(playerId,otherTeam);
+}
 function bindDragDrop(){
   document.querySelectorAll('.live-player').forEach(el=>{
     el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over')});
@@ -4490,15 +4504,15 @@ function bindDragDrop(){
   document.querySelectorAll('.substitute-chip').forEach(el=>{
     el.addEventListener('dragstart',e=>{dragPlayerId=el.dataset.playerId;e.dataTransfer.setData('text/plain',dragPlayerId);el.classList.add('dragging')});
     el.addEventListener('dragend',()=>{dragPlayerId=null;el.classList.remove('dragging')});
-    let lastSubTap=null;
+    let lastSubTap=null,lastSubTeamMoveAt=0;
     const selectSub=()=>setLiveSwapSelection(selectedSubPlayerId===el.dataset.playerId?null:el.dataset.playerId);
     el.addEventListener('pointerup',event=>{
       if(event.pointerType!=='touch')return;
       const now=Date.now(),tap={x:event.clientX,y:event.clientY,time:now};
-      if(lastSubTap&&now-lastSubTap.time<450&&Math.hypot(tap.x-lastSubTap.x,tap.y-lastSubTap.y)<34){lastSubTap=null;setTimeout(()=>setLiveSwapSelection(el.dataset.playerId),70);}
+      if(lastSubTap&&now-lastSubTap.time<450&&Math.hypot(tap.x-lastSubTap.x,tap.y-lastSubTap.y)<34){lastSubTap=null;lastSubTeamMoveAt=now;void moveSubstituteToOtherTeam(el.dataset.playerId);}
       else lastSubTap=tap;
     },{passive:true});
-    el.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();setLiveSwapSelection(el.dataset.playerId);});
+    el.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();if(Date.now()-lastSubTeamMoveAt<700)return;void moveSubstituteToOtherTeam(el.dataset.playerId);});
     el.addEventListener('click',selectSub);
     el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectSub();}});
   });
@@ -4857,7 +4871,7 @@ document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",asyn
 document.getElementById("liveRosterSearch")?.addEventListener("input",renderLiveRosterPool);
 document.getElementById('liveRosterCollapseBtn')?.addEventListener('click',event=>{const button=event.currentTarget,content=document.getElementById('liveRosterContent'),menu=document.getElementById('liveRosterContextMenu');if(!content)return;content.hidden=!content.hidden;button.setAttribute('aria-expanded',String(!content.hidden));button.textContent=content.hidden?'Show roster':'Collapse roster';if(menu)menu.hidden=true;});
 document.getElementById('liveRosterContextMenu')?.addEventListener('click',async event=>{const button=event.target.closest('button');if(!button)return;const menu=event.currentTarget,playerId=menu.dataset.playerId,mode=menu.dataset.mode;if(!playerId)return;menu.hidden=true;if(button.dataset.rosterSubstitute){await substitutePlayer(button.dataset.rosterSubstitute,playerId);return;}if(button.dataset.rosterDemote){await addLiveRosterPlayer(playerId,button.dataset.rosterDemote,false);return;}const team=button.dataset.rosterTeam;if(!team)return;if(mode==='prep'||!activeScrimmageId){await movePreparationToSub(playerId,team);return;}const existing=activeScrimmagePlayers.find(row=>row.player_id===playerId);if(existing&&!existing.on_field&&existing.team===team){liveRosterFeedback(`${players.find(player=>player.id===playerId)?.name||'Player'} is already on ${scrimmageTeamName(team)} substitutes.`);return;}await addLiveRosterPlayer(playerId,team,false);});
-document.addEventListener('click',event=>{const menu=document.getElementById('liveRosterContextMenu');if(menu&&!event.target.closest('#liveRosterContextMenu'))menu.hidden=true;});
+document.addEventListener('click',event=>{const menu=document.getElementById('liveRosterContextMenu');if(menu&&!event.target.closest('#liveRosterContextMenu,[data-live-roster-player]'))menu.hidden=true;});
 document.addEventListener('contextmenu',event=>{const menu=document.getElementById('liveRosterContextMenu');if(menu&&!event.target.closest('[data-live-roster-player],[data-prep-player]'))menu.hidden=true;});
 document.getElementById("playerGrid").addEventListener("keydown",event=>{if(event.key!=="Enter"&&event.key!==" ")return;const card=event.target.closest("[data-player-profile]");if(!card)return;event.preventDefault();void openPlayerProfile(card.dataset.playerProfile,card);});
 document.getElementById("closePlayerProfile").addEventListener("click",closePlayerProfile);
