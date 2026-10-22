@@ -1821,12 +1821,12 @@ main{max-width:none;margin:0 0 0 286px;padding:28px 32px;transition:margin-left 
 @media(max-width:1050px){#liveTeamsContainer .live-match-layout{grid-template-columns:minmax(0,1fr)}#liveTeamsContainer .live-fields-grid{column-gap:10px;padding-top:0}}
 @media(max-width:760px){#scrimmageMatchPanel .live-score-controls{grid-template-columns:minmax(0,1fr)}#scrimmageMatchPanel .scoreboard{min-height:120px}#scrimmageMatchPanel .score-latest-event{gap:6px;padding:5px 4px 0}#scrimmageMatchPanel .score-latest-event>strong{font-size:9px}#liveTeamsContainer .live-fields-grid{grid-template-columns:minmax(0,1fr);padding-top:0}#liveTeamsContainer .live-match-topline{gap:4px;min-height:50px}#liveTeamsContainer .live-top-team{gap:4px;padding:7px 6px}#liveTeamsContainer .live-top-team strong{font-size:clamp(10px,3vw,15px)}#liveTeamsContainer .live-top-team span{font-size:8px}#liveTeamsContainer .quick-pass-toolbar{padding:0 5px}.live-roster-tools{justify-content:stretch;flex-wrap:wrap}.live-roster-tools input{width:100%!important}.live-roster-tools button{flex:1}.live-latest-event{align-items:flex-start;flex-direction:column;gap:2px}}
 #scrimmageMatchPanel #matchPrimaryActionBtn{min-width:170px;min-height:58px;padding:0 22px;border-radius:15px;font-size:15px;font-weight:950;white-space:nowrap}
-.prep-live-actions{display:grid;grid-template-columns:minmax(150px,1fr);gap:6px;width:min(240px,100%)}
-.prep-live-actions .btn{min-width:0;min-height:34px;padding:6px 10px;font-size:10px;font-weight:850;white-space:nowrap}
+.prep-live-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;width:100%;margin-top:9px}
+.prep-live-actions .btn{min-width:0;min-height:38px;padding:6px 9px;font-size:10px;font-weight:850;line-height:1.15;white-space:normal}
 #scrimmageMatchPanel[data-match-active="true"] .prep-live-actions{display:none}
 #scrimmageMatchPanel[data-match-active="false"] .live-heading-copy>.live-badge,
 #scrimmageMatchPanel[data-match-active="false"] .live-heading-copy>#scrimmageMatchTitle{display:none}
-@media(max-width:760px){.prep-live-actions{grid-template-columns:minmax(0,1fr);width:100%}.prep-live-actions .btn{min-height:38px;font-size:10px}}
+@media(max-width:760px){.prep-live-actions{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:7px}.prep-live-actions .btn{min-height:34px;padding:5px 4px;font-size:9px}}
 .scrim-subtabs:has(.scrim-subtab:only-child){justify-content:flex-end;padding:4px 8px;margin-bottom:10px}
 .scrim-subtabs .scrim-subtab:only-child{flex:0 0 auto;padding:8px 14px;font-size:11px}
 @media(max-width:760px){#scrimmageMatchPanel #matchPrimaryActionBtn{width:100%;min-width:0;min-height:48px;font-size:13px}.scrim-subtabs:has(.scrim-subtab:only-child){justify-content:stretch}.scrim-subtabs .scrim-subtab:only-child{flex:1}}
@@ -2561,9 +2561,9 @@ body{
 <div id="orientationPrompt" role="status" aria-live="assertive" aria-hidden="true">
   <div class="orientation-card">
     <div class="rotate-phone" aria-hidden="true"><span class="orientation-arrow">↻</span></div>
-    <p class="orientation-kicker">LIVE SCRIMMAGE</p>
+    <p class="orientation-kicker" id="orientationKicker">LIVE SCRIMMAGE</p>
     <h2>Please rotate your phone</h2>
-    <p>Turn your phone sideways to set up the match.</p>
+    <p>Turn your phone sideways to set up and manage the match.</p>
   </div>
 </div>
 <div id="vucLoadingScreen" aria-live="polite" aria-busy="true">
@@ -2686,11 +2686,6 @@ body{
   <div id="scrimmageMatchPanel" class="panel scrimmage-live-panel">
     <div class="scrimmage-live-head">
       <div class="live-heading-copy">
-        <div class="prep-live-actions" id="prepLiveActions"><button type="button" class="btn btn-secondary rename-teams-btn" id="renameTeamsBtn">Rename teams</button>
-          <button class="btn btn-secondary" id="exportLineupPngBtn" type="button">Export PNG lineup team</button>
-          <button class="btn btn-ghost" id="clearLineupBtn" type="button">Clear lineup</button>
-          <button class="btn btn-secondary" id="viewPreviousMatchBtn" type="button">View Previous Match</button>
-        </div>
         <div class="live-badge"><span></span> LIVE SCRIMMAGE</div>
         <h2 id="scrimmageMatchTitle">Live Match</h2>
         <div id="scrimmageMatchMeta" class="match-meta">All connected devices share this match.</div>
@@ -2702,6 +2697,11 @@ body{
             <b>:</b>
             <div class="score-team"><span data-team-name-label="B">Charizard</span><strong id="scoreB">0</strong></div>
             <div class="score-latest-event"><span>LATEST GOAL</span><strong id="latestMatchEvent">No goals yet</strong></div>
+          </div>
+          <div class="prep-live-actions" id="prepLiveActions"><button type="button" class="btn btn-secondary rename-teams-btn" id="renameTeamsBtn">Rename teams</button>
+            <button class="btn btn-secondary" id="exportLineupPngBtn" type="button">Export PNG lineup team</button>
+            <button class="btn btn-ghost" id="clearLineupBtn" type="button">Clear lineup</button>
+            <button class="btn btn-secondary" id="viewPreviousMatchBtn" type="button">View Previous Match</button>
           </div>
         </div>
         <div class="match-actions">
@@ -4972,21 +4972,24 @@ async function bootstrapApp(){
 }
 let lastScrimmageOrientation=null;
 function syncPhonePrepOrientation(focusOnLandscape=false){
- const prompt=document.getElementById('orientationPrompt'),generator=document.getElementById('generator'),liveView=document.getElementById('liveView'),postView=document.getElementById('postMatchView');
- if(!prompt||!generator||!liveView)return;
+ const prompt=document.getElementById('orientationPrompt'),kicker=document.getElementById('orientationKicker'),generator=document.getElementById('generator'),postView=document.getElementById('postMatchView');
+ if(!prompt||!generator)return;
  const phone=(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches)&&window.innerWidth<=1000;
  const generatorSelected=generator.classList.contains('active')||document.querySelector('.tab.active')?.dataset.page==='generator';
- const matchStarted=document.getElementById('scrimmageMatchPanel')?.dataset.matchActive==='true'||!!activeScrimmageId;
  const postMatchOpen=postView?.style.display==='block';
- const liveMatchOpen=phone&&generatorSelected&&matchStarted&&!postMatchOpen;
+ const preparationOpen=phone&&generatorSelected&&!activeScrimmageId&&!postMatchOpen;
+ const liveMatchOpen=phone&&generatorSelected&&(document.getElementById('scrimmageMatchPanel')?.dataset.matchActive==='true'||!!activeScrimmageId)&&!postMatchOpen;
+ const scrimmageOpen=preparationOpen||liveMatchOpen;
  const portrait=matchMedia('(orientation:portrait)').matches;
- const shouldPrompt=liveMatchOpen&&portrait;
+ const shouldPrompt=scrimmageOpen&&portrait;
+ if(kicker)kicker.textContent=preparationOpen?'TEAM PREPARATION':'LIVE SCRIMMAGE';
  prompt.classList.toggle('visible',shouldPrompt);prompt.setAttribute('aria-hidden',String(!shouldPrompt));
- if(!liveMatchOpen){lastScrimmageOrientation=null;return;}
+ if(!scrimmageOpen){lastScrimmageOrientation=null;return;}
  if(portrait){lastScrimmageOrientation='portrait';return;}
  if(focusOnLandscape||lastScrimmageOrientation!=='landscape'){
   lastScrimmageOrientation='landscape';
-  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelector('#liveTeamsContainer .live-fields-grid')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})));
+  const field=preparationOpen?document.querySelector('#teamsContainer .prep-field'):document.querySelector('#liveTeamsContainer .live-fields-grid');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>field?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})));
  }
 }
 window.addEventListener('resize',()=>syncPhonePrepOrientation());
