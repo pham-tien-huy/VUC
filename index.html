@@ -2517,10 +2517,44 @@ body{
  #scrimmageMatchPanel.live-scrimmage-fullscreen .live-context-menu button{min-height:50px!important;padding:7px 3px!important;border-radius:10px!important;font-size:13px!important;font-weight:950!important;touch-action:manipulation!important}
 }
 
+/* Mobile landscape tuning: longer preparation pitch, smaller live player cards. */
+@media (pointer:coarse) and (max-width:1000px){
+  #teamsContainer .prep-field{aspect-ratio:.92/1!important;min-height:clamp(500px,100dvh,700px)!important;transform:none!important}
+  #teamsContainer .prep-slot{width:clamp(62px,9vw,78px)!important}
+  #teamsContainer .prep-mini-card{max-width:76px!important}
+  #liveTeamsContainer .live-field-player{width:64px!important}
+  #liveTeamsContainer .live-player-photo-frame{width:48px!important;height:48px!important}
+  #liveTeamsContainer .live-field-player strong{font-size:9px!important}
+  #liveTeamsContainer .live-fields-grid{touch-action:manipulation}
+  #liveTeamsContainer .live-field-player{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+}
+/* Game-style orientation gate for phone match preparation. */
+#orientationPrompt{position:fixed;inset:0;z-index:1000000;display:none;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at center,#101827 0%,#030508 72%);color:#f8fafc;text-align:center}
+#orientationPrompt.visible{display:flex;animation:orientation-fade-in .28s ease both}
+#orientationPrompt .orientation-card{display:grid;justify-items:center;gap:10px;width:min(88vw,360px)}
+#orientationPrompt .orientation-kicker{margin:8px 0 0;color:#67e8f9;font-size:10px;font-weight:950;letter-spacing:.2em}
+#orientationPrompt h2{margin:0;color:#fff;font-size:clamp(22px,6vw,30px);font-weight:950;letter-spacing:.02em}
+#orientationPrompt p{margin:0;color:#9fb2cc;font-size:14px;line-height:1.5}
+#orientationPrompt .rotate-phone{position:relative;width:58px;height:96px;border:3px solid #67e8f9;border-radius:13px;background:linear-gradient(145deg,#11243a,#08111e);box-shadow:0 0 24px #38bdf855,inset 0 0 12px #38bdf822;animation:phone-rotate-hint 2.2s ease-in-out infinite}
+#orientationPrompt .rotate-phone:before{position:absolute;top:6px;left:50%;width:14px;height:3px;border-radius:99px;background:#8be9f8;content:"";transform:translateX(-50%)}
+#orientationPrompt .rotate-phone:after{position:absolute;right:7px;bottom:7px;width:6px;height:6px;border:1px solid #8be9f8;border-radius:50%;content:""}
+#orientationPrompt .orientation-arrow{position:absolute;top:-17px;right:-22px;color:#facc15;font-size:25px;filter:drop-shadow(0 0 8px #facc1588);animation:arrow-orbit 2.2s ease-in-out infinite}
+@keyframes phone-rotate-hint{0%,15%{transform:rotate(0) scale(1)}55%,78%{transform:rotate(90deg) scale(1.08)}100%{transform:rotate(90deg) scale(1)}}
+@keyframes arrow-orbit{0%,20%{transform:rotate(0) translateX(0)}70%,100%{transform:rotate(90deg) translateX(5px)}}
+@keyframes orientation-fade-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#orientationPrompt.visible{animation:none}#orientationPrompt .rotate-phone,#orientationPrompt .orientation-arrow{animation:none}}
 </style>
 </head>
 
 <body>
+<div id="orientationPrompt" role="status" aria-live="assertive" aria-hidden="true">
+  <div class="orientation-card">
+    <div class="rotate-phone" aria-hidden="true"><span class="orientation-arrow">↻</span></div>
+    <p class="orientation-kicker">PREPARING MATCH</p>
+    <h2>Please rotate your phone</h2>
+    <p>Turn your phone sideways to set up the match.</p>
+  </div>
+</div>
 <div id="vucLoadingScreen" aria-live="polite" aria-busy="true">
   <img class="loading-bg" src="assets/loading-screen.jpg" alt="">
   <div class="loading-content">
@@ -2661,7 +2695,6 @@ body{
         </div>
         <div class="match-actions">
           <button type="button" id="quickPassToggle" class="quick-pass-toggle" disabled>GAME OFF</button>
-          <button type="button" id="liveFullscreenBtn" class="live-fullscreen-toggle" aria-pressed="false">Full screen ⛶</button>
           <button class="btn btn-primary" id="matchPrimaryActionBtn" type="button" disabled>▶ Start Game</button>
         </div>
       </div>
@@ -4273,6 +4306,15 @@ function renderLiveField(){
  host.querySelectorAll('[data-live-subs-team]').forEach(zone=>{zone.addEventListener('dragover',event=>{event.preventDefault();zone.classList.add('roster-drop-target');});zone.addEventListener('dragleave',()=>zone.classList.remove('roster-drop-target'));zone.addEventListener('drop',event=>{event.preventDefault();zone.classList.remove('roster-drop-target');const id=event.dataTransfer.getData('text/plain');if(id){if(activeScrimmageId)void addLiveRosterPlayer(id,zone.dataset.liveSubsTeam,false);else void movePreparationToSub(id,zone.dataset.liveSubsTeam);}});});
  host.querySelectorAll('[data-auto-lineup]').forEach(button=>button.addEventListener('click',()=>void autoArrangeTeamLineup(button.dataset.autoLineup)));
  host.querySelectorAll('.live-field-player').forEach(card=>{
+  let lastTouchTap=null;
+  card.addEventListener('pointerup',event=>{
+   if(event.pointerType!=='touch'||card.classList.contains('live-empty-slot')||!activeScrimmageId)return;
+   const now=Date.now(),point={x:event.clientX,y:event.clientY,time:now};
+   if(lastTouchTap&&now-lastTouchTap.time<450&&Math.hypot(point.x-lastTouchTap.x,point.y-lastTouchTap.y)<34){
+    lastTouchTap=null;card.dataset.touchDoubleTapUntil=String(now+500);
+    setTimeout(()=>openLiveContextMenu(card.dataset.playerId,card),80);
+   }else lastTouchTap=point;
+  },{passive:true});
   card.addEventListener('contextmenu',event=>{
    if(card.classList.contains('live-empty-slot'))return;
    event.preventDefault();event.stopPropagation();
@@ -4282,6 +4324,7 @@ function renderLiveField(){
   });
   card.addEventListener('click',event=>{
   event.stopPropagation();
+  if(Number(card.dataset.touchDoubleTapUntil||0)>Date.now()){event.preventDefault();return;}
   const contextMenu=host.querySelector('#liveContextMenu');if(contextMenu)contextMenu.hidden=true;
   if(card.classList.contains('live-empty-slot')){if(selectedSubPlayerId){const source=selectedSubPlayerId;selectedSubPlayerId=null;if(activeScrimmageId)void addLiveRosterPlayer(source,card.dataset.team,true,null,Number(card.dataset.openSlot));else void movePreparationPlayer(source,'field',card.dataset.team,Number(card.dataset.openSlot));}return;}
   if(selectedSubPlayerId){const source=selectedSubPlayerId;selectedSubPlayerId=null;if(activeScrimmageId)void substitutePlayer(source,card.dataset.playerId);else void movePreparationPlayer(source,'field',card.dataset.team,Number(card.dataset.slot));return;}
@@ -4295,7 +4338,7 @@ function renderLiveField(){
   if(quickPassActive&&(!quickPassHolderId||holder&&row?.team===holder.team&&playerId!==quickPassHolderId))handleQuickPassPlayerTap(playerId);
   });
   card.addEventListener('dblclick',event=>{
-   if(card.classList.contains('live-empty-slot')||!activeScrimmageId||!quickPassActive)return;
+   if(card.classList.contains('live-empty-slot')||!activeScrimmageId)return;
    event.preventDefault();event.stopPropagation();openLiveContextMenu(card.dataset.playerId,card);
    const goalButton=host.querySelector('#liveContextMenu [data-live-action="goal"]');if(goalButton&&!goalButton.disabled)goalButton.focus({preventScroll:true});
   });
@@ -4764,6 +4807,7 @@ document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",asyn
   document.getElementById(btn.dataset.page).classList.add("active");
   const dashboardMode=btn.dataset.page==="generator",dashboard=document.getElementById("scrimmageDashboardGrid");
   dashboard?.classList.toggle("dashboard-mode",dashboardMode);
+  syncPhonePrepOrientation(true);
   
   if(btn.dataset.page==="attendance"){
     try{await loadAttendanceHistory();await loadCompletedMatchHistory();await loadAttendance(document.getElementById("attendanceDate").value||todayISO());}catch(e){console.error(e);}
@@ -4790,22 +4834,6 @@ document.getElementById("playerForm").addEventListener("submit",async e=>{e.prev
 document.getElementById("cancelEdit").addEventListener("click",resetForm);
 document.getElementById("generateBtn").addEventListener("click",generateTeams);
 document.getElementById('matchPrimaryActionBtn').addEventListener('click',runMatchPrimaryAction);
-const liveFullscreenButton=document.getElementById('liveFullscreenBtn'),liveMatchPanel=document.getElementById('scrimmageMatchPanel');
-async function setLiveFullscreen(enabled){
- if(enabled){
-  document.body.classList.add('live-scrimmage-fullscreen');liveMatchPanel.classList.add('live-scrimmage-fullscreen');
-  liveFullscreenButton.setAttribute('aria-pressed','true');liveFullscreenButton.textContent='Exit full screen ⤢';
-  try{if(!document.fullscreenElement&&liveMatchPanel.requestFullscreen)await liveMatchPanel.requestFullscreen();}catch(error){console.info('Using in-page full-screen layout:',error.message||error);}
-  try{if(screen.orientation?.lock)await screen.orientation.lock('landscape');}catch{}
- }else{
-  document.body.classList.remove('live-scrimmage-fullscreen');liveMatchPanel.classList.remove('live-scrimmage-fullscreen');
-  liveFullscreenButton.setAttribute('aria-pressed','false');liveFullscreenButton.textContent='Full screen ⛶';
-  try{if(document.fullscreenElement)await document.exitFullscreen();}catch{}
-  try{screen.orientation?.unlock?.();}catch{}
- }
-}
-liveFullscreenButton.addEventListener('click',()=>void setLiveFullscreen(!liveMatchPanel.classList.contains('live-scrimmage-fullscreen')));
-document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&liveMatchPanel.classList.contains('live-scrimmage-fullscreen'))void setLiveFullscreen(false);});
 document.getElementById('exportLineupPngBtn')?.addEventListener('click',()=>void exportPreparationLineupPng());
 document.getElementById('renameTeamsBtn')?.addEventListener('click',()=>{const dialog=document.getElementById('teamRenameDialog');document.getElementById('renameTeamA').value=scrimmageTeamName('A');document.getElementById('renameTeamB').value=scrimmageTeamName('B');dialog?.showModal();});
 document.getElementById('cancelTeamRename')?.addEventListener('click',()=>document.getElementById('teamRenameDialog')?.close());
@@ -4891,7 +4919,30 @@ async function bootstrapApp(){
     alert("Could not load the shared database. Check your Supabase URL, key, SQL setup and RLS policies.\n\n"+err.message);
   }
 }
-(async()=>{if(SUPABASE_URL.includes("YOUR_")||SUPABASE_PUBLISHABLE_KEY.includes("YOUR_")){setSync("Add Supabase URL + key",false);failVucLoading("Supabase URL + key are not configured.");return;}await bootstrapApp();if(liveActionQueue.length)void flushLiveActionQueue();})();
+let lastPrepOrientation=null;
+function syncPhonePrepOrientation(focusOnLandscape=false){
+ const prompt=document.getElementById('orientationPrompt'),generator=document.getElementById('generator'),liveView=document.getElementById('liveView'),postView=document.getElementById('postMatchView');
+ if(!prompt||!generator||!liveView)return;
+ const phone=matchMedia('(pointer:coarse) and (max-width:1000px)').matches;
+ const preparing=phone&&generator.classList.contains('active')&&!activeScrimmageId&&liveView.style.display!=='none'&&postView?.style.display!=='block';
+ const portrait=matchMedia('(orientation:portrait)').matches;
+ const shouldPrompt=preparing&&portrait;
+ prompt.classList.toggle('visible',shouldPrompt);prompt.setAttribute('aria-hidden',String(!shouldPrompt));
+ if(!preparing){lastPrepOrientation=null;return;}
+ if(portrait){lastPrepOrientation='portrait';return;}
+ if(focusOnLandscape||lastPrepOrientation!=='landscape'){
+  lastPrepOrientation='landscape';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelector('#liveTeamsContainer .live-fields-grid')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})));
+ }
+}
+window.addEventListener('resize',()=>syncPhonePrepOrientation());
+window.addEventListener('orientationchange',()=>syncPhonePrepOrientation());
+const orientationWatcher=matchMedia('(orientation:portrait)');
+orientationWatcher.addEventListener?.('change',()=>syncPhonePrepOrientation());
+const prepOrientationObserver=new MutationObserver(()=>syncPhonePrepOrientation());
+['generator','liveView','postMatchView','scrimmageMatchPanel'].forEach(id=>{const node=document.getElementById(id);if(node)prepOrientationObserver.observe(node,{attributes:true,attributeFilter:['class','style','data-match-active']});});
+syncPhonePrepOrientation();
+(async()=>{if(SUPABASE_URL.includes("YOUR_")||SUPABASE_PUBLISHABLE_KEY.includes("YOUR_")){setSync("Add Supabase URL + key",false);failVucLoading("Supabase URL + key are not configured.");return;}await bootstrapApp();if(liveActionQueue.length)void flushLiveActionQueue();syncPhonePrepOrientation();})();
 </script>
 </body>
 </html>
