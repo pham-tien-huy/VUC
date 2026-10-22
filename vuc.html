@@ -2531,7 +2531,7 @@ body{
   #liveTeamsContainer .live-fields-grid{touch-action:manipulation}
   #liveTeamsContainer .live-field-player{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 }
-/* Game-style orientation gate for phone match preparation. */
+/* Game-style orientation gate for the active phone scrimmage. */
 #orientationPrompt{position:fixed;inset:0;z-index:1000000;display:none;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at center,#101827 0%,#030508 72%);color:#f8fafc;text-align:center}
 #orientationPrompt.visible{display:flex;animation:orientation-fade-in .28s ease both}
 #orientationPrompt .orientation-card{display:grid;justify-items:center;gap:10px;width:min(88vw,360px)}
@@ -2553,7 +2553,7 @@ body{
 <div id="orientationPrompt" role="status" aria-live="assertive" aria-hidden="true">
   <div class="orientation-card">
     <div class="rotate-phone" aria-hidden="true"><span class="orientation-arrow">↻</span></div>
-    <p class="orientation-kicker">PREPARING MATCH</p>
+    <p class="orientation-kicker">LIVE SCRIMMAGE</p>
     <h2>Please rotate your phone</h2>
     <p>Turn your phone sideways to set up the match.</p>
   </div>
@@ -4922,7 +4922,7 @@ async function bootstrapApp(){
     alert("Could not load the shared database. Check your Supabase URL, key, SQL setup and RLS policies.\n\n"+err.message);
   }
 }
-let lastPrepOrientation=null;
+let lastScrimmageOrientation=null;
 function syncPhonePrepOrientation(focusOnLandscape=false){
  const prompt=document.getElementById('orientationPrompt'),generator=document.getElementById('generator'),liveView=document.getElementById('liveView'),postView=document.getElementById('postMatchView');
  if(!prompt||!generator||!liveView)return;
@@ -4930,14 +4930,14 @@ function syncPhonePrepOrientation(focusOnLandscape=false){
  const generatorSelected=generator.classList.contains('active')||document.querySelector('.tab.active')?.dataset.page==='generator';
  const matchStarted=document.getElementById('scrimmageMatchPanel')?.dataset.matchActive==='true'||!!activeScrimmageId;
  const postMatchOpen=postView?.style.display==='block';
- const preparing=phone&&generatorSelected&&!matchStarted&&!postMatchOpen;
+ const liveMatchOpen=phone&&generatorSelected&&matchStarted&&!postMatchOpen;
  const portrait=matchMedia('(orientation:portrait)').matches;
- const shouldPrompt=preparing&&portrait;
+ const shouldPrompt=liveMatchOpen&&portrait;
  prompt.classList.toggle('visible',shouldPrompt);prompt.setAttribute('aria-hidden',String(!shouldPrompt));
- if(!preparing){lastPrepOrientation=null;return;}
- if(portrait){lastPrepOrientation='portrait';return;}
- if(focusOnLandscape||lastPrepOrientation!=='landscape'){
-  lastPrepOrientation='landscape';
+ if(!liveMatchOpen){lastScrimmageOrientation=null;return;}
+ if(portrait){lastScrimmageOrientation='portrait';return;}
+ if(focusOnLandscape||lastScrimmageOrientation!=='landscape'){
+  lastScrimmageOrientation='landscape';
   requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelector('#liveTeamsContainer .live-fields-grid')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})));
  }
 }
