@@ -2522,9 +2522,12 @@ body{
   #teamsContainer .prep-field{aspect-ratio:.92/1!important;min-height:clamp(500px,100dvh,700px)!important;transform:none!important}
   #teamsContainer .prep-slot{width:clamp(62px,9vw,78px)!important}
   #teamsContainer .prep-mini-card{max-width:76px!important}
-  #liveTeamsContainer .live-field-player{width:64px!important}
-  #liveTeamsContainer .live-player-photo-frame{width:48px!important;height:48px!important}
-  #liveTeamsContainer .live-field-player strong{font-size:9px!important}
+  #liveTeamsContainer .live-player-marker>.live-field-player{width:56px!important;height:54px!important}
+  #liveTeamsContainer .avatar-wrapper{width:40px!important;height:40px!important}
+  #liveTeamsContainer .live-player-photo-frame{width:36px!important;height:36px!important}
+  #liveTeamsContainer .live-player-marker>.live-player-field-label{top:32px!important;width:94px!important;max-width:94px!important;font-size:11px!important}
+  #liveTeamsContainer .live-player-marker[data-slot="0"]>.live-player-field-label{top:32px!important}
+  #liveTeamsContainer .live-player-card-role{font-size:7px!important}
   #liveTeamsContainer .live-fields-grid{touch-action:manipulation}
   #liveTeamsContainer .live-field-player{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 }
@@ -4923,8 +4926,11 @@ let lastPrepOrientation=null;
 function syncPhonePrepOrientation(focusOnLandscape=false){
  const prompt=document.getElementById('orientationPrompt'),generator=document.getElementById('generator'),liveView=document.getElementById('liveView'),postView=document.getElementById('postMatchView');
  if(!prompt||!generator||!liveView)return;
- const phone=matchMedia('(pointer:coarse) and (max-width:1000px)').matches;
- const preparing=phone&&generator.classList.contains('active')&&!activeScrimmageId&&liveView.style.display!=='none'&&postView?.style.display!=='block';
+ const phone=(navigator.maxTouchPoints>0||matchMedia('(pointer:coarse)').matches)&&window.innerWidth<=1000;
+ const generatorSelected=generator.classList.contains('active')||document.querySelector('.tab.active')?.dataset.page==='generator';
+ const matchStarted=document.getElementById('scrimmageMatchPanel')?.dataset.matchActive==='true'||!!activeScrimmageId;
+ const postMatchOpen=postView?.style.display==='block';
+ const preparing=phone&&generatorSelected&&!matchStarted&&!postMatchOpen;
  const portrait=matchMedia('(orientation:portrait)').matches;
  const shouldPrompt=preparing&&portrait;
  prompt.classList.toggle('visible',shouldPrompt);prompt.setAttribute('aria-hidden',String(!shouldPrompt));
