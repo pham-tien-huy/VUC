@@ -2554,6 +2554,29 @@ body{
 @keyframes arrow-orbit{0%,20%{transform:rotate(0) translateX(0)}70%,100%{transform:rotate(90deg) translateX(5px)}}
 @keyframes orientation-fade-in{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){#orientationPrompt.visible{animation:none}#orientationPrompt .rotate-phone,#orientationPrompt .orientation-arrow{animation:none}}
+/* iPad/tablet live scrimmage: avoid 3D clipping and keep labels and controls stable. */
+@media (min-width:761px) and (max-width:1180px){
+ #scrimmageMatchPanel .scrimmage-live-head{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+ #scrimmageMatchPanel .live-score-controls{grid-template-columns:minmax(0,1fr) auto!important;gap:12px!important}
+ #scrimmageMatchPanel .scoreboard{display:grid!important;grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr)!important;grid-template-areas:"score-a separator score-b" "latest latest latest"!important;gap:4px 8px!important;width:100%!important;min-height:96px!important;padding:10px 16px!important;border-radius:24px!important}
+ #scrimmageMatchPanel .scoreboard .score-team{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important;min-width:0!important}
+ #scrimmageMatchPanel .scoreboard .score-team span{max-width:clamp(88px,15vw,180px)!important;font-size:clamp(12px,1.5vw,17px)!important;text-overflow:clip!important}
+ #scrimmageMatchPanel .scoreboard strong,#scrimmageMatchPanel #scoreA,#scrimmageMatchPanel #scoreB{min-width:36px!important;font-size:clamp(36px,4.5vw,52px)!important}
+ #scrimmageMatchPanel .scoreboard>b{width:32px!important;padding:0!important}
+ #scrimmageMatchPanel .scoreboard .score-latest-event{display:flex!important;justify-content:center!important;min-width:0!important}
+ #scrimmageMatchPanel .match-actions{gap:8px!important}
+ #scrimmageMatchPanel #quickPassToggle,#scrimmageMatchPanel #matchPrimaryActionBtn{min-width:108px!important;min-height:48px!important;height:48px!important;padding:8px 12px!important;font-size:12px!important}
+ #liveTeamsContainer .live-fields-grid.tactical-pitch-glow{width:100%!important;max-width:100%!important;margin:16px auto 22px!important;overflow:visible!important;transform:none!important;transform-style:flat!important}
+ #liveTeamsContainer .endzone{top:52px!important;bottom:0!important;width:15%!important;overflow:visible!important}
+ #liveTeamsContainer .live-fields-grid>.endzone-vertical-line{top:52px!important;bottom:0!important}
+ #liveTeamsContainer .live-fields-grid>.endzone>.ez-text{position:absolute!important;top:50%!important;left:50%!important;width:max-content!important;max-width:none!important;overflow:visible!important;white-space:nowrap!important;font-size:clamp(11px,1.35vw,16px)!important;letter-spacing:.1em!important;opacity:1!important;transform:translate(-50%,-50%) rotate(-90deg)!important;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important}
+ #liveTeamsContainer .live-fields-grid>.left-endzone>.ez-text{transform:translate(-50%,-50%) rotate(90deg)!important}
+}
+@media (min-width:761px) and (max-width:900px){
+ #scrimmageMatchPanel .live-score-controls{grid-template-columns:minmax(0,1fr)!important}
+ #scrimmageMatchPanel .match-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #scrimmageMatchPanel #quickPassToggle,#scrimmageMatchPanel #matchPrimaryActionBtn{width:100%!important}
+}
 </style>
 </head>
 
