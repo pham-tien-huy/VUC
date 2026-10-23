@@ -2550,10 +2550,7 @@ body{
 #orientationPrompt .orientation-arrow{position:absolute;top:-17px;right:-22px;color:#facc15;font-size:25px;filter:drop-shadow(0 0 8px #facc1588);animation:arrow-orbit 2.2s ease-in-out infinite}
 #liveTeamsContainer .live-field-player.selected-sub .live-player-photo-frame{border-color:#facc15!important;box-shadow:0 0 0 3px #facc1566,0 0 18px #facc15aa!important}
 @media(max-width:760px){#liveTeamsContainer .live-top-team{gap:4px;padding:7px 5px}#liveTeamsContainer .live-top-team strong{font-size:clamp(9px,2.8vw,13px)}#liveTeamsContainer .live-top-team span{font-size:7px}#liveTeamsContainer .quick-pass-toggle{min-width:76px;min-height:34px;padding:5px 6px;font-size:8px}}
-@keyframes phone-rotate-hint{0%,15%{transform:rotate(0) scale(1)}55%,78%{transform:rotate(90deg) scale(1.08)}100%{transform:rotate(90deg) scale(1)}}
-@keyframes arrow-orbit{0%,20%{transform:rotate(0) translateX(0)}70%,100%{transform:rotate(90deg) translateX(5px)}}
-@keyframes orientation-fade-in{from{opacity:0}to{opacity:1}}
-@media(prefers-reduced-motion:reduce){#orientationPrompt.visible{animation:none}#orientationPrompt .rotate-phone,#orientationPrompt .orientation-arrow{animation:none}}
+
 /* iPad/tablet live scrimmage: avoid 3D clipping and keep labels and controls stable. */
 @media (min-width:761px) and (max-width:1180px){
  #scrimmageMatchPanel .scrimmage-live-head{grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
@@ -2577,10 +2574,14 @@ body{
  #scrimmageMatchPanel .match-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
  #scrimmageMatchPanel #quickPassToggle,#scrimmageMatchPanel #matchPrimaryActionBtn{width:100%!important}
 }
-/* Center the inactive match header when its title column is hidden. */
+/* Center the pre-game score and action row when the heading is hidden. */
 #scrimmageMatchPanel[data-match-active="false"] .scrimmage-live-head{grid-template-columns:minmax(0,1fr)!important}
-#scrimmageMatchPanel[data-match-active="false"] .live-score-controls{grid-template-columns:minmax(0,1fr) auto!important;width:min(100%,1200px)!important;justify-self:center!important}
+#scrimmageMatchPanel[data-match-active="false"] .live-score-controls{width:min(100%,1200px)!important;margin-inline:auto!important}
 #scrimmageMatchPanel[data-match-active="false"] .live-score-stack{min-width:0!important}
+@keyframes phone-rotate-hint{0%,15%{transform:rotate(0) scale(1)}55%,78%{transform:rotate(90deg) scale(1.08)}100%{transform:rotate(90deg) scale(1)}}
+@keyframes arrow-orbit{0%,20%{transform:rotate(0) translateX(0)}70%,100%{transform:rotate(90deg) translateX(5px)}}
+@keyframes orientation-fade-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#orientationPrompt.visible{animation:none}#orientationPrompt .rotate-phone,#orientationPrompt .orientation-arrow{animation:none}}
 </style>
 </head>
 
