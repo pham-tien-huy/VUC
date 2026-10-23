@@ -2577,6 +2577,10 @@ body{
  #scrimmageMatchPanel .match-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
  #scrimmageMatchPanel #quickPassToggle,#scrimmageMatchPanel #matchPrimaryActionBtn{width:100%!important}
 }
+/* Center the inactive match header when its title column is hidden. */
+#scrimmageMatchPanel[data-match-active="false"] .scrimmage-live-head{grid-template-columns:minmax(0,1fr)!important}
+#scrimmageMatchPanel[data-match-active="false"] .live-score-controls{grid-template-columns:minmax(0,1fr) auto!important;width:min(100%,1200px)!important;justify-self:center!important}
+#scrimmageMatchPanel[data-match-active="false"] .live-score-stack{min-width:0!important}
 </style>
 </head>
 
